@@ -1,12 +1,13 @@
 import fs from 'node:fs';
 import cluster from 'node:cluster';
-import { config, HostConfig } from './config.js';
+import { HostConfig, JansibleConfig } from './config.js';
 import { loadArgv } from './command.js';
 import type { HostConfigPlain } from './types.d.js';
 
 interface OutputBuffer {
   lines: string[];
   count: number;
+  total: number;
 }
 
 interface Counters {
@@ -19,13 +20,13 @@ interface Counters {
  */
 export function runPrimary(): void {
   const { command, outputFile } = loadArgv();
-  const hosts = config.hosts;
+  const hosts = new JansibleConfig().hosts;
 
   console.log(`\n在 ${hosts.length} 台主机上执行: ${command}\n`);
   console.log('='.repeat(60));
 
   // 输出缓冲区
-  const outputBuffer: OutputBuffer = { lines: [], count: 0 };
+  const outputBuffer: OutputBuffer = { lines: [], count: 0, total: hosts.length };
   const counters: Counters = {
     succ: 0,
     fail: 0,
@@ -118,7 +119,7 @@ function handleProgress(
   }
 
   // 添加分隔线（最后一个除外）
-  if (buffer.count < config.hosts.length) {
+  if (buffer.count < buffer.total) {
     buffer.lines.push('-'.repeat(60));
     process.stdout.write('-'.repeat(60) + '\n');
   }

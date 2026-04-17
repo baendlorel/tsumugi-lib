@@ -1,14 +1,12 @@
-import { readFileSync, existsSync } from 'node:fs';
-import path from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
 
 function loadPackageJson() {
   const paths = [
-    path.resolve('package.json'),
-    path.resolve('..', 'package.json'),
-    path.resolve('..', '..', 'package.json'),
+    new URL(/* @vite-ignore */ './package.json', import.meta.url),
+    new URL(/* @vite-ignore */ '../package.json', import.meta.url),
   ];
 
-  const p = paths.find((p) => existsSync(p));
+  const p = paths.find((candidate) => existsSync(candidate));
   if (!p) {
     console.error('没有找到 package.json 文件');
     process.exit(1);

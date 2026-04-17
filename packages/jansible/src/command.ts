@@ -1,38 +1,34 @@
 import { pkg } from './load-pkg.js';
 
-function showHelp(): never {
-  const flag = `
+function showHelp(code: number): never {
+  const info = `
    ___                 _ _     _
   |_  |               (_) |   | |
     | | __ _ _ __  ___ _| |__ | | ___
     | |/ _\` | '_ \/ __| | '_ \| |/ _ \
 /\__/ / (_| | | | \__ \ | |_) | |  __/
 \____/ \__,_|_| |_|___/_|_.__/|_|\___|
+
+jansible [-o|--output filename] (-e|--exec) "command"
+jansible -e "ls -la"
+jansible -o result.txt -e "systemctl status nginx"
   `;
-  console.log(flag);
-  console.log('用法: jansible [-o|--output 文件] (-e|--exec) "命令"');
-  console.log('示例: jansible -e "ls -la"');
-  console.log('示例: jansible -o result.txt -e "systemctl status nginx"');
-  process.exit(1);
+  console.log(info);
+  process.exit(code);
 }
 
 function showVersion(): never {
   console.log(pkg.name + ' ' + pkg.version);
-  process.exit(1);
+  process.exit(0);
 }
 
 export const loadArgv = (): { outputFile: string | null; command: string } => {
   let outputFile: string | null = null;
   let command: string | null = null;
-  let args: string[];
-  if (process.argv[0] === 'jansible') {
-    args = process.argv.slice(1);
-  } else {
-    args = process.argv.slice(2);
-  }
+  const args = process.argv.slice(2);
 
   if (args.includes('-h') || args.includes('--help')) {
-    showHelp();
+    showHelp(0);
   }
 
   if (args.includes('-v') || args.includes('--version')) {
@@ -57,7 +53,7 @@ export const loadArgv = (): { outputFile: string | null; command: string } => {
 
     // -e 后面的内容是命令
     if (arg === '-e' || arg === '--exec') {
-      command = args.slice(i + 1).join('');
+      command = args.slice(i + 1).join(' ');
       break;
     }
     if (arg.startsWith('-e') || arg.startsWith('--exec=')) {
@@ -67,7 +63,7 @@ export const loadArgv = (): { outputFile: string | null; command: string } => {
   }
 
   if (!command) {
-    showHelp();
+    showHelp(1);
   }
 
   return {

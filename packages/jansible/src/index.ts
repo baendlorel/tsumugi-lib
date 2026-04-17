@@ -1,18 +1,18 @@
 import fs from 'node:fs';
-import { config } from './config.js';
+import { JansibleConfig } from './config.js';
 import { loadArgv } from './command.js';
-import { sshExec, type SSHExecResult } from './ssh-exec.js';
+import { sshExec } from './ssh-exec.js';
 
 // 流式输出：每个主机完成后立即显示结果
 async function runAll() {
-  const hosts = config.hosts;
   const { command, outputFile } = loadArgv();
+  const hosts = new JansibleConfig().hosts;
   console.log(`\n在 ${hosts.length} 台主机上执行: ${command}\n`);
   console.log('='.repeat(60));
 
-  const results: SSHExecResult[] = [];
   let successCount = 0;
   let failCount = 0;
+  let completedCount = 0;
   const outputLines: string[] = [];
   const addOutput = (line: string) => {
     outputLines.push(line);
@@ -23,12 +23,8 @@ async function runAll() {
 
   // 并发执行，但每个完成后立即输出
   await Promise.all(
-    hosts.map(async (host, index) => {
+    hosts.map(async (host) => {
       const result = await sshExec(host, command);
-      results.push(result);
-
-      // 立即输出当前主机结果
-      const prefix = `\n【主机 ${host}】`;
 
       if (result.success) {
         successCount++;
@@ -37,13 +33,11 @@ async function runAll() {
         failCount++;
         const message = result.stderr || result.stdout;
         addOutput(`【主机 ${host} 失败】(退出码: ${result.code})\n${message}`);
-        if (message) {
-          process.stdout.write(message);
-        }
       }
 
+      completedCount++;
       // 分隔线（最后一个不需要）
-      if (index < hosts.length - 1) {
+      if (completedCount < hosts.length) {
         addOutput('-'.repeat(60));
       }
     }),

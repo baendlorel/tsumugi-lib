@@ -49,7 +49,7 @@ export class HostConfig implements HostConfigPlain {
   }
 }
 
-class JansibleConfig {
+export class JansibleConfig {
   /**
    * 主机列表
    */
@@ -60,7 +60,7 @@ class JansibleConfig {
   }
 
   private loadHosts(): HostConfig[] {
-    const raw = JSON.parse(fs.readFileSync('config.json', 'utf-8'));
+    const raw = JSON.parse(fs.readFileSync(new URL(/* @vite-ignore */ './config.json', import.meta.url), 'utf-8'));
     if (!Array.isArray(raw.hosts)) {
       throw new Error('Invalid hosts configuration. Must be an Array');
     }
@@ -81,5 +81,3 @@ class JansibleConfig {
     });
   }
 }
-
-export const config = new JansibleConfig();
