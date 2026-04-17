@@ -10,5 +10,5 @@
       "@shared/*": ["../_shared/*"]
     }
   },
-  "include": ["*.config.ts", "scripts/**/*.ts"]
+  "include": ["*.config.ts", "scripts/**/*.ts", "rollup.config.ts"]
 }

@@ -11,7 +11,7 @@ import dts from 'rollup-plugin-dts';
 
 import { getAliases } from './scripts/aliases.js';
 import { replaceOpts } from './scripts/replace-options.js';
-import { externalFromPeerDependencies } from './scripts/common/package-info';
+import { externalFromPeerDependencies } from './scripts/common/package-info.js';
 
 const getTsConfigPath = (packagePath: string) => {
   const tsconfigPath1 = path.join(packagePath, 'tsconfig.build.json');
