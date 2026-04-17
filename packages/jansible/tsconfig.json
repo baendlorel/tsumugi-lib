@@ -8,5 +8,5 @@
       "@shared": ["../_shared/index.ts"]
     }
   },
-  "include": ["./src/**/*.ts"]
+  "include": ["./src/**/*.ts", "./tests/**/*.ts"]
 }

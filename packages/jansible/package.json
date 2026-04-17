@@ -7,7 +7,8 @@
   },
   "scripts": {
     "build": "tsx build.ts",
-    "dev": "vite build --watch"
+    "dev": "vite build --watch",
+    "test": "vitest tests --config ../../vitest.config.ts"
   },
   "devDependencies": {
     "@types/node": "^25.2.3"
