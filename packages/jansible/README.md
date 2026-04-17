@@ -41,12 +41,9 @@ Use `jansible` when you just want a lightweight tool to run one command on sever
 
 `jansible` is built with a relatively low target and is intended to work with older Node.js versions.
 
+Recommended runtime: **>= Node.js 14+**
 
 ## Usage
-
-**`-o` must be ahead of `-e`**
-
-**All things after `-e` is handled as a command**
 
 ```bash
 jansible -e "uptime"
@@ -71,7 +68,8 @@ Create a `config.json` file:
     {
       "ip": "192.168.1.10",
       "user": "root",
-      "port": "22"
+      "port": "22",
+      "password": "your-password"
     },
     {
       "ip": "192.168.1.11"
@@ -89,7 +87,7 @@ Create a `config.json` file:
 - `ip`: host address
 - `user`: SSH username
 - `port`: SSH port
-- `password`: reserved field; currently not injected into the `ssh` command automatically
+- `password`: SSH password; when set, `jansible` will try to use `sshpass`
 
 ### Merge behavior
 
@@ -104,9 +102,10 @@ Create a `config.json` file:
 That means:
 
 1. it depends on `ssh` being available on your machine
-2. it does not inspect remote state before running commands
-3. repeated runs may produce different results
-4. command safety and repeatability are your responsibility
+2. if you use password authentication, `sshpass` also needs to be installed
+3. it does not inspect remote state before running commands
+4. repeated runs may produce different results
+5. command safety and repeatability are your responsibility
 
 ## Example
 

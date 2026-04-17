@@ -80,6 +80,54 @@ printf 'FILE_SSH:%s\n' "$*"
     expect(readFileSync(outputFile, 'utf-8')).toContain('FILE_SSH:-p 22022 root@132.239.38.151 echo hi');
   });
 
+  it('uses sshpass when password is configured', () => {
+    const dir = makeFixture(`#!/usr/bin/env bash
+printf 'SSH_ARGS:%s\n' "$*"
+printf 'SSH_PASSWORD:%s\n' "\${SSHPASS_PASSWORD:-}"
+`);
+
+    writeFileSync(
+      path.join(dir, 'bin', 'sshpass'),
+      `#!/usr/bin/env bash
+printf 'SSHPASS_ARGS:%s\n' "$*"
+password="$2"
+cmd="$3"
+shift 3
+SSHPASS_PASSWORD="$password" "$cmd" "$@"
+`,
+    );
+    chmodSync(path.join(dir, 'bin', 'sshpass'), 0o755);
+    writeFileSync(
+      path.join(dir, 'config.json'),
+      JSON.stringify(
+        {
+          hosts: [{ ip: '192.168.1.10', user: 'root', port: '22', password: 'secret' }],
+          common: {},
+        },
+        null,
+        2,
+      ),
+    );
+
+    const result = spawnSync('node', [path.join(dir, 'jansible.js'), '-e', 'echo secure'], {
+      cwd: tmpdir(),
+      env: {
+        ...process.env,
+        PATH: `${path.join(dir, 'bin')}:${process.env.PATH ?? ''}`,
+      },
+      encoding: 'utf-8',
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(
+      'SSHPASS_ARGS:-p secret ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no -p 22 root@192.168.1.10 echo secure',
+    );
+    expect(result.stdout).toContain(
+      'SSH_ARGS:-o PreferredAuthentications=password -o PubkeyAuthentication=no -p 22 root@192.168.1.10 echo secure',
+    );
+    expect(result.stdout).toContain('SSH_PASSWORD:secret');
+  });
+
   it('shows stderr and exit code when ssh fails', () => {
     const dir = makeFixture(`#!/usr/bin/env bash
 echo 'permission denied' >&2

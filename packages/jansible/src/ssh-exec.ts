@@ -11,7 +11,8 @@ export interface SSHExecResult {
 
 export function sshExec(host: HostConfig, cmd: string): Promise<SSHExecResult> {
   return new Promise((resolve) => {
-    const child = spawn('ssh', [...host.toSSHTarget(), cmd]);
+    const args = [...host.toSSHTarget(), cmd];
+    const child = host.password ? spawn('sshpass', ['-p', host.password, 'ssh', ...args]) : spawn('ssh', args);
     let stdout = '';
     let stderr = '';
 
