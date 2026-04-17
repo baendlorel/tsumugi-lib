@@ -1,5 +1,6 @@
 import { execSync } from 'node:child_process';
-import { writeFileSync } from 'node:fs';
+import { existsSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import { askYesNo } from './common/ask.js';
 import { getPackageInfo } from './common/package-info.js';
@@ -20,7 +21,11 @@ export async function publish(who: string | undefined) {
     return;
   }
 
-  execSync(`rollup -c rollup.config.ts --configPlugin typescript`, { stdio: 'inherit', env: info.env });
+  if (existsSync(join(info.path, 'build.ts'))) {
+    execSync('pnpm exec tsx build.ts', { stdio: 'inherit', cwd: info.path, env: info.env });
+  } else {
+    execSync(`rollup -c rollup.config.ts --configPlugin typescript`, { stdio: 'inherit', env: info.env });
+  }
   execSync(`npm publish ${info.path} --access public`, { stdio: 'inherit', cwd: info.path });
 
   console.log(`Published ${info.name}@${currentVersionStr}`);
