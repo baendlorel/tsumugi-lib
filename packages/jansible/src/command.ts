@@ -14,7 +14,6 @@ function showHelp(): never {
   console.log('示例: jansible -e "ls -la"');
   console.log('示例: jansible -o result.txt -e "systemctl status nginx"');
   process.exit(1);
-  throw new Error('Process exited'); // unreachable, but ensures no accessible endpoint
 }
 
 function showVersion(): never {
