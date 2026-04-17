@@ -17,6 +17,7 @@ describe('loadArgv', () => {
     expect(loadArgv()).toEqual({
       outputFile: null,
       command: 'echo hello world',
+      sequential: false,
     });
   });
 
@@ -26,6 +27,7 @@ describe('loadArgv', () => {
     expect(loadArgv()).toEqual({
       outputFile: 'result.txt',
       command: 'echo hi',
+      sequential: false,
     });
   });
 
@@ -35,6 +37,27 @@ describe('loadArgv', () => {
     expect(loadArgv()).toEqual({
       outputFile: 'result.txt',
       command: 'echo hi',
+      sequential: false,
+    });
+  });
+
+  it('enables sequential mode before -e', () => {
+    process.argv = ['node', 'jansible.js', '-s', '-e', 'echo', 'hi'];
+
+    expect(loadArgv()).toEqual({
+      outputFile: null,
+      command: 'echo hi',
+      sequential: true,
+    });
+  });
+
+  it('does not parse -s after -e as an option', () => {
+    process.argv = ['node', 'jansible.js', '-e', 'echo', '-s', 'hi'];
+
+    expect(loadArgv()).toEqual({
+      outputFile: null,
+      command: 'echo -s hi',
+      sequential: false,
     });
   });
 

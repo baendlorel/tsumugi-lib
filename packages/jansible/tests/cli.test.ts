@@ -56,6 +56,29 @@ printf 'SSH_ARGS:%s\n' "$*"
     expect(result.stdout).toContain('SSH_ARGS:-p 22022 root@132.239.38.152 echo hello world');
   });
 
+  it('runs hosts sequentially with -s', () => {
+    const dir = makeFixture(`#!/usr/bin/env bash
+if [[ "$*" == *132.239.38.151* ]]; then
+  sleep 0.2
+  printf 'ORDER:151\n'
+else
+  printf 'ORDER:152\n'
+fi
+`);
+
+    const result = spawnSync('node', [path.join(dir, 'jansible.js'), '-s', '-e', 'echo ordered'], {
+      cwd: tmpdir(),
+      env: {
+        ...process.env,
+        PATH: `${path.join(dir, 'bin')}:${process.env.PATH ?? ''}`,
+      },
+      encoding: 'utf-8',
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout.indexOf('ORDER:151')).toBeLessThan(result.stdout.indexOf('ORDER:152'));
+  });
+
   it('writes command output to file', () => {
     const dir = makeFixture(`#!/usr/bin/env bash
 printf 'FILE_SSH:%s\n' "$*"

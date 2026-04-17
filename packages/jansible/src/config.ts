@@ -25,6 +25,10 @@ export class HostConfig implements HostConfigPlain {
   toSSHTarget(): string[] {
     const args: string[] = [];
 
+    if (this.password) {
+      args.push('-o', 'PreferredAuthentications=password', '-o', 'PubkeyAuthentication=no');
+    }
+
     if (this.port) {
       args.push('-p', this.port);
     }

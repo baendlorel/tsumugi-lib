@@ -47,12 +47,14 @@ Recommended runtime: **>= Node.js 14+**
 
 ```bash
 jansible -e "uptime"
+jansible -s -e "systemctl restart nginx"
 jansible -e "systemctl status nginx"
 jansible -o result.txt -e "df -h"
 ```
 
 ## Options
 
+- `-s, --sequential`: run hosts one by one in config order
 - `-e, --exec`: command to execute
 - `-o, --output`: write output to a file
 - `-h, --help`: show help
