@@ -1,0 +1,36 @@
+{
+  "name": "composition-ts",
+  "version": "0.1.3",
+  "author": {
+    "name": "Kasukabe Tsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "purpose": "npm",
+  "description": "Instead of inheritance, make it composition!",
+  "description_zh": "不使用继承，使用组合吧！",
+  "type": "module",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.mjs",
+    "default": "./dist/index.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "directory": "packages/composition-ts"
+  },
+  "keywords": [
+    "typescript",
+    "javascript"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/baendlorel/kt-packages/issues"
+  },
+  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/composition-ts#readme"
+}

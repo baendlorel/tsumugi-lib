@@ -1,0 +1,984 @@
+{
+  "packages": [
+    {
+      "name": "bind-params",
+      "version": "1.1.2",
+      "author": {
+        "name": "Kasukabe Tsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "purpose": "npm",
+      "description": "Bind the first N parameters of a function, with full type hints!",
+      "description_zh": "为函数固定前N个参数，有完整的类型提示！",
+      "type": "module",
+      "module": "./dist/index.mjs",
+      "types": "./dist/index.d.ts",
+      "exports": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.mjs",
+        "default": "./dist/index.mjs"
+      },
+      "files": [
+        "dist"
+      ],
+      "homepage": "https://github.com/baendlorel/bind-params#readme",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/baendlorel/bind-params"
+      },
+      "keywords": [
+        "typescript",
+        "javascript"
+      ],
+      "scripts": {
+        "test": "vitest --config ../../vitest.config.ts",
+        "lint": "oxlint .",
+        "cover": "vitest --coverage",
+        "build": "rollup --config ../../rollup.config.ts --configPlugin typescript"
+      },
+      "license": "MIT",
+      "devDependencies": {},
+      "isMonorepo": true
+    },
+    {
+      "name": "concat-arr",
+      "version": "1.3.6",
+      "author": {
+        "name": "KasukabeTsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "description": "A simple utility to concatenate multiple arrays end-to-end. Ignores non-array inputs",
+      "description_zh": "简易的合并数组工具，忽略所有非数组元素",
+      "type": "module",
+      "exports": {
+        "import": "./dist/index.mjs",
+        "default": "./dist/index.mjs",
+        "types": "./dist/index.d.ts"
+      },
+      "files": [
+        "dist"
+      ],
+      "repository": {
+        "type": "git",
+        "url": "git+https://github.com/baendlorel/concat-arr.git"
+      },
+      "keywords": [
+        "array",
+        "concat",
+        "utility",
+        "javascript",
+        "npm"
+      ],
+      "license": "MIT",
+      "bugs": {
+        "url": "https://github.com/baendlorel/concat-arr/issues"
+      },
+      "homepage": "https://github.com/baendlorel/concat-arr#readme",
+      "devDependencies": {},
+      "isMonorepo": true
+    },
+    {
+      "name": "defered-branch",
+      "version": "2.2.7",
+      "author": {
+        "name": "Kasukabe Tsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "purpose": "npm",
+      "description": "Sometimes we need to judge something with multiple cases, but the main job should be done later. So we have Defered Branch!",
+      "description_zh": "有时候我们需要根据多个条件来判断某件事，但主要工作应该在之后完成。所以我们有了延迟分支！",
+      "type": "module",
+      "module": "./dist/index.mjs",
+      "types": "./dist/index.d.ts",
+      "exports": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.mjs",
+        "default": "./dist/index.mjs"
+      },
+      "files": [
+        "dist"
+      ],
+      "homepage": "https://github.com/baendlorel/defered-branch#readme",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/baendlorel/defered-branch"
+      },
+      "keywords": [
+        "branch",
+        "assert",
+        "typescript",
+        "javascript"
+      ],
+      "scripts": {
+        "test": "clear & vitest",
+        "lint": "oxlint .",
+        "cover": "clear & vitest --coverage",
+        "build": "node ./scripts/rollup.mjs"
+      },
+      "license": "MIT",
+      "devDependencies": {},
+      "isMonorepo": true
+    },
+    {
+      "name": "flat-pair",
+      "version": "1.3.2",
+      "author": {
+        "name": "Kasukabe Tsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "purpose": "npm",
+      "description": "Using array to save pairs. Serializable and easier to find, locate by value. Provide static methods, use it at 0 cost!",
+      "description_zh": "用数组来保存键值对。可序列化且更容易通过值查找、定位。提供静态方法，0成本使用！",
+      "type": "module",
+      "module": "./dist/index.mjs",
+      "types": "./dist/index.d.ts",
+      "exports": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.mjs",
+        "default": "./dist/index.mjs"
+      },
+      "files": [
+        "dist"
+      ],
+      "homepage": "https://github.com/baendlorel/flat-pair#readme",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/baendlorel/flat-pair"
+      },
+      "keywords": [
+        "typescript",
+        "javascript"
+      ],
+      "license": "MIT",
+      "devDependencies": {},
+      "isMonorepo": true
+    },
+    {
+      "name": "function-feature",
+      "version": "1.1.2",
+      "description": "Get V8 function type flags (IsConstructor, IsAsyncFunction, IsGeneratorFunction). Also includes features like getting bind source, Proxy source, function renaming, etc.",
+      "description_zh": "使用原生 V8 API 获取函数类型标志（IsConstructor、IsAsyncFunction、IsGeneratorFunction），也包含获取bind来源、Proxy来源、函数改名等功能",
+      "author": {
+        "name": "KasukabeTsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "type": "module",
+      "exports": {
+        "import": "./lib/index.mjs",
+        "default": "./lib/index.mjs",
+        "types": "./lib/index.d.ts"
+      },
+      "files": [
+        "lib",
+        "src",
+        "prebuilds",
+        "binding.gyp"
+      ],
+      "scripts": {
+        "build": "node-gyp rebuild",
+        "test": "./scripts/test.sh",
+        "vtest": "clear && vitest",
+        "clean": "node-gyp clean",
+        "rebuild": "node-gyp clean && node-gyp rebuild",
+        "prebuild": "./scripts/prebuild.sh",
+        "postinstall": "prebuild-install || node-gyp rebuild"
+      },
+      "keywords": [
+        "function",
+        "v8",
+        "native",
+        "addon",
+        "javascript",
+        "functionkind",
+        "class",
+        "constructor",
+        "async",
+        "generator",
+        "arrow",
+        "nan",
+        "introspection"
+      ],
+      "license": "MIT",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/baendlorel/function-feature.git"
+      },
+      "bugs": {
+        "url": "https://github.com/baendlorel/function-feature/issues"
+      },
+      "homepage": "https://github.com/baendlorel/function-feature#readme",
+      "dependencies": {
+        "prebuild-install": "^7.1.3"
+      },
+      "devDependencies": {
+        "function-feature": "^1.0.0",
+        "node-gyp": "^10.0.0",
+        "prebuildify": "^6.0.1",
+        "tsx": "^4.20.4",
+        "vitest": "^3.2.4"
+      },
+      "engines": {
+        "node": ">=16.0.0"
+      },
+      "gypfile": true,
+      "isMonorepo": true
+    },
+    {
+      "name": "minimal-event-bus",
+      "version": "1.0.2",
+      "author": {
+        "name": "Kasukabe Tsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "purpose": "npm",
+      "description": "A minimal event bus, it's on, off and emit method can be used outside the class instance.",
+      "description_zh": "一个极简的事件总线库，emit、on、off 方法可以在类实例外使用。",
+      "type": "module",
+      "module": "./dist/index.mjs",
+      "types": "./dist/index.d.ts",
+      "exports": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.mjs",
+        "default": "./dist/index.mjs"
+      },
+      "files": [
+        "dist"
+      ],
+      "homepage": "https://github.com/baendlorel/minimal-event-bus#readme",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/baendlorel/minimal-event-bus"
+      },
+      "keywords": [
+        "typescript",
+        "javascript"
+      ],
+      "license": "MIT",
+      "devDependencies": {},
+      "isMonorepo": true
+    },
+    {
+      "name": "n-base-integer",
+      "version": "1.1.1",
+      "author": {
+        "name": "KasukabeTsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "description": "Arbitrary-base integer with custom charset, supporting addition, subtraction, multiplication, comparison, and common base conversion utilities.",
+      "description_zh": "N进制数类，支持加减乘除、比较大小、进制转换",
+      "main": "dist/index.js",
+      "types": "dist/index.d.ts",
+      "files": [
+        "dist"
+      ],
+      "type": "module",
+      "homepage": "https://github.com/baendlorel/n-base-integer#readme",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/baendlorel/n-base-integer"
+      },
+      "keywords": [
+        "arbitrary base",
+        "base conversion",
+        "integer",
+        "arithmetic",
+        "addition",
+        "subtraction",
+        "multiplication",
+        "comparison",
+        "utility",
+        "typescript",
+        "javascript"
+      ],
+      "devDependencies": {},
+      "license": "MIT",
+      "isMonorepo": true
+    },
+    {
+      "name": "probability-branch",
+      "version": "1.1.7",
+      "author": {
+        "name": "KasukabeTsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "description": "A lightweight TypeScript library for probabilistic branching and random selection, powered by the Mersenne Twister algorithm.",
+      "description_zh": "一个轻量级的用于以设定的概率/权重来进入分支的库，使用 TypeScript 编写。默认使用 Mersenne Twister 算法获取概率值",
+      "type": "module",
+      "exports": {
+        "import": "./dist/index.mjs",
+        "default": "./dist/index.mjs",
+        "types": "./dist/index.d.ts"
+      },
+      "files": [
+        "dist"
+      ],
+      "homepage": "https://github.com/baendlorel/probability-branch#readme",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/baendlorel/probability-branch"
+      },
+      "keywords": [
+        "probability",
+        "branch",
+        "random",
+        "random-generator",
+        "mersenne-twister",
+        "typescript",
+        "decision-tree",
+        "stochastic",
+        "utility",
+        "library"
+      ],
+      "scripts": {
+        "test": "clear & vitest",
+        "lint": "oxlint .",
+        "cover": "clear & vitest --coverage",
+        "build": "rimraf dist && rollup -c"
+      },
+      "devDependencies": {},
+      "license": "MIT",
+      "isMonorepo": true
+    },
+    {
+      "name": "pseudo-json",
+      "version": "0.1.0",
+      "author": {
+        "name": "Kasukabe Tsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "purpose": "npm",
+      "description": "JSON is too simple, not enough for flexible data. So try pseudo-json! Stringify and parse plain js objects as what they look like in the js files. 0 dependency. ",
+      "description_zh": "JSON还是太简单了，不够灵活。所以试试pseudo-json吧！把js对象序列化成和js文件里一样的样子，然后再解析回来！0依赖",
+      "type": "module",
+      "module": "./dist/index.mjs",
+      "types": "./dist/index.d.ts",
+      "exports": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.mjs",
+        "default": "./dist/index.mjs"
+      },
+      "files": [
+        "dist"
+      ],
+      "homepage": "https://github.com/baendlorel/pseudo-json#readme",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/baendlorel/pseudo-json"
+      },
+      "keywords": [
+        "json",
+        "serialize",
+        "deserialize",
+        "stringify",
+        "parse",
+        "typescript",
+        "javascript"
+      ],
+      "scripts": {
+        "lines": "clear && find ./src -type f \\( -name \"*.ts\" -o -name \"*.tsx\" -o -name \"*.js\" -o -name \"*.mjs\" -o -name \"*.cjs\" -o -name \"*.cpp\" -o -name \"*.h\" -o -name \"*.py\"  -o -name \"*.css\" -o -name \"*.rs\" -o -name \"*.rc\" \\) | xargs wc -l",
+        "test": "clear & vitest",
+        "lint": "oxlint .",
+        "cover": "clear & vitest --coverage",
+        "build": "tsx ./scripts/rollup.ts"
+      },
+      "license": "MIT",
+      "devDependencies": {},
+      "isMonorepo": true
+    },
+    {
+      "name": "reflect-deep",
+      "version": "1.5.1",
+      "author": {
+        "name": "KasukabeTsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "description": "Deep property manipulation utilities with robust cloning, path traversal, and property access for JavaScript/TypeScript objects.",
+      "description_zh": "ReflectDeep是一个深度属性操作工具，提供强大的克隆、路径遍历和属性访问功能（和Reflect中的同名函数类似）",
+      "type": "module",
+      "exports": {
+        "import": "./dist/index.mjs",
+        "default": "./dist/index.mjs",
+        "types": "./dist/index.d.ts"
+      },
+      "files": [
+        "dist"
+      ],
+      "homepage": "https://github.com/baendlorel/reflect-deep#readme",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/baendlorel/reflect-deep"
+      },
+      "keywords": [
+        "deep",
+        "clone",
+        "reflect",
+        "property",
+        "path",
+        "object",
+        "nested",
+        "typescript",
+        "javascript"
+      ],
+      "scripts": {
+        "test": "clear & vitest",
+        "lint": "oxlint .",
+        "cover": "clear & vitest --coverage",
+        "build": "rimraf dist && rollup -c"
+      },
+      "devDependencies": {},
+      "license": "MIT",
+      "isMonorepo": true
+    },
+    {
+      "name": "rollup-plugin-conditional-compilation",
+      "version": "2.0.0",
+      "author": {
+        "name": "Kasukabe Tsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "description": "Conditional Compilation macros like #if #endif in C++.",
+      "description_zh": "和C++类似的条件编译语法，使用#if #endif等指令",
+      "purpose": "rollup-plugin",
+      "type": "module",
+      "main": "./dist/index.cjs",
+      "module": "./dist/index.mjs",
+      "types": "./dist/index.d.ts",
+      "exports": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.mjs",
+        "require": "./dist/index.cjs",
+        "default": "./dist/index.mjs"
+      },
+      "files": [
+        "dist"
+      ],
+      "homepage": "https://github.com/baendlorel/rollup-plugin-conditional-compilation#readme",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/baendlorel/rollup-plugin-conditional-compilation"
+      },
+      "keywords": [
+        "conditional",
+        "compilation",
+        "plugin",
+        "rollup",
+        "typescript",
+        "javascript"
+      ],
+      "license": "MIT",
+      "dependencies": {
+        "acorn": "^8.15.0",
+        "magic-string": "^0.30.21"
+      },
+      "isMonorepo": true
+    },
+    {
+      "name": "rollup-plugin-const-enum",
+      "version": "1.1.4",
+      "author": {
+        "name": "Kasukabe Tsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "purpose": "rollup-plugin",
+      "description": "A simple plugin to inline your const enums in typescript projects.",
+      "description_zh": "一个简单粗暴的插件，用于在 TypeScript 项目中内联你的 const 枚举值。",
+      "type": "module",
+      "main": "./dist/index.cjs",
+      "module": "./dist/index.mjs",
+      "types": "./dist/index.d.ts",
+      "exports": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.mjs",
+        "require": "./dist/index.cjs",
+        "default": "./dist/index.mjs"
+      },
+      "files": [
+        "dist"
+      ],
+      "homepage": "https://github.com/baendlorel/rollup-plugin-const-enum#readme",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/baendlorel/rollup-plugin-const-enum"
+      },
+      "keywords": [
+        "typescript",
+        "javascript"
+      ],
+      "scripts": {
+        "test": "clear & vitest",
+        "lint": "oxlint .",
+        "cover": "clear & vitest --coverage",
+        "build": "tsx ./scripts/rollup.ts"
+      },
+      "license": "MIT",
+      "devDependencies": {
+        "@rollup/plugin-alias": "^5.1.1",
+        "@rollup/plugin-commonjs": "^28.0.6",
+        "@rollup/plugin-replace": "^6.0.2",
+        "@rollup/plugin-terser": "^0.4.4",
+        "@rollup/plugin-typescript": "^12.1.4",
+        "@types/node": "^24.6.2",
+        "@vitest/coverage-v8": "^3.2.4",
+        "oxlint": "^1.19.0",
+        "prettier": "^3.6.2",
+        "rimraf": "^6.0.1",
+        "rollup": "^4.52.4",
+        "rollup-plugin-const-enum": "^1.0.2",
+        "rollup-plugin-dts": "^6.2.3",
+        "rollup-plugin-dts-merger": "^2.0.0",
+        "rollup-plugin-func-macro": "^1.1.0",
+        "tslib": "^2.8.1",
+        "typescript": "^5.9.3",
+        "vitest": "^3.2.4"
+      },
+      "isMonorepo": true
+    },
+    {
+      "name": "rollup-plugin-dts-merger",
+      "version": "2.0.0",
+      "description": "A Rollup plugin for merging your hand written .d.ts files into the final output type file.",
+      "description_zh": "这个rollup插件会把你所有手写的.d.ts文件合并到最终输出的类型文件",
+      "purpose": "rollup-plugin",
+      "type": "module",
+      "projectType": "library",
+      "main": "./dist/index.cjs",
+      "module": "./dist/index.mjs",
+      "types": "./dist/index.d.ts",
+      "exports": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.mjs",
+        "require": "./dist/index.cjs",
+        "default": "./dist/index.mjs"
+      },
+      "files": [
+        "dist"
+      ],
+      "scripts": {
+        "test": "clear & vitest",
+        "lint": "oxlint .",
+        "cover": "clear & vitest --coverage",
+        "build": "node ./scripts/rollup.mjs"
+      },
+      "keywords": [
+        "rollup",
+        "plugin",
+        "typescript",
+        "dts",
+        "declaration",
+        "merge"
+      ],
+      "author": {
+        "name": "Kasukabe Tsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "license": "MIT",
+      "repository": {
+        "type": "git",
+        "url": "git+https://github.com/baendlorel/rollup-plugin-dts-merger.git"
+      },
+      "bugs": {
+        "url": "https://github.com/baendlorel/rollup-plugin-dts-merger/issues"
+      },
+      "homepage": "https://github.com/baendlorel/rollup-plugin-dts-merger#readme",
+      "devDependencies": {
+        "@babel/plugin-proposal-decorators": "^7.28.0",
+        "@babel/preset-env": "^7.28.3",
+        "@rollup/plugin-alias": "^5.1.1",
+        "@rollup/plugin-babel": "^6.0.4",
+        "@rollup/plugin-commonjs": "^28.0.6",
+        "@rollup/plugin-node-resolve": "^16.0.1",
+        "@rollup/plugin-replace": "^6.0.2",
+        "@rollup/plugin-terser": "^0.4.4",
+        "@rollup/plugin-typescript": "^12.1.4",
+        "@types/node": "^24.2.1",
+        "@vitest/coverage-v8": "^3.2.4",
+        "oxlint": "^1.11.2",
+        "prettier": "^3.6.2",
+        "rimraf": "^6.0.1",
+        "rollup": "^4.46.2",
+        "rollup-plugin-dts": "^6.2.1",
+        "tslib": "^2.8.1",
+        "typescript": "^5.9.2",
+        "vitest": "^3.2.4"
+      },
+      "dependencies": {
+        "@rollup/pluginutils": "^5.3.0"
+      },
+      "isMonorepo": true
+    },
+    {
+      "name": "rollup-plugin-func-macro",
+      "version": "1.1.1",
+      "author": {
+        "name": "Kasukabe Tsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "purpose": "rollup-plugin",
+      "description": "Using __func__ like C++ to get current function name(ignores arrow function context)",
+      "description_zh": "使用类似C++的__func__来获取当前函数名(忽略箭头函数上下文)",
+      "type": "module",
+      "main": "./dist/index.cjs",
+      "module": "./dist/index.mjs",
+      "types": "./dist/index.d.ts",
+      "exports": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.mjs",
+        "require": "./dist/index.cjs",
+        "default": "./dist/index.mjs"
+      },
+      "files": [
+        "dist"
+      ],
+      "homepage": "https://github.com/baendlorel/rollup-plugin-func-macro#readme",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/baendlorel/rollup-plugin-func-macro"
+      },
+      "keywords": [
+        "function name",
+        "function",
+        "macro",
+        "cpp",
+        "c++",
+        "typescript",
+        "javascript"
+      ],
+      "scripts": {
+        "test": "clear & vitest",
+        "lint": "oxlint .",
+        "cover": "clear & vitest --coverage",
+        "build": "node ./scripts/rollup.mjs"
+      },
+      "license": "MIT",
+      "dependencies": {
+        "@rollup/pluginutils": "^5.3.0",
+        "acorn": "^8.15.0",
+        "acorn-walk": "^8.3.4"
+      },
+      "isMonorepo": true
+    },
+    {
+      "name": "rollup-plugin-inline-function",
+      "version": "1.0.3",
+      "projectType": "library",
+      "author": {
+        "name": "Kasukabe Tsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "description": "Inline simple functions line c++ does.",
+      "description_zh": "像C++一样内联简单函数。",
+      "purpose": "rollup-plugin",
+      "type": "module",
+      "main": "./dist/index.cjs",
+      "module": "./dist/index.mjs",
+      "types": "./dist/index.d.ts",
+      "exports": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.mjs",
+        "require": "./dist/index.cjs",
+        "default": "./dist/index.mjs"
+      },
+      "files": [
+        "dist"
+      ],
+      "homepage": "https://github.com/baendlorel/rollup-plugin-inline-function#readme",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/baendlorel/rollup-plugin-inline-function"
+      },
+      "keywords": [
+        "compile",
+        "rollup",
+        "inline",
+        "plugin",
+        "typescript",
+        "javascript"
+      ],
+      "scripts": {
+        "test": "clear & vitest",
+        "mock": "node ./scripts/rollup.mjs && cd tests && rollup -c",
+        "lint": "oxlint .",
+        "cover": "clear & vitest --coverage",
+        "build": "tsx ./scripts/rollup.ts"
+      },
+      "license": "MIT",
+      "devDependencies": {
+        "@rollup/plugin-alias": "^5.1.1",
+        "@rollup/plugin-commonjs": "^28.0.6",
+        "@rollup/plugin-node-resolve": "^16.0.1",
+        "@rollup/plugin-replace": "^6.0.2",
+        "@rollup/plugin-terser": "^0.4.4",
+        "@rollup/plugin-typescript": "^12.1.4",
+        "@types/node": "^24.3.0",
+        "@vitest/coverage-v8": "^3.2.4",
+        "oxlint": "^1.12.0",
+        "prettier": "^3.6.2",
+        "rimraf": "^6.0.1",
+        "rollup": "^4.46.2",
+        "rollup-plugin-const-enum": "^1.1.0",
+        "rollup-plugin-dts": "^6.2.3",
+        "rollup-plugin-func-macro": "^1.1.0",
+        "tslib": "^2.8.1",
+        "typescript": "^5.9.2",
+        "vitest": "^3.2.4"
+      },
+      "dependencies": {
+        "acorn": "^8.15.0",
+        "acorn-walk": "^8.3.4"
+      },
+      "isMonorepo": true
+    },
+    {
+      "name": "rollup-plugin-typescript-privatify",
+      "version": "0.0.1",
+      "author": {
+        "name": "KasukabeTsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "description": "Convert private field 'a' to '#a', make it really private. Cooperate with babel to make it truely private.",
+      "description_zh": "把private关键词修饰的类元素转化为ES2022的真实私有元素。配合babel的降级可以提升兼容性",
+      "purpose": "rollup-plugin",
+      "main": "dist/index.js",
+      "types": "dist/index.d.ts",
+      "files": [
+        "dist"
+      ],
+      "type": "module",
+      "homepage": "https://github.com/baendlorel/rollup-plugin-typescript-privatify#readme",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/baendlorel/rollup-plugin-typescript-privatify"
+      },
+      "keywords": [
+        "arbitrary base",
+        "base conversion",
+        "integer",
+        "arithmetic",
+        "addition",
+        "subtraction",
+        "multiplication",
+        "comparison",
+        "utility",
+        "typescript",
+        "javascript"
+      ],
+      "scripts": {
+        "test": "clear & jest",
+        "lint": "eslint .",
+        "plugin": "tsc  -p tsconfig.plugin.json",
+        "build": "rm -rf dist && pnpm plugin && rollup -c"
+      },
+      "license": "MIT",
+      "isMonorepo": true
+    },
+    {
+      "name": "serial-task",
+      "version": "1.2.1",
+      "author": {
+        "name": "Kasukabe Tsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "purpose": "npm",
+      "description": "Put a list of functions in and get a composed task function. Similar to functional programming's compose (function composition), but with more fine-grained and precise control, and the generated task incurs almost no runtime overhead. Supports both synchronous and asynchronous functions.",
+      "description_zh": "将一组函数放入并获取一个组合任务函数。类似于函数式编程的函数组合，但具有更细粒度和精确的控制，生成的任务几乎没有运行时判定的额外开销。支持同步和异步函数。",
+      "type": "module",
+      "module": "./dist/index.mjs",
+      "types": "./dist/index.d.ts",
+      "exports": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.mjs",
+        "default": "./dist/index.mjs"
+      },
+      "files": [
+        "dist"
+      ],
+      "homepage": "https://github.com/baendlorel/serial-task#readme",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/baendlorel/serial-task"
+      },
+      "keywords": [
+        "typescript",
+        "javascript"
+      ],
+      "scripts": {
+        "lines": "clear && find ./src -type f \\( -name \"*.ts\" -o -name \"*.tsx\" -o -name \"*.js\" -o -name \"*.mjs\" -o -name \"*.cjs\" -o -name \"*.cpp\" -o -name \"*.h\" -o -name \"*.py\"  -o -name \"*.css\" -o -name \"*.rs\" -o -name \"*.rc\" \\) | xargs wc -l",
+        "test": "clear & vitest",
+        "lint": "oxlint .",
+        "cover": "clear & vitest --coverage",
+        "build": "tsx ./scripts/rollup.ts"
+      },
+      "license": "MIT",
+      "devDependencies": {},
+      "isMonorepo": true
+    },
+    {
+      "name": "singleton-pattern",
+      "version": "1.2.3",
+      "author": {
+        "name": "Kasukabe Tsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "description": "Wrap a class with proxy to make it a safe singleton constructor. Using new Class() will return the same instance.",
+      "description_zh": "使用代理包装类以使其成为安全的单例构造函数（原型的构造函数也将被修改）。使用 new Class() 将返回相同的实例",
+      "type": "module",
+      "exports": {
+        "import": "./dist/index.mjs",
+        "default": "./dist/index.mjs",
+        "types": "./dist/index.d.ts"
+      },
+      "files": [
+        "dist"
+      ],
+      "homepage": "https://github.com/baendlorel/singleton-pattern#readme",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/baendlorel/singleton-pattern"
+      },
+      "keywords": [
+        "deep",
+        "clone",
+        "reflect",
+        "property",
+        "path",
+        "object",
+        "nested",
+        "typescript",
+        "javascript"
+      ],
+      "scripts": {
+        "test": "clear & vitest",
+        "lint": "oxlint .",
+        "cover": "clear & vitest --coverage",
+        "build": "rimraf dist && rollup -c"
+      },
+      "license": "MIT",
+      "devDependencies": {},
+      "isMonorepo": true
+    },
+    {
+      "name": "to-assigned",
+      "version": "2.0.1",
+      "author": {
+        "name": "KasukabeTsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "description": "Like Object.assign but will return a new object and ignores non-object arguments.",
+      "description_zh": "类似于Object.assign，但会返回一个新对象，并忽略非对象的入参",
+      "type": "module",
+      "exports": {
+        "import": "./dist/index.mjs",
+        "default": "./dist/index.mjs",
+        "types": "./dist/index.d.ts"
+      },
+      "files": [
+        "dist"
+      ],
+      "scripts": {
+        "build": "rimraf dist && rollup -c",
+        "test": "clear && vitest"
+      },
+      "repository": {
+        "type": "git",
+        "url": "git+https://github.com/baendlorel/to-assigned.git"
+      },
+      "keywords": [
+        "concat",
+        "utility",
+        "javascript",
+        "npm"
+      ],
+      "license": "MIT",
+      "bugs": {
+        "url": "https://github.com/baendlorel/to-assigned/issues"
+      },
+      "homepage": "https://github.com/baendlorel/to-assigned#readme",
+      "devDependencies": {},
+      "isMonorepo": true
+    },
+    {
+      "name": "whether-is",
+      "version": "1.3.3",
+      "author": {
+        "name": "KasukabeTsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "description": "A comprehensive, extensible, and type-friendly type and value checking utility for JavaScript/TypeScript.",
+      "description_zh": "一个简单直观、类型友好的判断工具，提供常用的类型和数值检查功能，支持 JavaScript 和 TypeScript",
+      "exports": {
+        "import": "./dist/index.mjs",
+        "default": "./dist/index.mjs",
+        "types": "./dist/index.d.ts"
+      },
+      "files": [
+        "dist"
+      ],
+      "type": "module",
+      "homepage": "https://github.com/baendlorel/whether-is#readme",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/baendlorel/whether-is"
+      },
+      "keywords": [
+        "assert",
+        "expect",
+        "whether",
+        "typescript",
+        "javascript"
+      ],
+      "scripts": {
+        "test": "clear & vitest",
+        "lint": "oxlint .",
+        "cover": "clear & vitest --coverage",
+        "build": "rimraf dist && rollup -c"
+      },
+      "devDependencies": {},
+      "license": "MIT",
+      "isMonorepo": true
+    },
+    {
+      "name": "wildcard-event",
+      "version": "1.0.2",
+      "author": {
+        "name": "KasukabeTsumugi",
+        "email": "futami16237@gmail.com"
+      },
+      "description": "Anything can be the event identifier. Tis a simple EventBus module for js/ts projects, support wildcards. Listening can get id, trigger can get id-value(listener's return value) key-value pair.",
+      "description_zh": "通配符事件总线，任何类型的值都可以作为事件标识符。监听可以获得id，触发可以获得id-监听函数返回值的键值对",
+      "type": "module",
+      "exports": {
+        "import": "./dist/index.mjs",
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      },
+      "files": [
+        "dist"
+      ],
+      "homepage": "https://github.com/baendlorel/wildcard-event#readme",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/baendlorel/wildcard-event"
+      },
+      "keywords": [
+        "JavaScript",
+        "TypeScript",
+        "event",
+        "bus",
+        "node",
+        "nodejs"
+      ],
+      "scripts": {
+        "test": "clear & vitest",
+        "lint": "oxlint .",
+        "cover": "clear & vitest --coverage",
+        "build": "rimraf dist && rollup -c && ls -lh dist/"
+      },
+      "devDependencies": {},
+      "license": "MIT",
+      "dependencies": {
+        "singleton-pattern": "^1.1.1"
+      },
+      "isMonorepo": true
+    }
+  ]
+}

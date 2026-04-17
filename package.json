@@ -1,0 +1,40 @@
+{
+	"name": "tsumugi-lib",
+	"private": true,
+	"version": "0.0.0",
+	"description": "monorepo",
+	"type": "module",
+	"packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
+	"scripts": {
+		"manifest": "tsx ./scripts/manifest.ts",
+		"lines": "tsx ./scripts/lines.ts",
+		"build": "tsx ./scripts/index.ts --build",
+		"pub": "tsx ./scripts/index.ts --publish",
+		"test": "tsx ./scripts/index.ts --test",
+		"cover": "pnpm -r --if-present run cover",
+		"build:root": "rollup --config rollup.config.ts --configPlugin typescript",
+		"test:root": "vitest",
+		"lint": "oxlint ."
+	},
+	"license": "MIT",
+	"devDependencies": {
+		"@rollup/plugin-alias": "^6.0.0",
+		"@rollup/plugin-commonjs": "^29.0.0",
+		"@rollup/plugin-node-resolve": "^16.0.3",
+		"@rollup/plugin-replace": "^6.0.3",
+		"@rollup/plugin-terser": "^0.4.4",
+		"@rollup/plugin-typescript": "^12.3.0",
+		"@types/node": "^25.2.3",
+		"@vitest/coverage-v8": "^4.0.18",
+		"oxlint": "^1.47.0",
+		"prettier": "^3.8.1",
+		"rimraf": "^6.1.2",
+		"rollup": "^4.57.1",
+		"rollup-plugin-dts": "^6.3.0",
+		"tslib": "^2.8.1",
+		"tsx": "^4.21.0",
+		"typescript": "^5.9.3",
+		"vite": "^7.3.1",
+		"vitest": "^4.0.18"
+	}
+}

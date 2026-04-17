@@ -1,0 +1,40 @@
+{
+  "name": "to-assigned",
+  "version": "2.0.3",
+  "author": {
+    "name": "KasukabeTsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "description": "Like Object.assign but will return a new object and ignores non-object arguments.",
+  "description_zh": "类似于Object.assign，但会返回一个新对象，并忽略非对象的入参",
+  "type": "module",
+  "exports": {
+    "import": "./dist/index.mjs",
+    "default": "./dist/index.mjs",
+    "types": "./dist/index.d.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rimraf dist && rollup -c",
+    "test": "clear && vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "directory": "packages/to-assigned"
+  },
+  "keywords": [
+    "concat",
+    "utility",
+    "javascript",
+    "npm"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/baendlorel/kt-packages/issues"
+  },
+  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/to-assigned#readme",
+  "devDependencies": {}
+}

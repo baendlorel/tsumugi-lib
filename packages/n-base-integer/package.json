@@ -1,0 +1,40 @@
+{
+  "name": "n-base-integer",
+  "version": "1.1.3",
+  "author": {
+    "name": "KasukabeTsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "description": "Arbitrary-base integer with custom charset, supporting addition, subtraction, multiplication, comparison, and common base conversion utilities.",
+  "description_zh": "N进制数类，支持加减乘除、比较大小、进制转换",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/n-base-integer#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "directory": "packages/n-base-integer"
+  },
+  "keywords": [
+    "arbitrary base",
+    "base conversion",
+    "integer",
+    "arithmetic",
+    "addition",
+    "subtraction",
+    "multiplication",
+    "comparison",
+    "utility",
+    "typescript",
+    "javascript"
+  ],
+  "devDependencies": {},
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/baendlorel/kt-packages/issues"
+  }
+}

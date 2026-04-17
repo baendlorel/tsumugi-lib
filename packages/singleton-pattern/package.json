@@ -1,0 +1,47 @@
+{
+  "name": "singleton-pattern",
+  "version": "1.2.5",
+  "author": {
+    "name": "Kasukabe Tsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "description": "Wrap a class with proxy to make it a safe singleton constructor. Using new Class() will return the same instance.",
+  "description_zh": "使用代理包装类以使其成为安全的单例构造函数（原型的构造函数也将被修改）。使用 new Class() 将返回相同的实例",
+  "type": "module",
+  "exports": {
+    "import": "./dist/index.mjs",
+    "default": "./dist/index.mjs",
+    "types": "./dist/index.d.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/singleton-pattern#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "directory": "packages/singleton-pattern"
+  },
+  "keywords": [
+    "deep",
+    "clone",
+    "reflect",
+    "property",
+    "path",
+    "object",
+    "nested",
+    "typescript",
+    "javascript"
+  ],
+  "scripts": {
+    "test": "clear & vitest",
+    "lint": "oxlint .",
+    "cover": "clear & vitest --coverage",
+    "build": "rimraf dist && rollup -c"
+  },
+  "license": "MIT",
+  "devDependencies": {},
+  "bugs": {
+    "url": "https://github.com/baendlorel/kt-packages/issues"
+  }
+}

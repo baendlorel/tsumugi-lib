@@ -1,0 +1,49 @@
+{
+  "name": "rollup-plugin-inline-expand",
+  "version": "0.0.4",
+  "projectType": "rollup-plugin",
+  "author": {
+    "name": "Kasukabe Tsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "description": "Expand functions like C++ macros, but whether the result is syntactically correct depends on your code.",
+  "description_zh": "像C++宏一样展开函数，但成品是否符合语法取决于你的代码。",
+  "purpose": "rollup-plugin",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.mjs",
+    "require": "./dist/index.cjs",
+    "default": "./dist/index.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/rollup-plugin-inline-expand#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "directory": "packages/rollup-plugin-inline-expand"
+  },
+  "keywords": [
+    "compile",
+    "rollup",
+    "inline",
+    "plugin",
+    "typescript",
+    "javascript"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@rollup/pluginutils": "^5.3.0",
+    "acorn": "^8.15.0",
+    "acorn-walk": "^8.3.4",
+    "magic-string": "^0.30.21"
+  },
+  "bugs": {
+    "url": "https://github.com/baendlorel/kt-packages/issues"
+  }
+}

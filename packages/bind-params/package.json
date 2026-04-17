@@ -1,0 +1,36 @@
+{
+  "name": "bind-params",
+  "version": "1.1.6",
+  "author": {
+    "name": "Kasukabe Tsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "purpose": "npm",
+  "description": "Bind the first N parameters of a function, with full type hints!",
+  "description_zh": "为函数固定前N个参数，有完整的类型提示！",
+  "type": "module",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.mjs",
+    "default": "./dist/index.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "directory": "packages/bind-params"
+  },
+  "keywords": [
+    "typescript",
+    "javascript"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/baendlorel/kt-packages/issues"
+  },
+  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/bind-params#readme"
+}

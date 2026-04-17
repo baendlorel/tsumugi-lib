@@ -1,0 +1,37 @@
+{
+  "name": "type-narrow",
+  "version": "0.2.3",
+  "author": {
+    "name": "Kasukabe Tsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "purpose": "npm",
+  "description": "Purely for getting correct type hints during development!",
+  "description_zh": "纯粹是为了开发时获得正确的类型提示而已！",
+  "type": "module",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.mjs",
+    "default": "./dist/index.mjs"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "directory": "packages/type-narrow"
+  },
+  "keywords": [
+    "typescript",
+    "javascript"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/baendlorel/kt-packages/issues"
+  },
+  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/type-narrow#readme"
+}

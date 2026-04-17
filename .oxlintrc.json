@@ -1,0 +1,33 @@
+{
+  "extends": [
+    "oxlint:recommended",
+    "oxlint-plugin-prettier/recommended",
+    "oxlint-plugin-typescript/recommended"
+  ],
+  "ignorePatterns": [
+    "scripts/",
+    "node_modules/",
+    "*.js",
+    "deprecated/**/*",
+    "packages/**/dist/",
+    "packages/**/node_modules/",
+    "packages/**/coverage/",
+    "packages/**/tests/"
+  ],
+  "plugins": [
+    "typescript"
+  ],
+  "rules": {
+    "no-inferrable-types": "off",
+    "prefer-for-of": "off",
+    "unified-signatures": "off",
+    "no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ]
+  }
+}

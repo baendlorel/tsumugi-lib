@@ -1,0 +1,36 @@
+{
+  "name": "flat-pair",
+  "version": "1.3.4",
+  "author": {
+    "name": "Kasukabe Tsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "purpose": "npm",
+  "description": "Using array to save pairs. Serializable and easier to find, locate by value. Provide static methods, use it at 0 cost!",
+  "description_zh": "用数组来保存键值对。可序列化且更容易通过值查找、定位。提供静态方法，0成本使用！",
+  "type": "module",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.mjs",
+    "default": "./dist/index.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/flat-pair#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "directory": "packages/flat-pair"
+  },
+  "keywords": [
+    "typescript",
+    "javascript"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/baendlorel/kt-packages/issues"
+  }
+}

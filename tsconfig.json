@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "declaration": false,
+    "esModuleInterop": true,
+    "strict": true,
+    "paths": {
+      "@shared/*": ["../_shared/*"]
+    }
+  },
+  "include": ["*.config.ts", "scripts/**/*.ts"]
+}

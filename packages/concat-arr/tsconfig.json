@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "target": "es5",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "baseUrl": ".",
+    "paths": {
+      "@concat-arr/*": ["src/*"],
+      "@shared": ["../_shared/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}

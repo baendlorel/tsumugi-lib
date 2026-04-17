@@ -1,0 +1,42 @@
+{
+  "name": "probability-branch",
+  "version": "1.1.9",
+  "author": {
+    "name": "KasukabeTsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "description": "A lightweight TypeScript library for probabilistic branching and random selection, powered by the Mersenne Twister algorithm.",
+  "description_zh": "一个轻量级的用于以设定的概率/权重来进入分支的库，使用 TypeScript 编写。默认使用 Mersenne Twister 算法获取概率值",
+  "type": "module",
+  "exports": {
+    "import": "./dist/index.mjs",
+    "default": "./dist/index.mjs",
+    "types": "./dist/index.d.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/probability-branch#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "directory": "packages/probability-branch"
+  },
+  "keywords": [
+    "probability",
+    "branch",
+    "random",
+    "random-generator",
+    "mersenne-twister",
+    "typescript",
+    "decision-tree",
+    "stochastic",
+    "utility",
+    "library"
+  ],
+  "devDependencies": {},
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/baendlorel/kt-packages/issues"
+  }
+}

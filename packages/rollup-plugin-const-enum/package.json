@@ -1,0 +1,38 @@
+{
+  "name": "rollup-plugin-const-enum",
+  "version": "1.1.6",
+  "author": {
+    "name": "Kasukabe Tsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "purpose": "rollup-plugin",
+  "description": "A simple plugin to inline your const enums in typescript projects.",
+  "description_zh": "一个简单粗暴的插件，用于在 TypeScript 项目中内联你的 const 枚举值。",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.mjs",
+    "require": "./dist/index.cjs",
+    "default": "./dist/index.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/rollup-plugin-const-enum#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "directory": "packages/rollup-plugin-const-enum"
+  },
+  "keywords": [
+    "typescript",
+    "javascript"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/baendlorel/kt-packages/issues"
+  }
+}

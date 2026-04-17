@@ -1,0 +1,52 @@
+{
+  "name": "rollup-plugin-dts-merger",
+  "version": "2.0.0",
+  "description": "A Rollup plugin for merging your hand written .d.ts files into the final output type file.",
+  "description_zh": "这个rollup插件会把你所有手写的.d.ts文件合并到最终输出的类型文件",
+  "purpose": "rollup-plugin",
+  "type": "module",
+  "projectType": "library",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.mjs",
+    "require": "./dist/index.cjs",
+    "default": "./dist/index.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "clear & vitest",
+    "lint": "oxlint .",
+    "cover": "clear & vitest --coverage",
+    "build": "node ./scripts/rollup.mjs"
+  },
+  "keywords": [
+    "rollup",
+    "plugin",
+    "typescript",
+    "dts",
+    "declaration",
+    "merge"
+  ],
+  "author": {
+    "name": "Kasukabe Tsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/rollup-plugin-dts-merger.git"
+  },
+  "bugs": {
+    "url": "https://github.com/baendlorel/rollup-plugin-dts-merger/issues"
+  },
+  "homepage": "https://github.com/baendlorel/rollup-plugin-dts-merger#readme",
+  "devDependencies": {},
+  "dependencies": {
+    "@rollup/pluginutils": "^5.3.0"
+  }
+}

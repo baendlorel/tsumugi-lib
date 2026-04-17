@@ -1,0 +1,12 @@
+{
+  "name": "jansible",
+  "version": "0.3.0",
+  "type": "module",
+  "bin": {
+    "jansible": "./jansible.js"
+  },
+  "scripts": {
+    "build": "tsx build.ts",
+    "dev": "vite build --watch"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "whether-is",
+  "version": "1.3.5",
+  "author": {
+    "name": "KasukabeTsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "description": "A comprehensive, extensible, and type-friendly type and value checking utility for JavaScript/TypeScript.",
+  "description_zh": "一个简单直观、类型友好的判断工具，提供常用的类型和数值检查功能，支持 JavaScript 和 TypeScript",
+  "exports": {
+    "import": "./dist/index.mjs",
+    "default": "./dist/index.mjs",
+    "types": "./dist/index.d.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/whether-is#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "directory": "packages/whether-is"
+  },
+  "keywords": [
+    "assert",
+    "expect",
+    "whether",
+    "typescript",
+    "javascript"
+  ],
+  "devDependencies": {},
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/baendlorel/kt-packages/issues"
+  }
+}

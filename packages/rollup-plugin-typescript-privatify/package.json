@@ -1,0 +1,46 @@
+{
+  "name": "rollup-plugin-typescript-privatify",
+  "version": "0.2.4",
+  "author": {
+    "name": "Kasukabe Tsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "description": "Custom transformers for @rollup/plugin-typescript to turn TypeScript private members into runtime-private implementations.",
+  "description_zh": "给 @rollup/plugin-typescript 用的 transformer 预设，可把 TypeScript private 成员转换为运行时真正私有实现。",
+  "purpose": "rollup-plugin",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.mjs",
+    "require": "./dist/index.cjs",
+    "default": "./dist/index.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/rollup-plugin-typescript-privatify#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "directory": "packages/rollup-plugin-typescript-privatify"
+  },
+  "keywords": [
+    "rollup",
+    "typescript",
+    "transformer",
+    "private",
+    "weakmap",
+    "plugin"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@rollup/plugin-typescript": "^12.0.0",
+    "typescript": ">=5.0.0"
+  },
+  "bugs": {
+    "url": "https://github.com/baendlorel/kt-packages/issues"
+  }
+}

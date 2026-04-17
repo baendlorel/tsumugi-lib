@@ -1,0 +1,41 @@
+{
+  "name": "reflect-deep",
+  "version": "1.5.4",
+  "author": {
+    "name": "KasukabeTsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "description": "Deep property manipulation utilities with robust cloning, path traversal, and property access for JavaScript/TypeScript objects.",
+  "description_zh": "ReflectDeep是一个深度属性操作工具，提供强大的克隆、路径遍历和属性访问功能（和Reflect中的同名函数类似）",
+  "type": "module",
+  "exports": {
+    "import": "./dist/index.mjs",
+    "default": "./dist/index.mjs",
+    "types": "./dist/index.d.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/reflect-deep#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "directory": "packages/reflect-deep"
+  },
+  "keywords": [
+    "deep",
+    "clone",
+    "reflect",
+    "property",
+    "path",
+    "object",
+    "nested",
+    "typescript",
+    "javascript"
+  ],
+  "devDependencies": {},
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/baendlorel/kt-packages/issues"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "name": "rollup-plugin-func-macro",
+  "version": "1.2.3",
+  "author": {
+    "name": "Kasukabe Tsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "purpose": "rollup-plugin",
+  "description": "Using __func__ like C++ to get current function name(ignores arrow function context)",
+  "description_zh": "使用类似C++的__func__来获取当前函数名(忽略箭头函数上下文)",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.mjs",
+    "require": "./dist/index.cjs",
+    "default": "./dist/index.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/rollup-plugin-func-macro#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "directory": "packages/rollup-plugin-func-macro"
+  },
+  "keywords": [
+    "function name",
+    "function",
+    "macro",
+    "cpp",
+    "c++",
+    "typescript",
+    "javascript"
+  ],
+  "scripts": {},
+  "license": "MIT",
+  "dependencies": {
+    "@rollup/pluginutils": "^5.3.0",
+    "acorn": "^8.15.0",
+    "acorn-walk": "^8.3.4"
+  },
+  "bugs": {
+    "url": "https://github.com/baendlorel/kt-packages/issues"
+  }
+}
