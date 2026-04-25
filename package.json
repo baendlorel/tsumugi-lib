@@ -11,6 +11,7 @@
 		"pub": "tsx ./scripts/index.ts --publish",
 		"test": "tsx ./scripts/index.ts --test",
 		"cover": "pnpm -r --if-present run cover",
+		"svg": "tsx ./pages/plugins/src/rollup-plugin-table.ts",
 		"lint": "oxlint ."
 	},
 	"license": "MIT",

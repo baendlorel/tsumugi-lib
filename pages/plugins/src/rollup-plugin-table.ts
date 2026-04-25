@@ -22,7 +22,7 @@ interface PluginMeta {
   url: string;
 }
 
-const workspaceRoot = path.join(import.meta.filename, '..', '..', '..');
+const workspaceRoot = path.join(import.meta.filename, '..', '..', '..', '..');
 const packagesDir = path.join(workspaceRoot, 'packages');
 const assetsDir = path.join(workspaceRoot, 'assets');
 
@@ -47,16 +47,16 @@ export function createSvgTable(plugins = readRollupPlugins(), generatedAt = new 
     plugins.map((p) => measureTextWidth(p.summary, 16)),
   );
 
-  h('svg', { width: '380', height: String(plugins.length * 40 + 40) }, [
+  return h('svg', { width: '380', height: String(plugins.length * 40 + 40) }, [
     col(
       { width: maxWidth, color: '#007ACC' },
       plugins.map((p) => p.name),
     ),
     col(
-      { x: maxWidth + 30, color: '#88b1c6' },
+      { x: maxWidth + 30 },
       plugins.map((p) => p.summary),
     ),
-  ]);
+  ]).render();
 }
 
 export function saveSvgTable(generatedAt = new Date()) {

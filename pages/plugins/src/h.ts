@@ -13,13 +13,14 @@ class H {
     const attr = Object.entries(this.attr)
       .map(([key, value]) => `${key}="${value}"`)
       .join(' ');
+    console.dir(this.children, { depth: 5 });
     return `<${this.tag} ${attr}>${inner}</${this.tag}>`;
   }
 }
 
 export const h = (tag: string, attr: Record<any, any> = {}, children: any[] = []) => new H(tag, attr, children);
-export const g = (attr: Record<any, any> = {}, children: any[] = []) => h('g', attr, children);
-export const text = (attr: Record<any, any>, content: string) => h('text', attr, [content]);
+export const g = (attr: Record<any, any> = {}, children: any[] = []) => new H('g', attr, children);
+export const text = (attr: Record<any, any>, content: string) => new H('text', attr, [content]);
 
 export const measureTextWidth = (text: string, fontSize: number) => {
   let units = 0;
