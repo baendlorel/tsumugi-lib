@@ -2,7 +2,8 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { dtm, measureTextWidth } from './h.js';
+import { dtm, h, measureTextWidth } from './h.js';
+import { col } from './table.js';
 
 interface PluginPackageJson {
   name?: string;
@@ -40,7 +41,23 @@ export function readRollupPlugins(): PluginMeta[] {
     });
 }
 
-export function createSvgTable(plugins = readRollupPlugins(), generatedAt = new Date()): string {}
+export function createSvgTable(plugins = readRollupPlugins(), generatedAt = new Date()): string {
+  const maxWidth = Math.max.apply(
+    null,
+    plugins.map((p) => measureTextWidth(p.summary, 16)),
+  );
+
+  h('svg', { width: '380', height: String(plugins.length * 40 + 40) }, [
+    col(
+      { width: maxWidth, color: '#007ACC' },
+      plugins.map((p) => p.name),
+    ),
+    col(
+      { x: maxWidth + 30, color: '#88b1c6' },
+      plugins.map((p) => p.summary),
+    ),
+  ]);
+}
 
 export function saveSvgTable(generatedAt = new Date()) {
   const svg = createSvgTable(readRollupPlugins(), generatedAt);

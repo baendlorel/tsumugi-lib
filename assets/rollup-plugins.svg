@@ -1,8 +1,8 @@
 <svg width="380" height="120">
   <g font-size="1rem" fill="#007ACC" font-family="monospace">
-    <text y="25">rollup-plugin-conditional-compilation</text>
-    <text y="55">rollup-plugin-conditional-compilation</text>
-    <text y="85">rollup-plugin-conditional-compilation</text>
+    <text y="25" style="margin-left:30px">rollup-plugin-conditional-compilation</text>
+    <text y="55" style="margin-left:50px">rollup-plugin-conditional-compilation</text>
+    <text y="85" style="margin-left:60px">rollup-plugin-conditional-compilation</text>
   </g>
   <g font-size="1rem" fill="#88b1c6" font-family="monospace">
     <text x="300" y="25">历练</text>

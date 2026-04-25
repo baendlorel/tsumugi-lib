@@ -17,9 +17,9 @@ class H {
   }
 }
 
-export const h = (tag: string, attr: Record<string, string> = {}, children: any[] = []) => new H(tag, attr, children);
-export const g = (attr: Record<string, string> = {}, children: any[] = []) => h('g', attr, children);
-export const text = (attr: Record<string, string>, content: string) => h('text', attr, [content]);
+export const h = (tag: string, attr: Record<any, any> = {}, children: any[] = []) => new H(tag, attr, children);
+export const g = (attr: Record<any, any> = {}, children: any[] = []) => h('g', attr, children);
+export const text = (attr: Record<any, any>, content: string) => h('text', attr, [content]);
 
 export const measureTextWidth = (text: string, fontSize: number) => {
   let units = 0;

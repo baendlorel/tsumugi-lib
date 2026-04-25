@@ -11,7 +11,14 @@
 //   </g>
 // </svg>
 
-import { g, h, measureTextWidth, text } from './h.js';
+import { g, measureTextWidth, text } from './h.js';
+
+interface ColProps {
+  x: number;
+  width: number;
+  fontSize: number;
+  color: string;
+}
 
 const wrapText = (text: string, maxWidth: number, fontSize: number) => {
   const lines: string[] = [];
@@ -38,8 +45,8 @@ const wrapText = (text: string, maxWidth: number, fontSize: number) => {
   return lines.length > 0 ? lines : [''];
 };
 
-export const col = (attr: { width: number; fontSize: number }, contents: string[]) => {
-  const { width = 200, fontSize = 16 } = attr;
+export const col = (attr: Partial<ColProps>, contents: string[]) => {
+  const { width = 240, fontSize = 16, x = 0, color = '#212527' } = attr;
   const list: any[] = [];
 
   for (let i = 0; i < contents.length; i++) {
@@ -47,7 +54,7 @@ export const col = (attr: { width: number; fontSize: number }, contents: string[
     list.push(...wrapText(t, width, fontSize));
   }
 
-  g({ 'font-size': `1rem`, fill: '#007ACC', 'font-family': 'monospace' }, [
-    list.map((t) => text({ x: '0', y: '0', fill: '#007ACC' }, t)),
+  return g({ 'font-size': `1rem`, fill: '#007ACC', 'font-family': 'monospace' }, [
+    list.map((t, i) => text({ x, y: `${i * fontSize * 2}`, fill: color }, t)),
   ]);
 };
