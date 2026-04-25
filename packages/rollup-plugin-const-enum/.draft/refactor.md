@@ -28,20 +28,16 @@
 - 默认只处理能被 TypeScript 判定为常量值的枚举成员访问。
 - 对无法安全求值的访问保持原样，不做激进替换。
 
-### 2.2 新增选项
+### 2.2 选项
 
 ```ts
 export interface RollupConstEnumOptions {
-  suffixes: string[];
-  skipDts: boolean;
-  files: string[];
-  excludedDirectories: string[];
   inlineNonConstEnums: boolean;
   inlineNames?: Array<string | RegExp>;
 }
 ```
 
-新增选项语义如下：
+选项语义如下：
 
 - `inlineNonConstEnums`
   - 类型：`boolean`
@@ -80,7 +76,7 @@ export interface RollupConstEnumOptions {
 1. `options`
    - 负责选项归一化与校验。
 2. `file-discovery`
-   - 负责根据 `files`、`suffixes`、`excludedDirectories`、`skipDts` 收集候选源文件。
+   - 负责收集候选源文件。
 3. `ts-context`
    - 负责创建和缓存 `typescript.Program` / `TypeChecker` / `SourceFile` 访问能力。
 4. `enum-inliner`
