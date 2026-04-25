@@ -1,12 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="360"><style>&lt;style&gt;
-    .plugin-name {
-      font-size: 14px;
-      font-family: Consolas, monospace;
-      fill: #0366d6;
-    }
-    .description {
-      font-size: 14px;
-      font-family: Consolas, monospace;
-      fill: #333;
-    }
-  &lt;/style&gt;</style><g><a href="https://www.npmjs.com/package/rollup-plugin-conditional-compilation" target="_blank"><text x="0" y="0" class="plugin-name">rollup-plugin-conditional-compilation</text></a><a href="https://www.npmjs.com/package/rollup-plugin-const-enum" target="_blank"><text x="0" y="32" class="plugin-name">rollup-plugin-const-enum</text></a><a href="https://www.npmjs.com/package/rollup-plugin-func-macro" target="_blank"><text x="0" y="64" class="plugin-name">rollup-plugin-func-macro</text></a><a href="https://www.npmjs.com/package/rollup-plugin-hide-private" target="_blank"><text x="0" y="96" class="plugin-name">rollup-plugin-hide-private</text></a><a href="https://www.npmjs.com/package/rollup-plugin-inline-expand" target="_blank"><text x="0" y="128" class="plugin-name">rollup-plugin-inline-expand</text></a><a href="https://www.npmjs.com/package/rollup-plugin-typescript-privatify" target="_blank"><text x="0" y="160" class="plugin-name">rollup-plugin-typescript-privatify</text></a></g><g><text x="312" y="20" class="description">Conditional Compilation macros like #if #endif in C++.</text><text x="312" y="52" class="description">A simple plugin to inline your const enums in typescript projects.</text><text x="312" y="84" class="description">Using __func__ like C++ to get current function name(ignores arrow function context)</text><text x="312" y="116" class="description">Remove selected private and protected members from generated declaration files.</text><text x="312" y="148" class="description">Expand functions like C++ macros, but whether the result is syntactically correct depends on your code.</text><text x="312" y="180" class="description">Custom transformers for @rollup/plugin-typescript to turn TypeScript private members into runtime-private implementations.</text></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="360"><style>
+      .plugin-name {
+        font-size: 14px;
+        font-family: Consolas, monospace;
+        fill: #0366d6;
+      }
+      .description {
+        font-size: 14px;
+        font-family: Consolas, monospace;
+        fill: #333;
+      }
+    </style><g><a href="https://www.npmjs.com/package/rollup-plugin-conditional-compilation" target="_blank"><text x="0" y="20" class="plugin-name">rollup-plugin-conditional-compilation</text></a><a href="https://www.npmjs.com/package/rollup-plugin-const-enum" target="_blank"><text x="0" y="52" class="plugin-name">rollup-plugin-const-enum</text></a><a href="https://www.npmjs.com/package/rollup-plugin-func-macro" target="_blank"><text x="0" y="84" class="plugin-name">rollup-plugin-func-macro</text></a><a href="https://www.npmjs.com/package/rollup-plugin-hide-private" target="_blank"><text x="0" y="116" class="plugin-name">rollup-plugin-hide-private</text></a><a href="https://www.npmjs.com/package/rollup-plugin-inline-expand" target="_blank"><text x="0" y="148" class="plugin-name">rollup-plugin-inline-expand</text></a><a href="https://www.npmjs.com/package/rollup-plugin-typescript-privatify" target="_blank"><text x="0" y="180" class="plugin-name">rollup-plugin-typescript-privatify</text></a></g><g><text x="312" y="20" class="description">Conditional Compilation macros like #if #endif in C++.</text><text x="312" y="52" class="description">A simple plugin to inline your const enums in typescript projects.</text><text x="312" y="84" class="description">Using __func__ like C++ to get current function name(ignores arrow function context)</text><text x="312" y="116" class="description">Remove selected private and protected members from generated declaration files.</text><text x="312" y="148" class="description">Expand functions like C++ macros, but whether the result is syntactically correct depends on your code.</text><text x="312" y="180" class="description">Custom transformers for @rollup/plugin-typescript to turn TypeScript private members into runtime-private implementations.</text></g></svg>

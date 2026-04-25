@@ -4,6 +4,10 @@
 	"version": "0.0.0",
 	"description": "monorepo",
 	"type": "module",
+	"imports": {
+		"#svgx/jsx-runtime": "./pages/svgx/jsx-runtime.ts",
+		"#svgx/jsx-dev-runtime": "./pages/svgx/jsx-runtime.ts"
+	},
 	"scripts": {
 		"manifest": "tsx ./scripts/manifest.ts",
 		"lines": "tsx ./scripts/lines.ts",
@@ -11,7 +15,7 @@
 		"pub": "tsx ./scripts/index.ts --publish",
 		"test": "tsx ./scripts/index.ts --test",
 		"cover": "pnpm -r --if-present run cover",
-		"svg": "tsx ./pages/plugins/src/rollup-plugin-table.ts",
+		"svg": "tsx --tsconfig ./pages/tsconfig.json ./pages/plugins/src/rollup-plugin-table.tsx",
 		"lint": "oxlint ."
 	},
 	"license": "MIT",
