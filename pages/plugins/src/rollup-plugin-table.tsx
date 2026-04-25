@@ -45,7 +45,7 @@ export function createSvgTable(plugins = readRollupPlugins()) {
   const styleText = fs.readFileSync(path.join(import.meta.dirname, 'styles.css'), 'utf8');
 
   const LineHeight = 64;
-  const Height = plugins.length * LineHeight + 20;
+  const Height = plugins.length * LineHeight;
 
   const link = (
     <svg xmlns="http://www.w3.org/2000/svg" width="800" height={Height}>
