@@ -8,6 +8,8 @@ This plugin is designed for declaration build steps, especially when you bundle 
 
 <img src="https://github.com/baendlorel/tsumugi-lib/releases/download/rollup-plugins-svg-v0.1.0/rollup-plugins.svg"/>
 
+<img src="https://github.com/baendlorel/tsumugi-lib/releases/download/rollup-plugins-svg-v0.1.0/rollup-plugins-nolink.svg"/>
+
 
 ## Install
 

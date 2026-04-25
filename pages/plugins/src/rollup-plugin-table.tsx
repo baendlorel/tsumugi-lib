@@ -37,7 +37,7 @@ export function readRollupPlugins(): PluginMeta[] {
     });
 }
 
-export function createSvgTable(plugins = readRollupPlugins()): string {
+export function createSvgTable(plugins = readRollupPlugins()) {
   plugins = plugins.filter(
     (p) => !p.name.includes('privatify') && !p.name.includes('analyze') && !p.name.includes('inline'),
   );
@@ -46,7 +46,7 @@ export function createSvgTable(plugins = readRollupPlugins()): string {
 
   const LineHeight = 48;
 
-  return (
+  const link = (
     <svg xmlns="http://www.w3.org/2000/svg" width="800" height={plugins.length * 60}>
       <style>{styleText}</style>
       {plugins.map((plugin, index) => (
@@ -61,14 +61,36 @@ export function createSvgTable(plugins = readRollupPlugins()): string {
       ))}
     </svg>
   );
+
+  const plain = (
+    <svg xmlns="http://www.w3.org/2000/svg" width="800" height={plugins.length * 60}>
+      <style>{styleText}</style>
+      {plugins.map((plugin, index) => (
+        <g>
+          <text x={0} y={index * LineHeight + 20} className="plugin-name">
+            {plugin.name}
+          </text>
+          <text x={0} y={index * LineHeight + 42} className="description">
+            {plugin.summary}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+  return { link: link, plain: plain };
 }
 
 export function saveSvgTable() {
   const svg = createSvgTable(readRollupPlugins());
   fs.mkdirSync(assetsDir, { recursive: true });
+
   const filePath = path.join(assetsDir, `rollup-plugins.svg`);
-  fs.writeFileSync(filePath, svg, 'utf8');
-  return { filePath, svg };
+  fs.writeFileSync(filePath, svg.link, 'utf8');
+
+  const filePathNoLink = path.join(assetsDir, `rollup-plugins-nolink.svg`);
+  fs.writeFileSync(filePathNoLink, svg.plain, 'utf8');
+
+  return { filePath, filePathNoLink, svg };
 }
 
 console.log(`Generated ${saveSvgTable().filePath}`);
