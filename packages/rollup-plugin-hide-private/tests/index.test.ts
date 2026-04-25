@@ -119,6 +119,259 @@ export declare class Example {
     expect(result.code).toContain('keepToken');
     expect(result.code).toContain('keepMethod');
   });
+
+  it('removes private identifier (#private) members', () => {
+    const code = `
+export declare class Example {
+  visible: string;
+  #secretField: string;
+  #privateMethod(): void;
+}
+`;
+
+    const result = stripHiddenDeclarations(code, {}, 'private-identifier.d.ts');
+
+    expect(result.changed).toBe(true);
+    expect(result.code).toContain('visible: string;');
+    expect(result.code).not.toContain('#secretField');
+    expect(result.code).not.toContain('#privateMethod');
+  });
+
+  it('handles computed property names', () => {
+    const code = `
+export declare class Example {
+  visible: string;
+  private ["computedPrivate"]: string;
+  protected [computedProtected]: number;
+}
+`;
+
+    const result = stripHiddenDeclarations(
+      code,
+      {
+        privateNames: true,
+        protectNames: true,
+        allNames: ['computedPrivate'],
+      },
+      'computed.d.ts',
+    );
+
+    expect(result.changed).toBe(true);
+    expect(result.code).toContain('visible: string;');
+    expect(result.code).not.toContain('computedPrivate');
+  });
+
+  it('returns unchanged result when no members to remove', () => {
+    const code = `
+export declare class Example {
+  public: string;
+  visible(): void;
+}
+`;
+
+    const result = stripHiddenDeclarations(code, {}, 'no-removals.d.ts');
+
+    expect(result.changed).toBe(false);
+    expect(result.code).toBe(code);
+    expect(result.removedMembers).toEqual([]);
+  });
+
+  it('handles multiple classes in same file', () => {
+    const code = `
+export declare class First {
+  private firstSecret: string;
+  public firstPublic: string;
+}
+export declare class Second {
+  private secondSecret: string;
+  public secondPublic: string;
+}
+`;
+
+    const result = stripHiddenDeclarations(code, {}, 'multiple-classes.d.ts');
+
+    expect(result.changed).toBe(true);
+    expect(result.code).toContain('firstPublic: string;');
+    expect(result.code).toContain('secondPublic: string;');
+    expect(result.code).not.toContain('firstSecret');
+    expect(result.code).not.toContain('secondSecret');
+  });
+
+  it('preserves constructor even with modifiers', () => {
+    const code = `
+export declare class Example {
+  private field: string;
+  private constructor();
+  protected method(): void;
+}
+`;
+
+    const result = stripHiddenDeclarations(code, {}, 'constructor.d.ts');
+
+    expect(result.changed).toBe(true);
+    expect(result.code).toContain('constructor();');
+    expect(result.code).not.toContain('field');
+    expect(result.code).not.toContain('method');
+  });
+
+  it('handles allNames with RegExp patterns', () => {
+    const code = `
+export declare class Example {
+  publicField: string;
+  _internalField: string;
+  __veryInternal__: string;
+  private _privateInternal: string;
+}
+`;
+
+    const result = stripHiddenDeclarations(
+      code,
+      {
+        privateNames: true,
+        protectNames: true,
+        allNames: [/^_/, /^__/],
+      },
+      'regexp-patterns.d.ts',
+    );
+
+    expect(result.changed).toBe(true);
+    expect(result.code).toContain('publicField: string;');
+    expect(result.code).not.toContain('_internalField');
+    expect(result.code).not.toContain('__veryInternal__');
+    expect(result.code).not.toContain('_privateInternal');
+  });
+
+  it('allNames with privateNames only hides matching private members', () => {
+    const code = `
+export declare class Example {
+  publicField: string;
+  private _removeMe: string;
+  private keepMe: string;
+  protected removeMeToo: string;
+}
+`;
+
+    const result = stripHiddenDeclarations(
+      code,
+      {
+        privateNames: [/^_remove/],
+        protectNames: [/removeMe/],
+        allNames: [/^_/],
+      },
+      'allnames-with-private.d.ts',
+    );
+
+    expect(result.changed).toBe(true);
+    expect(result.code).toContain('publicField: string;');
+    expect(result.code).toContain('keepMe');
+    expect(result.code).not.toContain('_removeMe');
+    expect(result.code).not.toContain('removeMeToo');
+  });
+
+  it('can use allNames to hide specific private members', () => {
+    const code = `
+export declare class Example {
+  private _secret: string;
+  private _debug: string;
+  private _prod: string;
+}
+`;
+
+    const result = stripHiddenDeclarations(
+      code,
+      {
+        privateNames: true,
+        allNames: ['_debug'],
+      },
+      'specific-private.d.ts',
+    );
+
+    expect(result.changed).toBe(true);
+    expect(result.code).not.toContain('_secret');
+    expect(result.code).not.toContain('_debug');
+    expect(result.code).not.toContain('_prod');
+  });
+
+  it('selectively hides protected members with protectNames filter', () => {
+    const code = `
+export declare class Example {
+  protected internalMethod(): void;
+  protected internalValue(): string;
+  protected keepMethod(): void;
+}
+`;
+
+    const result = stripHiddenDeclarations(
+      code,
+      {
+        protectNames: [/^internal/],
+      },
+      'selective-protected.d.ts',
+    );
+
+    expect(result.changed).toBe(true);
+    expect(result.code).not.toContain('internalMethod');
+    expect(result.code).not.toContain('internalValue');
+    expect(result.code).toContain('keepMethod');
+  });
+
+  it('handles getter/setter declarations', () => {
+    const code = `
+export declare class Example {
+  private _value: string;
+  get value(): string;
+  set value(v: string);
+  protected get internalValue(): number;
+}
+`;
+
+    const result = stripHiddenDeclarations(code, {}, 'getters-setters.d.ts');
+
+    expect(result.changed).toBe(true);
+    expect(result.code).toContain('get value(): string;');
+    expect(result.code).toContain('set value(v: string);');
+    expect(result.code).not.toContain('_value');
+    expect(result.code).not.toContain('internalValue');
+  });
+
+  it('handles numeric and string literal member names', () => {
+    const code = `
+export declare class Example {
+  private "stringKey": string;
+  protected 123: number;
+  public [computed]: any;
+}
+`;
+
+    const result = stripHiddenDeclarations(code, {}, 'literal-names.d.ts');
+
+    expect(result.changed).toBe(true);
+    expect(result.code).toContain('[computed]: any;');
+    expect(result.code).not.toContain('stringKey');
+    expect(result.code).not.toContain('123: number');
+  });
+
+  it('properly merges adjacent removal ranges', () => {
+    const code = `
+export declare class Example {
+  private first: string;
+  private second: string;
+  public between: string;
+  private third: string;
+  private fourth: string;
+}
+`;
+
+    const result = stripHiddenDeclarations(code, {}, 'merge-ranges.d.ts');
+
+    expect(result.changed).toBe(true);
+    expect(result.code).toContain('between: string;');
+    expect(result.code).not.toContain('first');
+    expect(result.code).not.toContain('second');
+    expect(result.code).not.toContain('third');
+    expect(result.code).not.toContain('fourth');
+    expect(result.removedMembers.length).toBe(4);
+  });
 });
 
 describe('rollup-plugin-hide-private', () => {
