@@ -45,9 +45,10 @@ export function createSvgTable(plugins = readRollupPlugins()) {
   const styleText = fs.readFileSync(path.join(import.meta.dirname, 'styles.css'), 'utf8');
 
   const LineHeight = 64;
+  const Height = plugins.length * (LineHeight + 2);
 
   const link = (
-    <svg xmlns="http://www.w3.org/2000/svg" width="800" height={plugins.length * 60}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="800" height={Height}>
       <style>{styleText}</style>
       {plugins.map((plugin, index) => (
         <a href={plugin.url} target="_blank">
@@ -63,7 +64,7 @@ export function createSvgTable(plugins = readRollupPlugins()) {
   );
 
   const plain = (
-    <svg xmlns="http://www.w3.org/2000/svg" width="800" height={plugins.length * 60}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="800" height={LineHeight}>
       <style>{styleText}</style>
       {plugins.map((plugin, index) => (
         <g>
