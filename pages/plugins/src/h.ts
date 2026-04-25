@@ -1,25 +1,59 @@
+type HChild = H | string | number | null | undefined | HChild[];
+
+const escapeXml = (value: string | number) =>
+  String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&apos;');
+
+const normalizeChildren = (children: HChild[]): Array<H | string> => {
+  const normalized: Array<H | string> = [];
+
+  for (const child of children) {
+    if (child == null) {
+      continue;
+    }
+
+    if (Array.isArray(child)) {
+      normalized.push(...normalizeChildren(child));
+      continue;
+    }
+
+    if (child instanceof H) {
+      normalized.push(child);
+      continue;
+    }
+
+    normalized.push(String(child));
+  }
+
+  return normalized;
+};
+
 class H {
   tag: string;
   attr: Record<string, string>;
-  children: H[] = [];
-  constructor(tag: string, attr: Record<string, string> = {}, children: any[] = []) {
+  children: Array<H | string> = [];
+  constructor(tag: string, attr: Record<string, string> = {}, children: HChild[] = []) {
     this.tag = tag;
     this.attr = attr;
-    this.children = children.map((c) => (c instanceof H ? c : new H(c)));
+    this.children = normalizeChildren(children);
   }
 
   render(): string {
-    const inner = this.children.map((c) => c.render()).join('');
+    const inner = this.children.map((c) => (typeof c === 'string' ? escapeXml(c) : c.render())).join('');
     const attr = Object.entries(this.attr)
-      .map(([key, value]) => `${key}="${value}"`)
+      .map(([key, value]) => `${key}="${escapeXml(value)}"`)
       .join(' ');
-    console.dir(this.children, { depth: 5 });
-    return `<${this.tag} ${attr}>${inner}</${this.tag}>`;
+    const attrText = attr ? ` ${attr}` : '';
+    return `<${this.tag}${attrText}>${inner}</${this.tag}>`;
   }
 }
 
-export const h = (tag: string, attr: Record<any, any> = {}, children: any[] = []) => new H(tag, attr, children);
-export const g = (attr: Record<any, any> = {}, children: any[] = []) => new H('g', attr, children);
+export const h = (tag: string, attr: Record<any, any> = {}, children: HChild[] = []) => new H(tag, attr, children);
+export const g = (attr: Record<any, any> = {}, children: HChild[] = []) => new H('g', attr, children);
 export const text = (attr: Record<any, any>, content: string) => new H('text', attr, [content]);
 
 export const measureTextWidth = (text: string, fontSize: number) => {

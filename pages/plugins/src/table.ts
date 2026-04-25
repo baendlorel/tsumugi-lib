@@ -54,7 +54,8 @@ export const col = (attr: Partial<ColProps>, contents: string[]) => {
     list.push(...wrapText(t, width, fontSize));
   }
 
-  return g({ 'font-size': `1rem`, fill: '#007ACC', 'font-family': 'monospace' }, [
+  return g(
+    { 'font-size': `1rem`, fill: '#007ACC', 'font-family': 'monospace' },
     list.map((t, i) => text({ x, y: `${i * fontSize * 2}`, fill: color }, t)),
-  ]);
+  );
 };
