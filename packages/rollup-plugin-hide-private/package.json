@@ -1,0 +1,50 @@
+{
+  "name": "rollup-plugin-hide-private",
+  "version": "0.1.0",
+  "author": {
+    "name": "Kasukabe Tsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "description": "Remove selected private and protected members from generated declaration files.",
+  "description_zh": "从生成后的声明文件中移除指定的 private 和 protected 成员。",
+  "purpose": "rollup-plugin",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.mjs",
+    "require": "./dist/index.cjs",
+    "default": "./dist/index.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/rollup-plugin-hide-private#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "directory": "packages/rollup-plugin-hide-private"
+  },
+  "keywords": [
+    "rollup",
+    "typescript",
+    "declaration",
+    "dts",
+    "private",
+    "protected",
+    "plugin"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "magic-string": "^0.30.21"
+  },
+  "peerDependencies": {
+    "rollup": ">=4.0.0",
+    "typescript": ">=4.5.0"
+  },
+  "bugs": {
+    "url": "https://github.com/baendlorel/kt-packages/issues"
+  }
+}
