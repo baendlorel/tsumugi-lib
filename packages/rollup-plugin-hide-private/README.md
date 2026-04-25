@@ -4,6 +4,11 @@ Remove selected `private` and `protected` members from generated TypeScript decl
 
 This plugin is designed for declaration build steps, especially when you bundle `.d.ts` output with `rollup-plugin-dts`.
 
+## More Plugins
+
+<img src="https://github.com/baendlorel/tsumugi-lib/releases/download/rollup-plugins-svg-v0.1.0/rollup-plugins.svg"/>
+
+
 ## Install
 
 ```bash
