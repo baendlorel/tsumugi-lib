@@ -1,10 +1,9 @@
 /// <reference types="node" />
 
-import { mkdirSync, readdirSync, readFileSync, writeFileSync, type Dirent } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
+import path from 'node:path';
 
-type PluginPackageJson = {
+interface PluginPackageJson {
   name?: string;
   description?: string;
   description_zh?: string;
@@ -13,13 +12,13 @@ type PluginPackageJson = {
     url?: string;
     directory?: string;
   };
-};
+}
 
-type PluginMeta = {
+interface PluginMeta {
   name: string;
   summary: string;
   url: string;
-};
+}
 
 type RenderedRow = PluginMeta & {
   index: number;
@@ -27,18 +26,17 @@ type RenderedRow = PluginMeta & {
   rowHeight: number;
 };
 
-const currentFilePath = fileURLToPath(import.meta.url);
-const scriptDir = dirname(currentFilePath);
-const workspaceRoot = resolve(scriptDir, '../..');
-const packagesDir = join(workspaceRoot, 'packages');
-const assetsDir = join(workspaceRoot, 'assets');
+const currentFilePath = import.meta.filename;
+const scriptDir = path.dirname(currentFilePath);
+const workspaceRoot = path.resolve(scriptDir, '../..');
+const packagesDir = path.join(workspaceRoot, 'packages');
+const assetsDir = path.join(workspaceRoot, 'assets');
 
 const svgWidth = 1280;
 const outerPadding = 36;
 const tableX = outerPadding;
 const tableY = 156;
 const tableWidth = svgWidth - outerPadding * 2;
-const headerHeight = 142;
 const indexColumnWidth = 76;
 const nameColumnWidth = 348;
 const descriptionColumnWidth = tableWidth - indexColumnWidth - nameColumnWidth;
@@ -113,14 +111,15 @@ const wrapText = (text: string, maxWidth: number, fontSize: number) => {
 };
 
 export function readRollupPlugins(): PluginMeta[] {
-  return readdirSync(packagesDir, { withFileTypes: true })
-    .filter((entry: Dirent) => entry.isDirectory() && entry.name.startsWith('rollup-plugin-'))
-    .sort((left: Dirent, right: Dirent) => left.name.localeCompare(right.name))
-    .map((entry: Dirent) => {
-      const packageJsonPath = join(packagesDir, entry.name, 'package.json');
-      const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as PluginPackageJson;
-      const name = packageJson.name ?? entry.name;
-      const summary = packageJson.description_zh?.trim() || packageJson.description?.trim() || '暂无简介';
+  return fs
+    .readdirSync(packagesDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && entry.name.startsWith('rollup-plugin-'))
+    .sort((left, right) => left.name.localeCompare(right.name))
+    .map((entry) => {
+      const p = path.join(packagesDir, entry.name, 'package.json');
+      const json = JSON.parse(fs.readFileSync(p, 'utf8')) as PluginPackageJson;
+      const name = json.name ?? entry.name;
+      const summary = json.description?.trim() || json.description_zh?.trim() || '-';
       const url = `https://www.npmjs.com/package/${name}`;
       return { name, summary, url };
     });
@@ -221,14 +220,14 @@ export function createSvgTable(plugins = readRollupPlugins(), generatedAt = new 
 
 export function saveSvgTable(generatedAt = new Date()) {
   const svg = createSvgTable(readRollupPlugins(), generatedAt);
-  mkdirSync(assetsDir, { recursive: true });
+  fs.mkdirSync(assetsDir, { recursive: true });
   const filename = `plugins-${formatFileTimestamp(generatedAt)}.svg`;
-  const filePath = join(assetsDir, filename);
-  writeFileSync(filePath, svg, 'utf8');
+  const filePath = path.join(assetsDir, filename);
+  fs.writeFileSync(filePath, svg, 'utf8');
   return { filePath, svg };
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === currentFilePath) {
+if (process.argv[1] && path.resolve(process.argv[1]) === currentFilePath) {
   const { filePath } = saveSvgTable();
   console.log(`Generated ${filePath}`);
 }
