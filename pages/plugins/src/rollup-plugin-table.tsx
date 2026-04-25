@@ -38,41 +38,27 @@ export function readRollupPlugins(): PluginMeta[] {
 }
 
 export function createSvgTable(plugins = readRollupPlugins()): string {
-  const len = Math.max(...plugins.map((p) => p.name.length));
-  const style = (
-    <style>{`
-      .plugin-name {
-        font-size: 14px;
-        font-family: Consolas, monospace;
-        fill: #0366d6;
-      }
-      .description {
-        font-size: 14px;
-        font-family: Consolas, monospace;
-        fill: #333;
-      }
-    `}</style>
+  plugins = plugins.filter(
+    (p) => !p.name.includes('privatify') && !p.name.includes('analyze') && !p.name.includes('inline'),
   );
+
+  const styleText = fs.readFileSync(path.join(import.meta.dirname, 'styles.css'), 'utf8');
+
+  const LineHeight = 48;
 
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="800" height={plugins.length * 60}>
-      {style}
-      <g>
-        {plugins.map((plugin, index) => (
-          <a href={plugin.url} target="_blank">
-            <text x={0} y={index * 32 + 20} className="plugin-name">
-              {plugin.name}
-            </text>
-          </a>
-        ))}
-      </g>
-      <g>
-        {plugins.map((plugin, index) => (
-          <text x={len * 8 + 16} y={index * 32 + 20} className="description">
+      <style>{styleText}</style>
+      {plugins.map((plugin, index) => (
+        <a href={plugin.url} target="_blank">
+          <text x={0} y={index * LineHeight + 20} className="plugin-name">
+            {plugin.name}
+          </text>
+          <text x={0} y={index * LineHeight + 42} className="description">
             {plugin.summary}
           </text>
-        ))}
-      </g>
+        </a>
+      ))}
     </svg>
   );
 }

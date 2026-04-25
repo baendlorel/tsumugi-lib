@@ -1,0 +1,8 @@
+.plugin-name {
+  font-size: 1rem;
+  font-family: Consolas, monospace;
+  fill: #0366d6;
+}
+.description {
+  font-size: 1rem;
+}
