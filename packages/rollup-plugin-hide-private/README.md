@@ -1,5 +1,7 @@
 # rollup-plugin-hide-private
 
+![badge](https://img.shields.io/npm/v/rollup-plugin-hide-private)
+
 Remove selected `private` and `protected` members from generated TypeScript declaration files.
 
 This plugin is designed for declaration build steps, especially when you bundle `.d.ts` output with `rollup-plugin-dts`.
