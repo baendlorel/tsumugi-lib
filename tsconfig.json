@@ -3,6 +3,7 @@
     "target": "ESNext",
     "module": "preserve",
     "moduleResolution": "bundler",
+    "types": ["node"],
     "declaration": false,
     "esModuleInterop": true,
     "strict": true,

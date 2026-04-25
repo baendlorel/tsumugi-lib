@@ -3,12 +3,12 @@
     "target": "ESNext",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "types": ["node"],
     "declaration": false,
     "esModuleInterop": true,
     "ignoreDeprecations": "6.0",
     "strict": true,
-    "outDir": "dist",
-    "baseUrl": "."
+    "outDir": "./dist"
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"]
+  "include": ["./src/**/*.ts", "./tests/**/*.ts"]
 }

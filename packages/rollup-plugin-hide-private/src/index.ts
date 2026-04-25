@@ -164,7 +164,7 @@ function getVisibility(member: ts.ClassElement): Visibility | null {
     return 'protected';
   }
 
-  if ('name' in member && member.name && isPrivateIdentifierName(member.name)) {
+  if ('name' in member && member.name && ts.isPrivateIdentifier(member.name)) {
     return 'private';
   }
 
@@ -245,10 +245,6 @@ function matchesPattern(pattern: string | RegExp, value: string): boolean {
 function hasModifier(node: ts.Node, kind: ts.SyntaxKind): boolean {
   const modifiers = (node as ts.Node & { modifiers?: ts.NodeArray<ts.ModifierLike> }).modifiers;
   return Boolean(modifiers?.some((modifier) => modifier.kind === kind));
-}
-
-function isPrivateIdentifierName(name: ts.PropertyName): name is ts.PrivateIdentifier {
-  return ts.isPrivateIdentifier(name);
 }
 
 function normalizeOptions(options: RollupHidePrivateOptions): NormalizedOptions {

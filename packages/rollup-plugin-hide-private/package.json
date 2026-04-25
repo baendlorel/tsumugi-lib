@@ -44,6 +44,9 @@
     "rollup": ">=4.0.0",
     "typescript": ">=4.5.0"
   },
+  "scripts": {
+    "test": "vitest"
+  },
   "bugs": {
     "url": "https://github.com/baendlorel/kt-packages/issues"
   }
