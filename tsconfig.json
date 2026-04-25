@@ -7,8 +7,6 @@
     "declaration": false,
     "esModuleInterop": true,
     "strict": true,
-    "jsx": "react-jsx",
-    "jsxImportSource": "./pages/svgx/runtime.ts",
     "paths": {
       "@shared/*": ["../_shared/*"]
     }

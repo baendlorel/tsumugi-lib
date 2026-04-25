@@ -1,8 +1,6 @@
-/// <reference types="node" />
-
 import fs from 'node:fs';
 import path from 'node:path';
-import { css, g, h, html, measureTextWidth, text } from './h.js';
+import {  g, h, html, text } from './h.js';
 
 interface PluginPackageJson {
   name?: string;
@@ -53,6 +51,8 @@ export function createSvgTable(plugins = readRollupPlugins()): string {
       font-family: Consolas, monospace;
       fill: #333;
     }</style>;
+
+
   html`<!--svg-->
     <svg width="800" height="${plugins.length * 60}" xmlns="http://www.w3.org/2000/svg">
       ${style}
