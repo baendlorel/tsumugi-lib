@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 import typescript from '@rollup/plugin-typescript';
 import resolve from '@rollup/plugin-node-resolve';
@@ -25,6 +25,11 @@ export default () => {
   const currentPackagePath = process.env.LIB_PACKAGE_PATH || '';
   const tsconfigPath = getTsConfigPath(currentPackagePath);
   const external = externalFromPeerDependencies(currentPackagePath);
+
+  // const tsconfigIncludes = (JSON.parse(readFileSync(tsconfigPath, 'utf-8')).include ?? []).filter((item: string) =>
+  //   item.includes('test'),
+  // );
+
   return [
     // * Main
     {

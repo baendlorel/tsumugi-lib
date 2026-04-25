@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="240"><style>.plugin-name {
-  font-size: 1rem;
+  font-size: 16px;
   font-family: Consolas, monospace;
   fill: #0366d6;
 }
 .description {
-  font-size: 1rem;
+  font-size: 16px;
 }
-</style><a href="https://www.npmjs.com/package/rollup-plugin-conditional-compilation" target="_blank"><text x="0" y="20" class="plugin-name">rollup-plugin-conditional-compilation</text><text x="0" y="48" class="description">Conditional Compilation macros like #if #endif in C++.</text></a><a href="https://www.npmjs.com/package/rollup-plugin-const-enum" target="_blank"><text x="0" y="76" class="plugin-name">rollup-plugin-const-enum</text><text x="0" y="104" class="description">A simple plugin to inline your const enums in typescript projects.</text></a><a href="https://www.npmjs.com/package/rollup-plugin-func-macro" target="_blank"><text x="0" y="132" class="plugin-name">rollup-plugin-func-macro</text><text x="0" y="160" class="description">Using __func__ like C++ to get current function name(ignores arrow function context)</text></a><a href="https://www.npmjs.com/package/rollup-plugin-hide-private" target="_blank"><text x="0" y="188" class="plugin-name">rollup-plugin-hide-private</text><text x="0" y="216" class="description">Remove selected private and protected members from generated declaration files.</text></a></svg>
+</style><a href="https://www.npmjs.com/package/rollup-plugin-conditional-compilation" target="_blank"><text x="0" y="20" class="plugin-name">rollup-plugin-conditional-compilation</text><text x="0" y="52" class="description">Conditional Compilation macros like #if #endif in C++.</text></a><a href="https://www.npmjs.com/package/rollup-plugin-const-enum" target="_blank"><text x="0" y="84" class="plugin-name">rollup-plugin-const-enum</text><text x="0" y="116" class="description">A simple plugin to inline your const enums in typescript projects.</text></a><a href="https://www.npmjs.com/package/rollup-plugin-func-macro" target="_blank"><text x="0" y="148" class="plugin-name">rollup-plugin-func-macro</text><text x="0" y="180" class="description">Using __func__ like C++ to get current function name(ignores arrow function context)</text></a><a href="https://www.npmjs.com/package/rollup-plugin-hide-private" target="_blank"><text x="0" y="212" class="plugin-name">rollup-plugin-hide-private</text><text x="0" y="244" class="description">Remove selected private and protected members from generated declaration files.</text></a></svg>
