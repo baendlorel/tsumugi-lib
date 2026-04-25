@@ -44,7 +44,7 @@ export declare class Example {
       code,
       {
         privateNames: false,
-        protectNames: false,
+        protectedNames: false,
         allNames: ['debugOnly'],
       },
       'all-names.d.ts',
@@ -71,7 +71,7 @@ export declare class Example {
       code,
       {
         privateNames: [/^drop/],
-        protectNames: ['dropMethod'],
+        protectedNames: ['dropMethod'],
       },
       'filtered.d.ts',
     );
@@ -110,7 +110,7 @@ export declare class Example {
       code,
       {
         privateNames: false,
-        protectNames: false,
+        protectedNames: false,
       },
       'keep-all.d.ts',
     );
@@ -150,7 +150,7 @@ export declare class Example {
       code,
       {
         privateNames: true,
-        protectNames: true,
+        protectedNames: true,
         allNames: ['computedPrivate'],
       },
       'computed.d.ts',
@@ -228,7 +228,7 @@ export declare class Example {
       code,
       {
         privateNames: true,
-        protectNames: true,
+        protectedNames: true,
         allNames: [/^_/, /^__/],
       },
       'regexp-patterns.d.ts',
@@ -255,7 +255,7 @@ export declare class Example {
       code,
       {
         privateNames: [/^_remove/],
-        protectNames: [/removeMe/],
+        protectedNames: [/removeMe/],
         allNames: [/^_/],
       },
       'allnames-with-private.d.ts',
@@ -304,7 +304,7 @@ export declare class Example {
     const result = stripHiddenDeclarations(
       code,
       {
-        protectNames: [/^internal/],
+        protectedNames: [/^internal/],
       },
       'selective-protected.d.ts',
     );

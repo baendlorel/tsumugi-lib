@@ -1,15 +1,31 @@
-import MagicString from 'magic-string';
 import type { ExistingRawSourceMap, Plugin } from 'rollup';
+import MagicString from 'magic-string';
 import ts from 'typescript';
 
-export type DeclarationNamePattern = string | RegExp;
-export type DeclarationNamePatternList = DeclarationNamePattern[];
-export type HideNameMatcher = boolean | DeclarationNamePatternList;
+export type Pattern = string | RegExp;
+export type HideNameMatcher = boolean | Pattern[];
 
 export interface RollupHidePrivateOptions {
-  privateNames?: HideNameMatcher;
-  protectNames?: HideNameMatcher;
-  allNames?: DeclarationNamePatternList;
+  /**
+   * Private member names to hide.
+   * - Can be `true` to hide all private members, `false` to hide none, or an array of string or RegExp patterns to match member names.
+   */
+  privateNames?: boolean | Pattern[];
+
+  /**
+   * Protected member names to hide.
+   * - Can be `true` to hide all protected members, `false` to hide none, or an array of string or RegExp patterns to match member names.
+   * @default
+   */
+  protectedNames?: boolean | Pattern[];
+
+  /**
+   * Any member names to hide, regardless of visibility.
+   * - Can be an array of string or RegExp patterns to match member names.
+   *
+   * @default undefined
+   */
+  allNames?: Pattern[];
 }
 
 export interface StripHiddenDeclarationsResult {
@@ -24,7 +40,7 @@ type Visibility = 'private' | 'protected';
 interface NormalizedOptions {
   privateNames: HideNameMatcher;
   protectNames: HideNameMatcher;
-  allNames: DeclarationNamePatternList;
+  allNames: Pattern[];
 }
 
 interface RemovalRange {
@@ -39,6 +55,14 @@ const DEFAULT_OPTIONS: NormalizedOptions = {
   allNames: [],
 };
 
+/**
+ * Hide private and protected members in TypeScript declaration files.
+ *
+ * Useful for libraries that want to keep certain members internal while still providing type information for them.
+ * @param options Options to configure which members to hide.
+ *
+ * __PKG_INFO__
+ */
 export default function hidePrivate(options: RollupHidePrivateOptions = {}): Plugin {
   const normalized = normalizeOptions(options);
 
@@ -250,12 +274,12 @@ function hasModifier(node: ts.Node, kind: ts.SyntaxKind): boolean {
 function normalizeOptions(options: RollupHidePrivateOptions): NormalizedOptions {
   return {
     privateNames: options.privateNames ?? DEFAULT_OPTIONS.privateNames,
-    protectNames: options.protectNames ?? DEFAULT_OPTIONS.protectNames,
+    protectNames: options.protectedNames ?? DEFAULT_OPTIONS.protectNames,
     allNames: normalizeAllNames(options.allNames),
   };
 }
 
-function normalizeAllNames(allNames: RollupHidePrivateOptions['allNames']): DeclarationNamePatternList {
+function normalizeAllNames(allNames: RollupHidePrivateOptions['allNames']): Pattern[] {
   if (allNames === undefined) {
     return [];
   }
@@ -264,7 +288,7 @@ function normalizeAllNames(allNames: RollupHidePrivateOptions['allNames']): Decl
     throw new TypeError('The "allNames" option must be an array of string or RegExp values.');
   }
 
-  const normalized: DeclarationNamePatternList = [];
+  const normalized: Pattern[] = [];
   for (let i = 0; i < allNames.length; i++) {
     const item = allNames[i];
     if (typeof item !== 'string' && !(item instanceof RegExp)) {

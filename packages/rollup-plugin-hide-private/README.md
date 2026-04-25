@@ -35,37 +35,51 @@ The plugin only processes declaration outputs such as `.d.ts`, `.d.mts` and `.d.
 ## Options
 
 ```ts
-type DeclarationNamePattern = string | RegExp;
-type DeclarationNamePatternList = DeclarationNamePattern[];
-type HideNameMatcher = boolean | DeclarationNamePatternList;
-
 interface RollupHidePrivateOptions {
-  privateNames?: HideNameMatcher;
-  protectNames?: HideNameMatcher;
-  allNames?: DeclarationNamePatternList;
+  // `true` by default
+  privateNames?: boolean | Pattern[];
+
+  // `true` by default
+  protectedNames?: boolean | Pattern[];
+
+  // `[]` by default
+  allNames?: boolean | Pattern[];
 }
 ```
 
-- `privateNames` (default: `true`)
-  - `true`: remove every `private` member.
-  - `false`: keep every `private` member.
-  - `Array<string | RegExp>`: remove only matching `private` member names.
-- `protectNames` (default: `true`)
-  - `true`: remove every `protected` member.
-  - `false`: keep every `protected` member.
-  - `Array<string | RegExp>`: remove only matching `protected` member names.
-- `allNames` (default: `[]`)
-  - Removes any matching class member name from the declaration file, even if it is not `private` or `protected`.
-  - Accepts only arrays.
-  - Every item must be either a string or a regular expression.
+`Pattern` means either a string or a regular expression.
 
-String matchers use exact matching. Regular expressions are tested against the member name.
 
-## Notes
+## Effect
 
-- The plugin removes matching class members directly from declaration source text, then emits a fresh sourcemap.
-- It works for declaration chunks and declaration module inputs.
-- For `#private` fields, both `#name` and `name` can match a configured string or regular expression.
+<span style="color: #ff7b00;font-weight:bold;">Before<span>
+
+```ts
+export class AAA {
+  private a: number;
+  asdf: string = 'asdf';
+  _asdf: string = 'asdf';
+  constructor(a: number) {
+    this.a = a;
+  }
+}
+```
+With options:
+
+```ts
+hidePrivate({
+  allNames: [/^_/],
+})
+```
+
+<span style="color: #07AACC;font-weight:bold;">After<span>
+
+```ts
+declare class AAA {
+    asdf: string;
+    constructor(a: number);
+}
+```
 
 ## License
 
