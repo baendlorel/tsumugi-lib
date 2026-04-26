@@ -101,7 +101,11 @@ importers:
         specifier: ^0.30.21
         version: 0.30.21
 
-  packages/rollup-plugin-const-enum: {}
+  packages/rollup-plugin-const-enum:
+    dependencies:
+      magic-string:
+        specifier: ^0.30.21
+        version: 0.30.21
 
   packages/rollup-plugin-func-macro:
     dependencies:

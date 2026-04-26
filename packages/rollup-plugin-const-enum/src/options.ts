@@ -1,27 +1,32 @@
-import { RollupConstEnumOptions } from './types/global.js';
+import type { NormalizedRollupConstEnumOptions, RollupConstEnumOptions } from './types/global.js';
 
-const expectStringArray = (value: any, name: string) => {
-  if (!Array.isArray(value) || value.some((v) => typeof v !== 'string')) {
-    throw new TypeError(`Expected ${name} to be string[].`);
+function assertInlineNames(value: unknown): asserts value is Array<string | RegExp> {
+  if (!Array.isArray(value)) {
+    throw new TypeError('Expected inlineNames to be Array<string | RegExp>.');
   }
-};
 
-export function normalize(options: Partial<RollupConstEnumOptions> = {}) {
-  const {
-    suffixes = ['.ts', '.tsx', '.mts', '.cts'],
-    files = [],
-    excludedDirectories = ['.git', 'test', 'tests', 'dist', 'node_modules'],
-    skipDts = true,
-  } = Object(options) as RollupConstEnumOptions;
+  for (let i = 0; i < value.length; i++) {
+    const entry = value[i];
+    if (typeof entry === 'string' || entry instanceof RegExp) {
+      continue;
+    }
+    throw new TypeError('Expected inlineNames to be Array<string | RegExp>.');
+  }
+}
 
-  expectStringArray(suffixes, 'suffixes');
-  expectStringArray(files, 'files');
-  expectStringArray(excludedDirectories, 'excludedDirectories');
+export function normalize(options: Partial<RollupConstEnumOptions> = {}): NormalizedRollupConstEnumOptions {
+  const normalized = Object(options) as Partial<RollupConstEnumOptions>;
+
+  if (normalized.inlineNonConstEnums !== undefined && typeof normalized.inlineNonConstEnums !== 'boolean') {
+    throw new TypeError('Expected inlineNonConstEnums to be boolean.');
+  }
+
+  if (normalized.inlineNames !== undefined) {
+    assertInlineNames(normalized.inlineNames);
+  }
 
   return {
-    suffixes,
-    files,
-    excludedDirectories,
-    skipDts,
+    inlineNonConstEnums: normalized.inlineNonConstEnums ?? false,
+    inlineNames: normalized.inlineNames,
   };
 }

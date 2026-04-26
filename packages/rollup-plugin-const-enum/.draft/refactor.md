@@ -25,8 +25,15 @@
 
 - 默认只内联 `const enum`。
 - 默认不限制名字，即所有命中的 `const enum` 都允许内联。
+- 只有当前文件作用域内可解析到、且满足“当前文件已引入”约束的枚举成员访问才允许内联。
 - 默认只处理能被 TypeScript 判定为常量值的枚举成员访问。
 - 对无法安全求值的访问保持原样，不做激进替换。
+
+这里的“已引入”约束定义如下：
+
+- 若枚举声明就在当前文件中，天然满足约束。
+- 若枚举声明位于其他模块，则必须通过当前文件中的 `import` 明确引入后才允许内联。
+- 未被当前文件引入、只是碰巧在 Program 中可见的其他模块枚举，不允许内联。
 
 ### 2.2 选项
 
@@ -71,20 +78,18 @@ export interface RollupConstEnumOptions {
 
 ### 3.1 总体架构
 
-重构后将插件拆成四层：
+重构后将插件拆成三层：
 
 1. `options`
    - 负责选项归一化与校验。
-2. `file-discovery`
-   - 负责收集候选源文件。
-3. `ts-context`
+2. `ts-context`
    - 负责创建和缓存 `typescript.Program` / `TypeChecker` / `SourceFile` 访问能力。
-4. `enum-inliner`
+3. `enum-inliner`
    - 负责基于 AST 查找成员访问、做符号解析、判定是否允许内联、生成替换节点。
 
 现有 `ConstEnumHandler` 的职责会被拆散：
 
-- 文件扫描逻辑可以保留，但要下沉为纯“根文件发现器”。
+- 基于目录递归和文件后缀的扫描逻辑整体移除。
 - 正则解析与替换逻辑整体移除。
 
 ### 3.2 建议的源码结构
@@ -95,9 +100,9 @@ export interface RollupConstEnumOptions {
 src/
   index.ts
   options.ts
-  discover-files.ts
   create-ts-context.ts
   inline-enum-access.ts
+  collect-imports.ts
   match-inline-name.ts
   literal.ts
   types/
@@ -111,17 +116,19 @@ src/
   - 在合适时机初始化 TypeScript 上下文。
   - 在 `transform` 中调用内联器。
 
-- `discover-files.ts`
-  - 只做文件发现，不参与 enum 解析。
-
 - `create-ts-context.ts`
   - 创建 `Program` 和 `TypeChecker`。
   - 为当前 `transform` 的 `id + code` 提供内存覆盖，避免只依赖磁盘内容。
+  - 通过 TypeScript 模块解析把当前文件依赖到的源码纳入分析上下文，而不是全项目盲扫。
+
+- `collect-imports.ts`
+  - 从当前文件 AST 提取 import 信息。
+  - 为“枚举必须已被当前文件引入”提供判定依据。
 
 - `inline-enum-access.ts`
   - 查找 `PropertyAccessExpression` / `ElementAccessExpression`。
   - 识别目标是否为 enum member access。
-  - 判断是否满足 `const enum` / `inlineNonConstEnums` / `inlineNames`。
+  - 判断是否满足“已引入” / `const enum` / `inlineNonConstEnums` / `inlineNames`。
   - 生成替换后的字面量节点。
 
 - `match-inline-name.ts`
@@ -147,23 +154,41 @@ interface TsContext {
 
 设计原则：
 
-- `Program` 的根文件来自文件发现器收集结果。
-- 当前正在 `transform` 的文件如果已经在根文件集合中，优先用内存中的 `code` 覆盖磁盘内容。
-- 如果 `id` 不在初始根文件列表内，但后缀可识别，也要允许临时纳入上下文。
+- `Program` 的根入口以当前 `transform` 文件为中心，而不是预先扫描整个项目。
+- 当前正在 `transform` 的文件优先用内存中的 `code` 覆盖磁盘内容。
+- 其余依赖文件交给 TypeScript 按 import/export 关系做模块解析。
 - 一个构建周期内允许复用 `Program`，但在 `buildStart` 或首次 `transform` 时要有明确的刷新策略。
 
 推荐方案：
 
-- 在 `buildStart` 初始化文件集合和基础 `Program`。
-- 在每次 `transform(code, id)` 时，对当前文件建立一次内存覆盖，然后刷新 `Program`。
+- 在 `buildStart` 初始化基础编译配置解析能力，例如读取最近的 `tsconfig.json`。
+- 在每次 `transform(code, id)` 时，以当前文件为入口建立一次内存覆盖，并让 TypeScript 从该入口解析依赖图。
 - 不追求“复杂增量编译器”，优先追求实现可控和语义正确。
 
 原因：
 
 - 这个包的目标是可靠内联，不是充当完整的 TypeScript 构建器。
+- 与其维护一套项目级文件扫描配置，不如直接复用 TypeScript 自己的模块解析结果。
 - 与其过早做复杂缓存，不如先让符号解析和语义稳定下来。
 
-### 3.4 访问表达式识别
+### 3.4 当前文件引入约束
+
+内联判定除了语义正确，还必须满足“当前文件已引入”这一额外边界。
+
+建议实现为两级判定：
+
+1. 先通过 `checker` 确认当前访问节点确实解析到某个 `EnumMember`。
+2. 再确认该成员所属 enum 对当前文件来说满足以下任一条件：
+  - enum 声明位于当前 `SourceFile`
+  - enum 符号来自当前文件某个 `import` 绑定
+
+这条约束的目的不是补类型系统漏洞，而是明确插件行为边界：
+
+- 只处理当前模块显式依赖到的 enum。
+- 不做全项目范围的“碰到同名就内联”。
+- 避免某些通过三斜线引用、全局声明或 Program 可见性带来的越权替换。
+
+### 3.5 访问表达式识别
 
 只处理明确的枚举成员访问：
 
@@ -184,12 +209,13 @@ interface TsContext {
 2. 发现 `PropertyAccessExpression` 或可静态判定的 `ElementAccessExpression`。
 3. 通过 `checker.getSymbolAtLocation(...)` 拿到成员符号。
 4. 判断该符号是否来自 `EnumMember`。
-5. 取到所属 enum 声明，判断它是 `const enum` 还是普通 `enum`。
-6. 应用 `inlineNonConstEnums` 和 `inlineNames` 筛选。
-7. 调用 TypeScript 常量求值能力获取该成员常量值。
-8. 若成功求值，则用字面量 AST 节点替换。
+5. 判断该成员所属 enum 是否满足“当前文件已引入”约束。
+6. 取到所属 enum 声明，判断它是 `const enum` 还是普通 `enum`。
+7. 应用 `inlineNonConstEnums` 和 `inlineNames` 筛选。
+8. 调用 TypeScript 常量求值能力获取该成员常量值。
+9. 若成功求值，则用字面量 AST 节点替换。
 
-### 3.5 常量值获取策略
+### 3.6 常量值获取策略
 
 应优先依赖 TypeScript 自身的常量语义，而不是自己再实现一套 enum 求值器。
 
@@ -208,7 +234,7 @@ interface TsContext {
 
 如果 `getConstantValue` 返回 `undefined`，则保持原表达式不变。这是安全边界，不应自行猜测。
 
-### 3.6 AST 变换策略
+### 3.7 AST 变换策略
 
 建议使用 `ts.transform` 或 `ts.visitEachChild` 做纯语法树替换。
 
@@ -224,7 +250,7 @@ interface TsContext {
 - `number` -> `factory.createNumericLiteral(...)`
 - 负数建议生成 `PrefixUnaryExpression(-, NumericLiteral(...))`，避免直接拼字符串造成 AST 非法
 
-### 3.7 名字筛选设计
+### 3.8 名字筛选设计
 
 建议把名字筛选单独封装成纯函数：
 
@@ -244,32 +270,37 @@ function shouldInlineEnumName(
   - 本地声明名，如 `Color`
   - 若可取到限定名，则再加一个如 `Ns.Color`
 
-## 4. 与现有选项的兼容策略
+## 4. 选项边界调整
 
-建议保留以下现有选项，因为它们仍然适合作为“Program 根文件发现器”的输入：
+本次方案明确把 options 收缩为仅两个开关：
+
+- `inlineNonConstEnums`
+- `inlineNames`
+
+这意味着以下旧选项不再保留，也不再做兼容层：
 
 - `suffixes`
 - `files`
 - `excludedDirectories`
 - `skipDts`
 
-但需要重新定义它们的定位：
+原因：
 
-- 旧实现里它们是“供正则扫描使用的文件过滤条件”。
-- 新实现里它们是“构造 TypeScript 分析上下文时的候选源文件集合规则”。
-
-这样可以尽量减少 API 破坏，同时避免保留旧逻辑语义。
+- 这些选项服务的是旧版“项目扫描器”架构。
+- 新版插件不再通过目录遍历找 enum，而是围绕当前 transform 文件做 TypeScript 语义解析。
+- 继续保留这些选项只会把实现重新拉回“扫描式设计”，与这次重构目标冲突。
 
 ## 5. Rollup 生命周期建议
 
 建议使用以下生命周期：
 
 - `buildStart`
-  - 发现文件
-  - 初始化 TypeScript 上下文
+  - 初始化 TypeScript 配置解析能力
+  - 准备 Program/CompilerHost 复用策略
 
 - `transform`
   - 对当前模块建立 `SourceFile`
+  - 收集当前文件 import 绑定
   - 执行 AST 内联
   - 返回替换后的代码
 
@@ -278,7 +309,7 @@ function shouldInlineEnumName(
 - `watchChange`
   - 使缓存失效，确保 watch 模式下 Program 刷新
 
-不建议继续沿用“插件初始化时就立刻扫描并固定替换表”的做法，因为那会让 watch 和增量开发的行为不可靠。
+不建议继续沿用“插件初始化时就立刻扫描并固定替换表”的做法，因为那会让 watch 和增量开发的行为不可靠，也与“只内联当前文件已引入的 enum”这一边界冲突。
 
 ## 6. peerDependencies 调整
 
@@ -303,7 +334,7 @@ function shouldInlineEnumName(
 
 现有测试大量绑定在“正则扫描结果”上，重构后应整体迁移为“语义行为测试”。
 
-建议拆成四组测试：
+建议拆成五组测试：
 
 ### 7.1 options 测试
 
@@ -314,7 +345,16 @@ function shouldInlineEnumName(
 - `inlineNames` 支持 `string` 和 `RegExp`
 - 非法类型报错
 
-### 7.2 matcher 测试
+### 7.2 import gate 测试
+
+覆盖点：
+
+- 同文件声明的 enum 可内联
+- 跨文件 enum 只有在当前文件显式 import 后才可内联
+- 未 import 的 enum 即便在 Program 中可见也不可内联
+- namespace import、named import、import alias 的绑定都能正确识别
+
+### 7.3 matcher 测试
 
 覆盖点：
 
@@ -323,7 +363,7 @@ function shouldInlineEnumName(
 - `Ns.Color` 与 `Color` 候选名匹配
 - `inlineNames === undefined` 时放行全部
 
-### 7.3 transform 单测
+### 7.4 transform 单测
 
 直接验证代码变换结果：
 
@@ -331,11 +371,12 @@ function shouldInlineEnumName(
 - 开启 `inlineNonConstEnums` 后可内联普通 `enum`
 - `inlineNames` 未命中时不替换
 - `inlineNames` 命中时替换
+- 未 import 的跨文件 enum 不替换
 - 普通对象属性访问不被误替换
 - 字符串枚举、数字枚举、十六进制枚举、自增成员均能正确处理
 - 无法静态求值时保持原样
 
-### 7.4 rollup 集成测试
+### 7.5 rollup 集成测试
 
 至少保留一到两个真正通过 Rollup 跑的用例：
 
@@ -347,12 +388,13 @@ function shouldInlineEnumName(
 建议按下面顺序推进，避免一次性重写过大：
 
 1. 先重写 `options.ts` 与类型定义
-2. 抽离文件发现器，保留现有扫描逻辑但去掉 enum 解析职责
+2. 去掉文件扫描相关实现与测试
 3. 建立最小可用的 `Program + TypeChecker` 上下文
-4. 先支持 `PropertyAccessExpression` 的 `const enum` 内联
-5. 再加 `inlineNonConstEnums`
-6. 再加 `inlineNames`
-7. 最后补 `ElementAccessExpression`、watch 刷新和集成测试
+4. 先实现“当前文件 import 绑定收集 + import gate”
+5. 先支持 `PropertyAccessExpression` 的 `const enum` 内联
+6. 再加 `inlineNonConstEnums`
+7. 再加 `inlineNames`
+8. 最后补 `ElementAccessExpression`、watch 刷新和集成测试
 
 这样每一步都有明确可验证的边界。
 
@@ -397,4 +439,6 @@ source map 可以作为第二阶段工作项。首轮重构先把语义正确性
 
 ## 11. 一句话结论
 
-这次不是“在旧实现上补两个选项”，而是把插件从“文本替换器”升级为“基于 TypeScript 语义模型的枚举成员内联器”；文件扫描逻辑最多只保留为 Program 根文件发现器，其余正则解析与替换逻辑都应退场。
+这次不是“在旧实现上补两个选项”，而是把插件从“文本替换器”升级为“基于 TypeScript 语义模型的枚举成员内联器”；原先那套文件扫描、正则解析与文本替换逻辑都应退场。
+
+补充一句，这个“语义模型”还包含一个刻意收紧的工程边界：只有当前文件已经引入到本模块作用域中的 enum，才允许被内联。

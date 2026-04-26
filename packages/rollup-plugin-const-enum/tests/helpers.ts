@@ -1,7 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Plugin } from 'rollup';
+import type { Plugin } from 'rollup';
+
+export interface SimulatedTransformResult {
+  code: string;
+  map: unknown;
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -17,6 +22,21 @@ export function createTestEnvironment(testName: string) {
   }
 
   fs.mkdirSync(testDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(testDir, 'tsconfig.json'),
+    JSON.stringify(
+      {
+        compilerOptions: {
+          module: 'ESNext',
+          moduleResolution: 'Bundler',
+          target: 'ESNext',
+        },
+      },
+      null,
+      2,
+    ),
+    'utf8',
+  );
 
   return {
     dir: testDir,
@@ -46,11 +66,16 @@ export function createTestEnvironment(testName: string) {
 /**
  * Simulate plugin transform by applying the plugin's transform function
  */
-export function simulateTransform(
+export function simulateTransform(plugin: Plugin, code: string, id: string = 'test.ts'): string | null {
+  const result = simulateTransformResult(plugin, code, id);
+  return result?.code ?? null;
+}
+
+export function simulateTransformResult(
   plugin: Plugin,
   code: string,
-  id: string = 'test.ts'
-): string | null {
+  id: string = 'test.ts',
+): SimulatedTransformResult | null {
   if (!plugin.transform || typeof plugin.transform !== 'function') {
     throw new Error('Plugin does not have a transform function');
   }
@@ -63,84 +88,15 @@ export function simulateTransform(
   }
 
   if (typeof result === 'string') {
-    return result;
+    return { code: result, map: null };
   }
 
   if (typeof result === 'object' && 'code' in result) {
-    return result.code ?? null;
+    return {
+      code: result.code ?? '',
+      map: 'map' in result ? result.map : null,
+    };
   }
 
   return null;
 }
-
-/**
- * Sample const enum declarations for testing
- */
-export const sampleEnums = {
-  simple: `
-const enum Colors {
-  Red = 0,
-  Green = 1,
-  Blue = 2
-}`,
-  stringEnum: `
-export const enum Status {
-  Active = "active",
-  Inactive = "inactive",
-  Pending = "pending"
-}`,
-  mixed: `
-declare const enum Mixed {
-  A = 1,
-  B = "string",
-  C = 0x10,
-  D
-}`,
-  multiple: `
-const enum First {
-  A = 1,
-  B = 2
-}
-
-const enum Second {
-  X = "x",
-  Y = "y"
-}`,
-  withComments: `
-const enum Status {
-  /* This is a comment */
-  Active = 1,
-  // Another comment
-  Inactive = 0
-}`,
-  final: `
-const enum Status {/* This is a comment */Active,BAKDB,/* '''43This is a comment */KDJF,
-  // Another comment
-  Inactive = '23'
-}`,
-  error: `
-const enum Status {
-  a = '23',b
-}`,
-};
-
-/**
- * Sample code that uses const enums
- */
-export const sampleUsage = {
-  simple: `
-const color = Colors.Red;
-const active = Status.Active;`,
-  expression: `
-const value = Colors.Red + Colors.Blue;
-const text = "Status: " + Status.Active;`,
-  complex: `
-function getColor(type: string) {
-  if (type === 'primary') {
-    return Colors.Red;
-  }
-  return Colors.Blue;
-}
-
-const statuses = [Status.Active, Status.Inactive];`,
-};
