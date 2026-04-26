@@ -26,6 +26,14 @@ export interface RollupHidePrivateOptions {
    * @default undefined
    */
   allNames?: Pattern[];
+
+  /**
+   * Whether interface members should also be removed when they match `allNames`.
+   * - This only affects interface declarations because they do not have private or protected visibility.
+   *
+   * @default false
+   */
+  interfaces?: boolean;
 }
 
 export interface StripHiddenDeclarationsResult {
@@ -41,6 +49,7 @@ interface NormalizedOptions {
   privateNames: HideNameMatcher;
   protectNames: HideNameMatcher;
   allNames: Pattern[];
+  interfaces: boolean;
 }
 
 interface RemovalRange {
@@ -53,12 +62,14 @@ const DEFAULT_OPTIONS: NormalizedOptions = {
   privateNames: true,
   protectNames: true,
   allNames: [],
+  interfaces: false,
 };
 
 /**
  * Hide private and protected members in TypeScript declaration files.
  *
  * Useful for libraries that want to keep certain members internal while still providing type information for them.
+ * When used with `rollup-plugin-dts`, place this plugin before `dts()` in the Rollup plugins array.
  * @param options Options to configure which members to hide.
  *
  * __PKG_INFO__
@@ -141,37 +152,75 @@ function collectHiddenMembers(
   removals: RemovalRange[],
 ) {
   if (ts.isClassDeclaration(node) || ts.isClassExpression(node)) {
-    for (let i = 0; i < node.members.length; i++) {
-      const member = node.members[i];
-      if (!isHideableMember(member)) {
-        continue;
-      }
+    collectHiddenClassMembers(node.members, sourceFile, options, removals);
+  }
 
-      const matchesAllNames = matchesMemberName(member, sourceFile, options.allNames);
-      const visibility = getVisibility(member);
-      if (!matchesAllNames && !visibility) {
-        continue;
-      }
-
-      if (!matchesAllNames && visibility) {
-        const matcher = visibility === 'private' ? options.privateNames : options.protectNames;
-        if (!matchesMemberName(member, sourceFile, matcher)) {
-          continue;
-        }
-      }
-
-      removals.push({
-        start: member.getFullStart(),
-        end: member.getEnd(),
-        name: getPrimaryMemberName(member, sourceFile),
-      });
-    }
+  if (options.interfaces && ts.isInterfaceDeclaration(node)) {
+    collectHiddenInterfaceMembers(node.members, sourceFile, options, removals);
   }
 
   ts.forEachChild(node, (child) => collectHiddenMembers(child, sourceFile, options, removals));
 }
 
-function isHideableMember(member: ts.ClassElement): member is ts.ClassElement & { name: ts.PropertyName } {
+function collectHiddenClassMembers(
+  members: ts.NodeArray<ts.ClassElement>,
+  sourceFile: ts.SourceFile,
+  options: NormalizedOptions,
+  removals: RemovalRange[],
+) {
+  for (let i = 0; i < members.length; i++) {
+    const member = members[i];
+    if (!isHideableClassMember(member)) {
+      continue;
+    }
+
+    const matchesAllNames = matchesMemberName(member, sourceFile, options.allNames);
+    const visibility = getVisibility(member);
+    if (!matchesAllNames && !visibility) {
+      continue;
+    }
+
+    if (!matchesAllNames && visibility) {
+      const matcher = visibility === 'private' ? options.privateNames : options.protectNames;
+      if (!matchesMemberName(member, sourceFile, matcher)) {
+        continue;
+      }
+    }
+
+    removals.push({
+      start: member.getFullStart(),
+      end: member.getEnd(),
+      name: getPrimaryMemberName(member, sourceFile),
+    });
+  }
+}
+
+function collectHiddenInterfaceMembers(
+  members: ts.NodeArray<ts.TypeElement>,
+  sourceFile: ts.SourceFile,
+  options: NormalizedOptions,
+  removals: RemovalRange[],
+) {
+  if (options.allNames.length === 0) {
+    return;
+  }
+
+  for (let i = 0; i < members.length; i++) {
+    const member = members[i];
+    if (!isHideableTypeMember(member) || !matchesMemberName(member, sourceFile, options.allNames)) {
+      continue;
+    }
+
+    removals.push({
+      start: member.getFullStart(),
+      end: member.getEnd(),
+      name: getPrimaryMemberName(member, sourceFile),
+    });
+  }
+}
+
+function isHideableClassMember(member: any): member is NamedMember {
+  member as ts.ClassElement;
   if (!('name' in member) || !member.name) {
     return false;
   }
@@ -179,7 +228,19 @@ function isHideableMember(member: ts.ClassElement): member is ts.ClassElement & 
   return !ts.isConstructorDeclaration(member);
 }
 
-function getVisibility(member: ts.ClassElement): Visibility | null {
+function isHideableTypeMember(member: any): member is NamedMember {
+  member as ts.TypeElement;
+  return 'name' in member && Boolean(member.name);
+}
+
+type NamedMember = {
+  name: ts.PropertyName;
+  getText(sourceFile?: ts.SourceFile): string;
+  getFullStart(): number;
+  getEnd(): number;
+};
+
+function getVisibility(member: ts.ClassElement & { name: ts.PropertyName }): Visibility | null {
   if (hasModifier(member, ts.SyntaxKind.PrivateKeyword)) {
     return 'private';
   }
@@ -195,11 +256,7 @@ function getVisibility(member: ts.ClassElement): Visibility | null {
   return null;
 }
 
-function matchesMemberName(
-  member: ts.ClassElement & { name: ts.PropertyName },
-  sourceFile: ts.SourceFile,
-  matcher: HideNameMatcher,
-): boolean {
+function matchesMemberName(member: NamedMember, sourceFile: ts.SourceFile, matcher: HideNameMatcher): boolean {
   if (matcher === true) {
     return true;
   }
@@ -225,7 +282,7 @@ function matchesMemberName(
   return false;
 }
 
-function getPrimaryMemberName(member: ts.ClassElement & { name: ts.PropertyName }, sourceFile: ts.SourceFile): string {
+function getPrimaryMemberName(member: NamedMember, sourceFile: ts.SourceFile): string {
   const candidates = getMemberNameCandidates(member.name, sourceFile);
   return candidates[0] ?? member.name.getText(sourceFile);
 }
@@ -276,6 +333,7 @@ function normalizeOptions(options: RollupHidePrivateOptions): NormalizedOptions 
     privateNames: options.privateNames ?? DEFAULT_OPTIONS.privateNames,
     protectNames: options.protectedNames ?? DEFAULT_OPTIONS.protectNames,
     allNames: normalizeAllNames(options.allNames),
+    interfaces: options.interfaces ?? DEFAULT_OPTIONS.interfaces,
   };
 }
 

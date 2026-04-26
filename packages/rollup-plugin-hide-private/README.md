@@ -6,6 +6,8 @@ Remove selected `private` and `protected` members from generated TypeScript decl
 
 This plugin is designed for declaration build steps, especially when you bundle `.d.ts` output with `rollup-plugin-dts`.
 
+Place `hidePrivate()` before `dts()` in the Rollup plugins array so declaration members are removed before `rollup-plugin-dts` emits the final bundle.
+
 **More Rollup Plugins** you might be interested in:
 
 ![More Plugins](https://github.com/baendlorel/tsumugi-lib/raw/refs/heads/main/assets/rollup-plugins.svg)
@@ -28,12 +30,13 @@ export default {
   input: 'dist/types/index.d.ts',
   output: [{ file: 'dist/index.d.ts', format: 'es', sourcemap: true }],
   plugins: [
-    dts(),
     hidePrivate({
       privateNames: true,
-      protectNames: [/^internal/, 'debugOnly'],
+      protectedNames: [/^internal/, 'debugOnly'],
       allNames: ['__internal', /^debug/],
+      interfaces: true,
     }),
+    dts(),
   ],
 };
 ```
@@ -51,11 +54,16 @@ interface RollupHidePrivateOptions {
   protectedNames?: boolean | Pattern[];
 
   // `[]` by default
-  allNames?: boolean | Pattern[];
+  allNames?: Pattern[];
+
+  // `false` by default
+  interfaces?: boolean;
 }
 ```
 
 `Pattern` means either a string or a regular expression.
+
+`interfaces` only applies to `allNames`. When enabled, matching members inside `interface` declarations are removed as well.
 
 
 ## Effect

@@ -334,6 +334,30 @@ export declare class Example {
     expect(result.code).not.toContain('internalValue');
   });
 
+  it('can remove interface members matched by allNames when interfaces is enabled', () => {
+    const code = `
+export interface Example {
+  visible: string;
+  debugOnly: string;
+  nested(): void;
+}
+`;
+
+    const result = stripHiddenDeclarations(
+      code,
+      {
+        allNames: ['debugOnly', 'nested'],
+        interfaces: true,
+      },
+      'interface-members.d.ts',
+    );
+
+    expect(result.changed).toBe(true);
+    expect(result.code).toContain('visible: string;');
+    expect(result.code).not.toContain('debugOnly');
+    expect(result.code).not.toContain('nested(): void;');
+  });
+
   it('handles numeric and string literal member names', () => {
     const code = `
 export declare class Example {
@@ -378,7 +402,7 @@ describe('rollup-plugin-hide-private', () => {
   it('generates declaration output with a sourcemap', async () => {
     const bundle = await rollup({
       input: fixturePath,
-      plugins: [dts(), hidePrivate()],
+      plugins: [hidePrivate(), dts()],
     });
 
     try {
