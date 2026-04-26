@@ -1,3 +1,5 @@
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { OutputChunk } from 'rollup';
 import { rollup } from 'rollup';
@@ -526,6 +528,63 @@ export declare class Example {
 });
 
 describe('rollup-plugin-hide-private', () => {
+  it('requires filePatterns in write-files mode', () => {
+    expect(() => hidePrivate({ mode: 'write-files' })).toThrow(TypeError);
+    expect(() => hidePrivate({ mode: 'write-files', filePatterns: [] })).toThrow(TypeError);
+  });
+
+  it('rewrites matched declaration files on disk in write-files mode', async () => {
+    const tempDir = mkdtempSync(join(tmpdir(), 'rollup-plugin-hide-private-'));
+    const matchedDir = join(tempDir, 'types');
+    const unmatchedDir = join(tempDir, 'other');
+    const matchedFile = join(matchedDir, 'index.d.ts');
+    const unmatchedFile = join(unmatchedDir, 'index.d.ts');
+
+    mkdirSync(matchedDir, { recursive: true });
+    mkdirSync(unmatchedDir, { recursive: true });
+
+    writeFileSync(
+      matchedFile,
+      `
+export declare class Example {
+  visible: string;
+  private hiddenToken: string;
+}
+`,
+      'utf8',
+    );
+
+    writeFileSync(
+      unmatchedFile,
+      `
+export declare class Example {
+  visible: string;
+  private hiddenToken: string;
+}
+`,
+      'utf8',
+    );
+
+    try {
+      const plugin = hidePrivate({
+        mode: 'write-files',
+        cwd: tempDir,
+        filePatterns: ['types/**/*.d.ts'],
+      });
+
+      await plugin.writeBundle?.call({} as never);
+
+      const matchedCode = readFileSync(matchedFile, 'utf8');
+      const unmatchedCode = readFileSync(unmatchedFile, 'utf8');
+
+      expect(matchedCode).toContain('visible: string;');
+      expect(matchedCode).not.toContain('hiddenToken');
+      expect(unmatchedCode).toContain('hiddenToken');
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('generates declaration output with a sourcemap', async () => {
     const bundle = await rollup({
       input: fixturePath,

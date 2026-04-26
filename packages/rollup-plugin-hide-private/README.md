@@ -8,6 +8,11 @@ This plugin is designed for declaration build steps, especially when you bundle 
 
 Place `hidePrivate()` before `dts()` in the Rollup plugins array so declaration members are removed before `rollup-plugin-dts` emits the final bundle.
 
+The plugin supports two modes:
+
+- `normal` mode: the current behavior, transforming declaration output inside the Rollup pipeline.
+- `write-files` mode: directly rewrites matched declaration files on disk during `writeBundle`.
+
 **More Rollup Plugins** you might be interested in:
 
 ![More Plugins](https://github.com/baendlorel/tsumugi-lib/raw/refs/heads/main/assets/rollup-plugins.svg)
@@ -21,6 +26,8 @@ pnpm add -D rollup-plugin-hide-private rollup typescript
 ```
 
 ## Usage
+
+### Normal mode
 
 ```ts
 import dts from 'rollup-plugin-dts';
@@ -45,10 +52,43 @@ export default {
 
 The plugin only processes declaration outputs such as `.d.ts`, `.d.mts` and `.d.cts`.
 
+### Write-files mode
+
+Use this mode when you already have declaration files on disk and want the plugin to rewrite only selected files matched by glob patterns.
+
+```ts
+import hidePrivate from 'rollup-plugin-hide-private';
+
+export default {
+  input: 'src/index.ts',
+  output: [{ dir: 'dist', format: 'es' }],
+  plugins: [
+    hidePrivate({
+      mode: 'write-files',
+      cwd: process.cwd(),
+      filePatterns: ['dist/types/**/*.d.ts', 'dist/**/*.d.mts'],
+      privateNames: true,
+      protectedNames: [/^internal/],
+    }),
+  ],
+};
+```
+
+In `write-files` mode, `filePatterns` is required and must be an array of glob strings.
+
 ## Options
 
 ```ts
 interface RollupHidePrivateOptions {
+  // `normal` by default
+  mode?: 'normal' | 'write-files';
+
+  // Required when mode is `write-files`
+  filePatterns?: string[];
+
+  // `process.cwd()` by default
+  cwd?: string;
+
   // `true` by default
   privateNames?: boolean | Pattern[];
 
@@ -70,6 +110,10 @@ interface RollupHidePrivateOptions {
 ```
 
 `Pattern` means either a string or a regular expression.
+
+`mode: 'normal'` keeps the existing Rollup transform/renderChunk behavior.
+
+`mode: 'write-files'` skips in-memory declaration transforms and instead rewrites declaration files matched by `filePatterns` during `writeBundle`.
 
 `allNames` is evaluated for private, protected, public, interface, and type-literal members.
 

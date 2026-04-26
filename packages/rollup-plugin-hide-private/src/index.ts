@@ -1,3 +1,5 @@
+import { globSync, readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import type { ExistingRawSourceMap, Plugin } from 'rollup';
 import MagicString from 'magic-string';
 import ts from 'typescript';
@@ -5,8 +7,32 @@ import ts from 'typescript';
 export type Pattern = string | RegExp;
 export type HideNameMatcher = boolean | Pattern[];
 export type TypeMemberMatcher = false | Pattern[];
+export type RollupHidePrivateMode = 'normal' | 'write-files';
 
 export interface RollupHidePrivateOptions {
+  /**
+   * Plugin operating mode.
+   * - `normal`: transform declaration output in the Rollup pipeline.
+   * - `write-files`: rewrite matched declaration files on disk in `writeBundle`.
+   *
+   * @default 'normal'
+   */
+  mode?: RollupHidePrivateMode;
+
+  /**
+   * Glob patterns used to match file paths when `mode` is `write-files`.
+   *
+   * @default []
+   */
+  filePatterns?: string[];
+
+  /**
+   * Base directory used to resolve `filePatterns` in `write-files` mode.
+   *
+   * @default process.cwd()
+   */
+  cwd?: string;
+
   /**
    * Private member names to hide.
    * - Can be `true` to hide all private members, `false` to hide none, or an array of string or RegExp patterns to match member names.
@@ -63,6 +89,9 @@ export interface StripHiddenDeclarationsResult {
 type Visibility = 'private' | 'protected' | 'public';
 
 interface NormalizedOptions {
+  mode: RollupHidePrivateMode;
+  filePatterns: string[];
+  cwd: string;
   privateNames: HideNameMatcher;
   protectNames: HideNameMatcher;
   publicNames: HideNameMatcher;
@@ -78,6 +107,9 @@ interface RemovalRange {
 }
 
 const DEFAULT_OPTIONS: NormalizedOptions = {
+  mode: 'normal',
+  filePatterns: [],
+  cwd: process.cwd(),
   privateNames: true,
   protectNames: true,
   publicNames: false,
@@ -101,6 +133,10 @@ export default function hidePrivate(options: RollupHidePrivateOptions = {}): Plu
   return {
     name: 'rollup-plugin-hide-private',
     transform(code, id) {
+      if (normalized.mode !== 'normal') {
+        return null;
+      }
+
       const fileName = stripQuery(id);
       if (!isDeclarationFile(fileName)) {
         return null;
@@ -109,11 +145,22 @@ export default function hidePrivate(options: RollupHidePrivateOptions = {}): Plu
       return toRollupResult(stripHiddenDeclarationsInternal(code, normalized, fileName));
     },
     renderChunk(code, chunk) {
+      if (normalized.mode !== 'normal') {
+        return null;
+      }
+
       if (!isDeclarationFile(chunk.fileName)) {
         return null;
       }
 
       return toRollupResult(stripHiddenDeclarationsInternal(code, normalized, chunk.fileName));
+    },
+    writeBundle() {
+      if (normalized.mode !== 'write-files') {
+        return;
+      }
+
+      rewriteMatchedDeclarationFiles(normalized);
     },
   };
 }
@@ -363,7 +410,12 @@ function hasModifier(node: ts.Node, kind: ts.SyntaxKind): boolean {
 }
 
 function normalizeOptions(options: RollupHidePrivateOptions): NormalizedOptions {
+  const mode = normalizeMode(options.mode);
+
   return {
+    mode,
+    filePatterns: normalizeFilePatterns(options.filePatterns, mode),
+    cwd: normalizeCwd(options.cwd),
     privateNames: normalizeVisibilityMatcher(options.privateNames, DEFAULT_OPTIONS.privateNames, 'privateNames'),
     protectNames: normalizeVisibilityMatcher(options.protectedNames, DEFAULT_OPTIONS.protectNames, 'protectedNames'),
     publicNames: normalizeVisibilityMatcher(options.publicNames, DEFAULT_OPTIONS.publicNames, 'publicNames'),
@@ -371,6 +423,63 @@ function normalizeOptions(options: RollupHidePrivateOptions): NormalizedOptions 
     interfaces: normalizeTypeMemberMatcher(options.interfaces, 'interfaces'),
     types: normalizeTypeMemberMatcher(options.types, 'types'),
   };
+}
+
+function normalizeMode(mode: RollupHidePrivateOptions['mode']): RollupHidePrivateMode {
+  if (mode === undefined) {
+    return DEFAULT_OPTIONS.mode;
+  }
+
+  if (mode === 'normal' || mode === 'write-files') {
+    return mode;
+  }
+
+  throw new TypeError('The "mode" option must be either "normal" or "write-files".');
+}
+
+function normalizeFilePatterns(
+  filePatterns: RollupHidePrivateOptions['filePatterns'],
+  mode: RollupHidePrivateMode,
+): string[] {
+  if (filePatterns === undefined) {
+    if (mode === 'write-files') {
+      throw new TypeError('The "filePatterns" option is required when mode is "write-files".');
+    }
+
+    return [];
+  }
+
+  if (!Array.isArray(filePatterns)) {
+    throw new TypeError('The "filePatterns" option must be an array of glob strings.');
+  }
+
+  const normalized: string[] = [];
+  for (let i = 0; i < filePatterns.length; i++) {
+    const item = filePatterns[i];
+    if (typeof item !== 'string' || item.length === 0) {
+      throw new TypeError('The "filePatterns" option must contain only non-empty glob strings.');
+    }
+
+    normalized.push(item);
+  }
+
+  if (mode === 'write-files' && normalized.length === 0) {
+    throw new TypeError('The "filePatterns" option must contain at least one glob when mode is "write-files".');
+  }
+
+  return normalized;
+}
+
+function normalizeCwd(cwd: RollupHidePrivateOptions['cwd']): string {
+  if (cwd === undefined) {
+    return DEFAULT_OPTIONS.cwd;
+  }
+
+  if (typeof cwd !== 'string' || cwd.length === 0) {
+    throw new TypeError('The "cwd" option must be a non-empty string.');
+  }
+
+  return cwd;
 }
 
 function normalizeVisibilityMatcher(
@@ -430,6 +539,38 @@ function normalizePatternArray(
 
 function isDeclarationFile(fileName: string): boolean {
   return fileName.endsWith('.d.ts') || fileName.endsWith('.d.mts') || fileName.endsWith('.d.cts');
+}
+
+function rewriteMatchedDeclarationFiles(options: NormalizedOptions) {
+  const matchedFiles = globSync(options.filePatterns, {
+    cwd: options.cwd,
+    withFileTypes: true,
+  });
+
+  const uniqueFiles = new Set<string>();
+  for (let i = 0; i < matchedFiles.length; i++) {
+    const matchedFile = matchedFiles[i];
+    if (!matchedFile.isFile()) {
+      continue;
+    }
+
+    const absolutePath = resolve(options.cwd, matchedFile.parentPath, matchedFile.name);
+    if (!isDeclarationFile(absolutePath)) {
+      continue;
+    }
+
+    uniqueFiles.add(absolutePath);
+  }
+
+  for (const filePath of uniqueFiles) {
+    const code = readFileSync(filePath, 'utf8');
+    const result = stripHiddenDeclarationsInternal(code, options, filePath);
+    if (!result.changed) {
+      continue;
+    }
+
+    writeFileSync(filePath, result.code, 'utf8');
+  }
 }
 
 function stripQuery(id: string): string {
