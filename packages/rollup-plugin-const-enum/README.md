@@ -5,7 +5,7 @@
 
 A Rollup plugin that uses the TypeScript compiler API to inline enum member accesses such as `Colors.Red` -> `0` or `Status.Active` -> `"active"`.
 
-By default it only inlines `const enum` members. It can optionally inline regular `enum` members when TypeScript can evaluate them as compile-time constants.
+> 2.0.0 is a major refactor that replaces the original regex-based scanning approach with a more robust TypeScript compiler API-based implementation. This allows for more accurate and reliable enum member inlining, especially in complex codebases with various import patterns and TypeScript features.
 
 **More Rollup Plugins** you might be interested in:
 
