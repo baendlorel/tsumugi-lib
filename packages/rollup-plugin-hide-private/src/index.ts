@@ -4,6 +4,7 @@ import ts from 'typescript';
 
 export type Pattern = string | RegExp;
 export type HideNameMatcher = boolean | Pattern[];
+export type TypeMemberMatcher = false | Pattern[];
 
 export interface RollupHidePrivateOptions {
   /**
@@ -20,20 +21,36 @@ export interface RollupHidePrivateOptions {
   protectedNames?: boolean | Pattern[];
 
   /**
+   * Public member names to hide.
+   * - Can be `true` to hide all public members, `false` to hide none, or an array of string or RegExp patterns to match member names.
+   *
+   * @default false
+   */
+  publicNames?: boolean | Pattern[];
+
+  /**
+   * Interface member names to hide.
+   * - Can be `false` to hide none, or an array of string or RegExp patterns to match member names.
+   *
+   * @default false
+   */
+  interfaces?: false | Pattern[];
+
+  /**
+   * Type literal member names to hide.
+   * - Can be `false` to hide none, or an array of string or RegExp patterns to match member names.
+   *
+   * @default false
+   */
+  types?: false | Pattern[];
+
+  /**
    * Any member names to hide, regardless of visibility.
    * - Can be an array of string or RegExp patterns to match member names.
    *
    * @default undefined
    */
   allNames?: Pattern[];
-
-  /**
-   * Whether interface members should also be removed when they match `allNames`.
-   * - This only affects interface declarations because they do not have private or protected visibility.
-   *
-   * @default false
-   */
-  interfaces?: boolean;
 }
 
 export interface StripHiddenDeclarationsResult {
@@ -43,13 +60,15 @@ export interface StripHiddenDeclarationsResult {
   changed: boolean;
 }
 
-type Visibility = 'private' | 'protected';
+type Visibility = 'private' | 'protected' | 'public';
 
 interface NormalizedOptions {
   privateNames: HideNameMatcher;
   protectNames: HideNameMatcher;
+  publicNames: HideNameMatcher;
   allNames: Pattern[];
-  interfaces: boolean;
+  interfaces: TypeMemberMatcher;
+  types: TypeMemberMatcher;
 }
 
 interface RemovalRange {
@@ -61,12 +80,14 @@ interface RemovalRange {
 const DEFAULT_OPTIONS: NormalizedOptions = {
   privateNames: true,
   protectNames: true,
+  publicNames: false,
   allNames: [],
   interfaces: false,
+  types: false,
 };
 
 /**
- * Hide private and protected members in TypeScript declaration files.
+ * Hide selected declaration members in TypeScript declaration files.
  *
  * Useful for libraries that want to keep certain members internal while still providing type information for them.
  * When used with `rollup-plugin-dts`, place this plugin before `dts()` in the Rollup plugins array.
@@ -155,8 +176,12 @@ function collectHiddenMembers(
     collectHiddenClassMembers(node.members, sourceFile, options, removals);
   }
 
-  if (options.interfaces && ts.isInterfaceDeclaration(node)) {
-    collectHiddenInterfaceMembers(node.members, sourceFile, options, removals);
+  if (ts.isInterfaceDeclaration(node)) {
+    collectHiddenTypeMembers(node.members, sourceFile, options.allNames, options.interfaces, removals);
+  }
+
+  if (ts.isTypeLiteralNode(node)) {
+    collectHiddenTypeMembers(node.members, sourceFile, options.allNames, options.types, removals);
   }
 
   ts.forEachChild(node, (child) => collectHiddenMembers(child, sourceFile, options, removals));
@@ -174,17 +199,16 @@ function collectHiddenClassMembers(
       continue;
     }
 
-    const matchesAllNames = matchesMemberName(member, sourceFile, options.allNames);
     const visibility = getVisibility(member);
-    if (!matchesAllNames && !visibility) {
-      continue;
-    }
+    const matcher =
+      visibility === 'private'
+        ? options.privateNames
+        : visibility === 'protected'
+          ? options.protectNames
+          : options.publicNames;
 
-    if (!matchesAllNames && visibility) {
-      const matcher = visibility === 'private' ? options.privateNames : options.protectNames;
-      if (!matchesMemberName(member, sourceFile, matcher)) {
-        continue;
-      }
+    if (!matchesAnyMatcher(member, sourceFile, options.allNames, matcher)) {
+      continue;
     }
 
     removals.push({
@@ -195,19 +219,20 @@ function collectHiddenClassMembers(
   }
 }
 
-function collectHiddenInterfaceMembers(
+function collectHiddenTypeMembers(
   members: ts.NodeArray<ts.TypeElement>,
   sourceFile: ts.SourceFile,
-  options: NormalizedOptions,
+  allNames: Pattern[],
+  matcher: TypeMemberMatcher,
   removals: RemovalRange[],
 ) {
-  if (options.allNames.length === 0) {
+  if (allNames.length === 0 && matcher === false) {
     return;
   }
 
   for (let i = 0; i < members.length; i++) {
     const member = members[i];
-    if (!isHideableTypeMember(member) || !matchesMemberName(member, sourceFile, options.allNames)) {
+    if (!isHideableTypeMember(member) || !matchesAnyMatcher(member, sourceFile, allNames, matcher)) {
       continue;
     }
 
@@ -253,7 +278,16 @@ function getVisibility(member: ts.ClassElement & { name: ts.PropertyName }): Vis
     return 'private';
   }
 
-  return null;
+  return 'public';
+}
+
+function matchesAnyMatcher(
+  member: NamedMember,
+  sourceFile: ts.SourceFile,
+  allNames: Pattern[],
+  matcher: HideNameMatcher | TypeMemberMatcher,
+): boolean {
+  return matchesMemberName(member, sourceFile, allNames) || matchesMemberName(member, sourceFile, matcher);
 }
 
 function matchesMemberName(member: NamedMember, sourceFile: ts.SourceFile, matcher: HideNameMatcher): boolean {
@@ -330,11 +364,29 @@ function hasModifier(node: ts.Node, kind: ts.SyntaxKind): boolean {
 
 function normalizeOptions(options: RollupHidePrivateOptions): NormalizedOptions {
   return {
-    privateNames: options.privateNames ?? DEFAULT_OPTIONS.privateNames,
-    protectNames: options.protectedNames ?? DEFAULT_OPTIONS.protectNames,
+    privateNames: normalizeVisibilityMatcher(options.privateNames, DEFAULT_OPTIONS.privateNames, 'privateNames'),
+    protectNames: normalizeVisibilityMatcher(options.protectedNames, DEFAULT_OPTIONS.protectNames, 'protectedNames'),
+    publicNames: normalizeVisibilityMatcher(options.publicNames, DEFAULT_OPTIONS.publicNames, 'publicNames'),
     allNames: normalizeAllNames(options.allNames),
-    interfaces: options.interfaces ?? DEFAULT_OPTIONS.interfaces,
+    interfaces: normalizeTypeMemberMatcher(options.interfaces, 'interfaces'),
+    types: normalizeTypeMemberMatcher(options.types, 'types'),
   };
+}
+
+function normalizeVisibilityMatcher(
+  matcher: HideNameMatcher | undefined,
+  defaultValue: HideNameMatcher,
+  optionName: 'privateNames' | 'protectedNames' | 'publicNames',
+): HideNameMatcher {
+  if (matcher === undefined) {
+    return defaultValue;
+  }
+
+  if (typeof matcher === 'boolean') {
+    return matcher;
+  }
+
+  return normalizePatternArray(matcher, optionName);
 }
 
 function normalizeAllNames(allNames: RollupHidePrivateOptions['allNames']): Pattern[] {
@@ -342,15 +394,33 @@ function normalizeAllNames(allNames: RollupHidePrivateOptions['allNames']): Patt
     return [];
   }
 
-  if (!Array.isArray(allNames)) {
-    throw new TypeError('The "allNames" option must be an array of string or RegExp values.');
+  return normalizePatternArray(allNames, 'allNames');
+}
+
+function normalizeTypeMemberMatcher(
+  matcher: RollupHidePrivateOptions['interfaces'] | RollupHidePrivateOptions['types'],
+  optionName: 'interfaces' | 'types',
+): TypeMemberMatcher {
+  if (matcher === undefined || matcher === false) {
+    return false;
+  }
+
+  return normalizePatternArray(matcher, optionName);
+}
+
+function normalizePatternArray(
+  patterns: unknown,
+  optionName: 'allNames' | 'privateNames' | 'protectedNames' | 'publicNames' | 'interfaces' | 'types',
+): Pattern[] {
+  if (!Array.isArray(patterns)) {
+    throw new TypeError(`The "${optionName}" option must be an array of string or RegExp values.`);
   }
 
   const normalized: Pattern[] = [];
-  for (let i = 0; i < allNames.length; i++) {
-    const item = allNames[i];
+  for (let i = 0; i < patterns.length; i++) {
+    const item = patterns[i];
     if (typeof item !== 'string' && !(item instanceof RegExp)) {
-      throw new TypeError('The "allNames" option must contain only string or RegExp values.');
+      throw new TypeError(`The "${optionName}" option must contain only string or RegExp values.`);
     }
     normalized.push(item);
   }

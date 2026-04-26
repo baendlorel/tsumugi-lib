@@ -334,7 +334,7 @@ export declare class Example {
     expect(result.code).not.toContain('internalValue');
   });
 
-  it('can remove interface members matched by allNames when interfaces is enabled', () => {
+  it('can remove interface members matched by allNames by default', () => {
     const code = `
 export interface Example {
   visible: string;
@@ -347,7 +347,6 @@ export interface Example {
       code,
       {
         allNames: ['debugOnly', 'nested'],
-        interfaces: true,
       },
       'interface-members.d.ts',
     );
@@ -356,6 +355,134 @@ export interface Example {
     expect(result.code).toContain('visible: string;');
     expect(result.code).not.toContain('debugOnly');
     expect(result.code).not.toContain('nested(): void;');
+  });
+
+  it('can remove interface members matched by interfaces patterns', () => {
+    const code = `
+export interface Example {
+  visible: string;
+  debugOnly: string;
+  debugMethod(): void;
+}
+`;
+
+    const result = stripHiddenDeclarations(
+      code,
+      {
+        interfaces: ['debugOnly', /^debugMethod$/],
+      },
+      'interface-patterns.d.ts',
+    );
+
+    expect(result.changed).toBe(true);
+    expect(result.code).toContain('visible: string;');
+    expect(result.code).not.toContain('debugOnly');
+    expect(result.code).not.toContain('debugMethod');
+  });
+
+  it('keeps interface members when interfaces is false', () => {
+    const code = `
+export interface Example {
+  visible: string;
+  debugOnly: string;
+}
+`;
+
+    const result = stripHiddenDeclarations(
+      code,
+      {
+        interfaces: false,
+      },
+      'interface-false.d.ts',
+    );
+
+    expect(result.changed).toBe(false);
+    expect(result.code).toContain('visible: string;');
+    expect(result.code).toContain('debugOnly');
+  });
+
+  it('can remove public members matched by publicNames', () => {
+    const code = `
+export declare class Example {
+  visible: string;
+  debugOnly: string;
+  debugMethod(): void;
+}
+`;
+
+    const result = stripHiddenDeclarations(
+      code,
+      {
+        privateNames: false,
+        protectedNames: false,
+        publicNames: ['debugOnly', /^debugMethod$/],
+      },
+      'public-names.d.ts',
+    );
+
+    expect(result.changed).toBe(true);
+    expect(result.code).toContain('visible: string;');
+    expect(result.code).not.toContain('debugOnly');
+    expect(result.code).not.toContain('debugMethod');
+  });
+
+  it('can remove type literal members matched by types patterns', () => {
+    const code = `
+export type Example = {
+  visible: string;
+  debugOnly: string;
+  debugMethod(): void;
+};
+`;
+
+    const result = stripHiddenDeclarations(
+      code,
+      {
+        types: ['debugOnly', /^debugMethod$/],
+      },
+      'types-patterns.d.ts',
+    );
+
+    expect(result.changed).toBe(true);
+    expect(result.code).toContain('visible: string;');
+    expect(result.code).not.toContain('debugOnly');
+    expect(result.code).not.toContain('debugMethod');
+  });
+
+  it('uses allNames for public, interface, and type members by default', () => {
+    const code = `
+export declare class ClassExample {
+  visible: string;
+  debugOnly: string;
+}
+
+export interface InterfaceExample {
+  visible: string;
+  debugOnly: string;
+}
+
+export type TypeExample = {
+  visible: string;
+  debugOnly: string;
+};
+`;
+
+    const result = stripHiddenDeclarations(
+      code,
+      {
+        privateNames: false,
+        protectedNames: false,
+        publicNames: false,
+        interfaces: false,
+        types: false,
+        allNames: ['debugOnly'],
+      },
+      'all-names-everywhere.d.ts',
+    );
+
+    expect(result.changed).toBe(true);
+    expect(result.code).toContain('visible: string;');
+    expect(result.code).not.toContain('debugOnly: string;');
   });
 
   it('handles numeric and string literal member names', () => {

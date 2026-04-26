@@ -2,7 +2,7 @@
 
 ![npm version](https://img.shields.io/npm/v/rollup-plugin-hide-private.svg) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Remove selected `private` and `protected` members from generated TypeScript declaration files.
+Remove selected declaration members from generated TypeScript declaration files.
 
 This plugin is designed for declaration build steps, especially when you bundle `.d.ts` output with `rollup-plugin-dts`.
 
@@ -33,8 +33,10 @@ export default {
     hidePrivate({
       privateNames: true,
       protectedNames: [/^internal/, 'debugOnly'],
+      publicNames: [/^debug/],
+      interfaces: ['__internal'],
+      types: [/^__typeInternal/],
       allNames: ['__internal', /^debug/],
-      interfaces: true,
     }),
     dts(),
   ],
@@ -53,17 +55,25 @@ interface RollupHidePrivateOptions {
   // `true` by default
   protectedNames?: boolean | Pattern[];
 
+  // `false` by default
+  publicNames?: boolean | Pattern[];
+
   // `[]` by default
   allNames?: Pattern[];
 
   // `false` by default
-  interfaces?: boolean;
+  interfaces?: false | Pattern[];
+
+  // `false` by default
+  types?: false | Pattern[];
 }
 ```
 
 `Pattern` means either a string or a regular expression.
 
-`interfaces` only applies to `allNames`. When enabled, matching members inside `interface` declarations are removed as well.
+`allNames` is evaluated for private, protected, public, interface, and type-literal members.
+
+`interfaces` and `types` provide extra pattern-based filtering for interface members and type-literal members. They accept either `false` or a pattern array.
 
 
 ## Effect
