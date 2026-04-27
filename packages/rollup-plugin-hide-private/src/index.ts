@@ -1,122 +1,10 @@
-import { globSync, readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import type { ExistingRawSourceMap, Plugin } from 'rollup';
+import type { Options, Result, NormalizedOptions, RemovalRange, Pattern, Visibility, Matcher } from './types.js';
+
 import MagicString from 'magic-string';
 import ts from 'typescript';
-
-export type Pattern = string | RegExp;
-export type HideNameMatcher = boolean | Pattern[];
-export type TypeMemberMatcher = false | Pattern[];
-export type RollupHidePrivateMode = 'normal' | 'write-files';
-
-export interface RollupHidePrivateOptions {
-  /**
-   * Plugin operating mode.
-   * - `normal`: transform declaration output in the Rollup pipeline.
-   * - `write-files`: rewrite matched declaration files on disk in `writeBundle`.
-   *
-   * @default 'normal'
-   */
-  mode?: RollupHidePrivateMode;
-
-  /**
-   * Glob patterns used to match file paths when `mode` is `write-files`.
-   *
-   * @default []
-   */
-  filePatterns?: string[];
-
-  /**
-   * Base directory used to resolve `filePatterns` in `write-files` mode.
-   *
-   * @default process.cwd()
-   */
-  cwd?: string;
-
-  /**
-   * Private member names to hide.
-   * - Can be `true` to hide all private members, `false` to hide none, or an array of string or RegExp patterns to match member names.
-   */
-  privateNames?: boolean | Pattern[];
-
-  /**
-   * Protected member names to hide.
-   * - Can be `true` to hide all protected members, `false` to hide none, or an array of string or RegExp patterns to match member names.
-   * @default
-   */
-  protectedNames?: boolean | Pattern[];
-
-  /**
-   * Public member names to hide.
-   * - Can be `true` to hide all public members, `false` to hide none, or an array of string or RegExp patterns to match member names.
-   *
-   * @default false
-   */
-  publicNames?: boolean | Pattern[];
-
-  /**
-   * Interface member names to hide.
-   * - Can be `false` to hide none, or an array of string or RegExp patterns to match member names.
-   *
-   * @default false
-   */
-  interfaces?: false | Pattern[];
-
-  /**
-   * Type literal member names to hide.
-   * - Can be `false` to hide none, or an array of string or RegExp patterns to match member names.
-   *
-   * @default false
-   */
-  types?: false | Pattern[];
-
-  /**
-   * Any member names to hide, regardless of visibility.
-   * - Can be an array of string or RegExp patterns to match member names.
-   *
-   * @default undefined
-   */
-  allNames?: Pattern[];
-}
-
-export interface StripHiddenDeclarationsResult {
-  code: string;
-  map: ExistingRawSourceMap | null;
-  removedMembers: string[];
-  changed: boolean;
-}
-
-type Visibility = 'private' | 'protected' | 'public';
-
-interface NormalizedOptions {
-  mode: RollupHidePrivateMode;
-  filePatterns: string[];
-  cwd: string;
-  privateNames: HideNameMatcher;
-  protectNames: HideNameMatcher;
-  publicNames: HideNameMatcher;
-  allNames: Pattern[];
-  interfaces: TypeMemberMatcher;
-  types: TypeMemberMatcher;
-}
-
-interface RemovalRange {
-  start: number;
-  end: number;
-  name: string;
-}
-
-const DEFAULT_OPTIONS: NormalizedOptions = {
-  mode: 'normal',
-  filePatterns: [],
-  cwd: process.cwd(),
-  privateNames: true,
-  protectNames: true,
-  publicNames: false,
-  allNames: [],
-  interfaces: false,
-  types: false,
-};
+import { stripQuery, isDeclarationFile, toRollupResult, mergeRanges } from './utils.js';
+import { normalizeOptions } from './options.js';
 
 /**
  * Hide selected declaration members in TypeScript declaration files.
@@ -127,16 +15,12 @@ const DEFAULT_OPTIONS: NormalizedOptions = {
  *
  * __PKG_INFO__
  */
-export default function hidePrivate(options: RollupHidePrivateOptions = {}): Plugin {
+export default function hidePrivate(options: Options = {}): Plugin {
   const normalized = normalizeOptions(options);
 
   return {
     name: 'rollup-plugin-hide-private',
     transform(code, id) {
-      if (normalized.mode !== 'normal') {
-        return null;
-      }
-
       const fileName = stripQuery(id);
       if (!isDeclarationFile(fileName)) {
         return null;
@@ -144,40 +28,14 @@ export default function hidePrivate(options: RollupHidePrivateOptions = {}): Plu
 
       return toRollupResult(stripHiddenDeclarationsInternal(code, normalized, fileName));
     },
-    renderChunk(code, chunk) {
-      if (normalized.mode !== 'normal') {
-        return null;
-      }
-
-      if (!isDeclarationFile(chunk.fileName)) {
-        return null;
-      }
-
-      return toRollupResult(stripHiddenDeclarationsInternal(code, normalized, chunk.fileName));
-    },
-    writeBundle() {
-      if (normalized.mode !== 'write-files') {
-        return;
-      }
-
-      rewriteMatchedDeclarationFiles(normalized);
-    },
   };
 }
 
-export function stripHiddenDeclarations(
-  code: string,
-  options: RollupHidePrivateOptions = {},
-  fileName = 'index.d.ts',
-): StripHiddenDeclarationsResult {
+export function stripHiddenDeclarations(code: string, options: Options = {}, fileName = 'index.d.ts'): Result {
   return stripHiddenDeclarationsInternal(code, normalizeOptions(options), fileName);
 }
 
-function stripHiddenDeclarationsInternal(
-  code: string,
-  options: NormalizedOptions,
-  fileName: string,
-): StripHiddenDeclarationsResult {
+function stripHiddenDeclarationsInternal(code: string, options: NormalizedOptions, fileName: string): Result {
   const sourceFile = ts.createSourceFile(fileName, code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
   const removals: RemovalRange[] = [];
 
@@ -251,7 +109,7 @@ function collectHiddenClassMembers(
       visibility === 'private'
         ? options.privateNames
         : visibility === 'protected'
-          ? options.protectNames
+          ? options.protectedNames
           : options.publicNames;
 
     if (!matchesAnyMatcher(member, sourceFile, options.allNames, matcher)) {
@@ -270,7 +128,7 @@ function collectHiddenTypeMembers(
   members: ts.NodeArray<ts.TypeElement>,
   sourceFile: ts.SourceFile,
   allNames: Pattern[],
-  matcher: TypeMemberMatcher,
+  matcher: Matcher,
   removals: RemovalRange[],
 ) {
   if (allNames.length === 0 && matcher === false) {
@@ -332,12 +190,12 @@ function matchesAnyMatcher(
   member: NamedMember,
   sourceFile: ts.SourceFile,
   allNames: Pattern[],
-  matcher: HideNameMatcher | TypeMemberMatcher,
+  matcher: Matcher,
 ): boolean {
   return matchesMemberName(member, sourceFile, allNames) || matchesMemberName(member, sourceFile, matcher);
 }
 
-function matchesMemberName(member: NamedMember, sourceFile: ts.SourceFile, matcher: HideNameMatcher): boolean {
+function matchesMemberName(member: NamedMember, sourceFile: ts.SourceFile, matcher: Matcher): boolean {
   if (matcher === true) {
     return true;
   }
@@ -407,210 +265,6 @@ function matchesPattern(pattern: string | RegExp, value: string): boolean {
 function hasModifier(node: ts.Node, kind: ts.SyntaxKind): boolean {
   const modifiers = (node as ts.Node & { modifiers?: ts.NodeArray<ts.ModifierLike> }).modifiers;
   return Boolean(modifiers?.some((modifier) => modifier.kind === kind));
-}
-
-function normalizeOptions(options: RollupHidePrivateOptions): NormalizedOptions {
-  const mode = normalizeMode(options.mode);
-
-  return {
-    mode,
-    filePatterns: normalizeFilePatterns(options.filePatterns, mode),
-    cwd: normalizeCwd(options.cwd),
-    privateNames: normalizeVisibilityMatcher(options.privateNames, DEFAULT_OPTIONS.privateNames, 'privateNames'),
-    protectNames: normalizeVisibilityMatcher(options.protectedNames, DEFAULT_OPTIONS.protectNames, 'protectedNames'),
-    publicNames: normalizeVisibilityMatcher(options.publicNames, DEFAULT_OPTIONS.publicNames, 'publicNames'),
-    allNames: normalizeAllNames(options.allNames),
-    interfaces: normalizeTypeMemberMatcher(options.interfaces, 'interfaces'),
-    types: normalizeTypeMemberMatcher(options.types, 'types'),
-  };
-}
-
-function normalizeMode(mode: RollupHidePrivateOptions['mode']): RollupHidePrivateMode {
-  if (mode === undefined) {
-    return DEFAULT_OPTIONS.mode;
-  }
-
-  if (mode === 'normal' || mode === 'write-files') {
-    return mode;
-  }
-
-  throw new TypeError('The "mode" option must be either "normal" or "write-files".');
-}
-
-function normalizeFilePatterns(
-  filePatterns: RollupHidePrivateOptions['filePatterns'],
-  mode: RollupHidePrivateMode,
-): string[] {
-  if (filePatterns === undefined) {
-    if (mode === 'write-files') {
-      throw new TypeError('The "filePatterns" option is required when mode is "write-files".');
-    }
-
-    return [];
-  }
-
-  if (!Array.isArray(filePatterns)) {
-    throw new TypeError('The "filePatterns" option must be an array of glob strings.');
-  }
-
-  const normalized: string[] = [];
-  for (let i = 0; i < filePatterns.length; i++) {
-    const item = filePatterns[i];
-    if (typeof item !== 'string' || item.length === 0) {
-      throw new TypeError('The "filePatterns" option must contain only non-empty glob strings.');
-    }
-
-    normalized.push(item);
-  }
-
-  if (mode === 'write-files' && normalized.length === 0) {
-    throw new TypeError('The "filePatterns" option must contain at least one glob when mode is "write-files".');
-  }
-
-  return normalized;
-}
-
-function normalizeCwd(cwd: RollupHidePrivateOptions['cwd']): string {
-  if (cwd === undefined) {
-    return DEFAULT_OPTIONS.cwd;
-  }
-
-  if (typeof cwd !== 'string' || cwd.length === 0) {
-    throw new TypeError('The "cwd" option must be a non-empty string.');
-  }
-
-  return cwd;
-}
-
-function normalizeVisibilityMatcher(
-  matcher: HideNameMatcher | undefined,
-  defaultValue: HideNameMatcher,
-  optionName: 'privateNames' | 'protectedNames' | 'publicNames',
-): HideNameMatcher {
-  if (matcher === undefined) {
-    return defaultValue;
-  }
-
-  if (typeof matcher === 'boolean') {
-    return matcher;
-  }
-
-  return normalizePatternArray(matcher, optionName);
-}
-
-function normalizeAllNames(allNames: RollupHidePrivateOptions['allNames']): Pattern[] {
-  if (allNames === undefined) {
-    return [];
-  }
-
-  return normalizePatternArray(allNames, 'allNames');
-}
-
-function normalizeTypeMemberMatcher(
-  matcher: RollupHidePrivateOptions['interfaces'] | RollupHidePrivateOptions['types'],
-  optionName: 'interfaces' | 'types',
-): TypeMemberMatcher {
-  if (matcher === undefined || matcher === false) {
-    return false;
-  }
-
-  return normalizePatternArray(matcher, optionName);
-}
-
-function normalizePatternArray(
-  patterns: unknown,
-  optionName: 'allNames' | 'privateNames' | 'protectedNames' | 'publicNames' | 'interfaces' | 'types',
-): Pattern[] {
-  if (!Array.isArray(patterns)) {
-    throw new TypeError(`The "${optionName}" option must be an array of string or RegExp values.`);
-  }
-
-  const normalized: Pattern[] = [];
-  for (let i = 0; i < patterns.length; i++) {
-    const item = patterns[i];
-    if (typeof item !== 'string' && !(item instanceof RegExp)) {
-      throw new TypeError(`The "${optionName}" option must contain only string or RegExp values.`);
-    }
-    normalized.push(item);
-  }
-
-  return normalized;
-}
-
-function isDeclarationFile(fileName: string): boolean {
-  return fileName.endsWith('.d.ts') || fileName.endsWith('.d.mts') || fileName.endsWith('.d.cts');
-}
-
-function rewriteMatchedDeclarationFiles(options: NormalizedOptions) {
-  const matchedFiles = globSync(options.filePatterns, {
-    cwd: options.cwd,
-    withFileTypes: true,
-  });
-
-  const uniqueFiles = new Set<string>();
-  for (let i = 0; i < matchedFiles.length; i++) {
-    const matchedFile = matchedFiles[i];
-    if (!matchedFile.isFile()) {
-      continue;
-    }
-
-    const absolutePath = resolve(options.cwd, matchedFile.parentPath, matchedFile.name);
-    if (!isDeclarationFile(absolutePath)) {
-      continue;
-    }
-
-    uniqueFiles.add(absolutePath);
-  }
-
-  for (const filePath of uniqueFiles) {
-    const code = readFileSync(filePath, 'utf8');
-    const result = stripHiddenDeclarationsInternal(code, options, filePath);
-    if (!result.changed) {
-      continue;
-    }
-
-    writeFileSync(filePath, result.code, 'utf8');
-  }
-}
-
-function stripQuery(id: string): string {
-  const queryIndex = id.indexOf('?');
-  const hashIndex = id.indexOf('#');
-  const end = [queryIndex, hashIndex].filter((value) => value >= 0).sort((a, b) => a - b)[0];
-  return end === undefined ? id : id.slice(0, end);
-}
-
-function toRollupResult(result: StripHiddenDeclarationsResult) {
-  if (!result.changed || !result.map) {
-    return null;
-  }
-
-  return {
-    code: result.code,
-    map: result.map,
-  };
-}
-
-function mergeRanges(ranges: RemovalRange[]): RemovalRange[] {
-  if (ranges.length <= 1) {
-    return ranges;
-  }
-
-  const sorted = [...ranges].sort((a, b) => a.start - b.start || a.end - b.end);
-  const merged: RemovalRange[] = [sorted[0]];
-
-  for (let i = 1; i < sorted.length; i++) {
-    const current = sorted[i];
-    const previous = merged[merged.length - 1];
-    if (current.start <= previous.end) {
-      previous.end = Math.max(previous.end, current.end);
-      continue;
-    }
-
-    merged.push({ ...current });
-  }
-
-  return merged;
 }
 
 export { hidePrivate };

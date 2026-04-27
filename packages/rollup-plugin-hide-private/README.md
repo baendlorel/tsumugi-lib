@@ -2,16 +2,7 @@
 
 ![npm version](https://img.shields.io/npm/v/rollup-plugin-hide-private.svg) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Remove selected declaration members from generated TypeScript declaration files.
-
 This plugin is designed for declaration build steps, especially when you bundle `.d.ts` output with `rollup-plugin-dts`.
-
-Place `hidePrivate()` before `dts()` in the Rollup plugins array so declaration members are removed before `rollup-plugin-dts` emits the final bundle.
-
-The plugin supports two modes:
-
-- `normal` mode: the current behavior, transforming declaration output inside the Rollup pipeline.
-- `write-files` mode: directly rewrites matched declaration files on disk during `writeBundle`.
 
 **More Rollup Plugins** you might be interested in:
 
@@ -27,7 +18,7 @@ pnpm add -D rollup-plugin-hide-private rollup typescript
 
 ## Usage
 
-### Normal mode
+### Normal 
 
 ```ts
 import dts from 'rollup-plugin-dts';
@@ -52,43 +43,25 @@ export default {
 
 The plugin only processes declaration outputs such as `.d.ts`, `.d.mts` and `.d.cts`.
 
-### Write-files mode
+### vite-plugin-dts
 
 Use this mode when you already have declaration files on disk and want the plugin to rewrite only selected files matched by glob patterns.
 
 ```ts
-import hidePrivate from 'rollup-plugin-hide-private';
-
-export default {
-  input: 'src/index.ts',
-  output: [{ dir: 'dist', format: 'es' }],
-  plugins: [
-    hidePrivate({
-      mode: 'write-files',
-      cwd: process.cwd(),
-      filePatterns: ['dist/types/**/*.d.ts', 'dist/**/*.d.mts'],
-      privateNames: true,
-      protectedNames: [/^internal/],
-    }),
-  ],
-};
+import dts from 'vite-plugin-dts';
+import { stripHiddenDeclarations } from 'rollup-plugin-hide-private';
+ dts({
+  ...,
+  beforeWriteFile: (filePath: string, content: string) => {
+    return { content: stripHiddenDeclarations(content, { allNames: [/^_/] }).code, filePath };
+  },
+}),
 ```
-
-In `write-files` mode, `filePatterns` is required and must be an array of glob strings.
 
 ## Options
 
 ```ts
 interface RollupHidePrivateOptions {
-  // `normal` by default
-  mode?: 'normal' | 'write-files';
-
-  // Required when mode is `write-files`
-  filePatterns?: string[];
-
-  // `process.cwd()` by default
-  cwd?: string;
-
   // `true` by default
   privateNames?: boolean | Pattern[];
 
@@ -108,16 +81,6 @@ interface RollupHidePrivateOptions {
   types?: false | Pattern[];
 }
 ```
-
-`Pattern` means either a string or a regular expression.
-
-`mode: 'normal'` keeps the existing Rollup transform/renderChunk behavior.
-
-`mode: 'write-files'` skips in-memory declaration transforms and instead rewrites declaration files matched by `filePatterns` during `writeBundle`.
-
-`allNames` is evaluated for private, protected, public, interface, and type-literal members.
-
-`interfaces` and `types` provide extra pattern-based filtering for interface members and type-literal members. They accept either `false` or a pattern array.
 
 
 ## Effect
