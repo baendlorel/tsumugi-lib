@@ -1,7 +1,7 @@
 import { HexagramList, type HexagramInfo } from '../core/common.js';
 import { Yao } from './yao.js';
 
-export type LiuYao = [Yao, Yao, Yao, Yao, Yao, Yao];
+type LiuYao = [Yao, Yao, Yao, Yao, Yao, Yao];
 export const YaoIndex = ['初爻', '二爻', '三爻', '四爻', '五爻', '上爻'] as const;
 
 /**
@@ -11,6 +11,23 @@ export const YaoIndex = ['初爻', '二爻', '三爻', '四爻', '五爻', '上�
  * - Creates “乾为天” by default.
  */
 export class Hexagram {
+  /**
+   * Use tokens like `'012132'` to create a Hexagram, where each digit represents the count of Yang in the corresponding Yao (0 for 老阴, 1 for 少阳, 2 for 少阴, 3 for 老阳). The first digit represents the first Yao (初爻) and the last digit represents the sixth Yao (上爻).
+   */
+  static fromBinary(quaternary: string): Hexagram {
+    return new Hexagram(quaternary.split('').map((c) => new Yao(parseInt(c))));
+  }
+
+  /**
+   * Use tokens like `'单单拆拆重重'` to create a Hexagram.
+   *
+   * Since 交 is 0, 单 is 1, 拆 is 2, and 重 is 3, the above token is equivalent to '112233'.
+   * Which returns '风泽中孚' with its 5th and 6th Yao being dynamic.
+   */
+  static fromSymbolName(quaternary: string): Hexagram {
+    return new Hexagram(quaternary.split('').map((c) => new Yao(parseInt(c))));
+  }
+
   /**
    * Try to create a Hexagram from an array of Yaos. If the input is invalid, null will be returned.
    */

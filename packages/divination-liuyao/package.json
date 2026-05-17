@@ -7,7 +7,7 @@
   },
   "purpose": "npm",
   "description": "Offers metadata for the Chinese Liu Yao divination, sourced from works such as 'Zeng Shan Bu Yi'.",
-  "description_zh": "提供六爻卦象的元数据，来自《增删卜易》等著作",
+  "description_zh": "提供六爻卦象的元数据，数据来自《增删卜易》等著作",
   "type": "module",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -22,15 +22,20 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/baendlorel/kt-packages.git",
-    "directory": "packages/bind-params"
+    "directory": "packages/liuyao"
   },
   "keywords": [
     "typescript",
-    "javascript"
+    "javascript",
+    "liuyao",
+    "divination",
+    "易经",
+    "六爻",
+    "占卜"
   ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/baendlorel/kt-packages/issues"
   },
-  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/bind-params#readme"
+  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/liuyao#readme"
 }
