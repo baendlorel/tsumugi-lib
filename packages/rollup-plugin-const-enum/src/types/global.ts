@@ -1,38 +1,18 @@
 export interface RollupConstEnumOptions {
   /**
-   * Which file to scan for const enums.
-   * - priority < `files`
-   * - default: `['.ts', '.tsx', '.mts', '.cts']`
+   * Inline regular `enum` members in addition to `const enum`.
+   * - default: `false`
    */
-  suffixes: string[];
+  inlineNonConstEnums: boolean;
 
   /**
-   * Skip `.d.ts` files while scanning.
-   * - default: `true`
+   * Only inline enums whose declaration names match one of these rules.
+   * - default: `undefined`
    */
-  skipDts: boolean;
-
-  /**
-   * Which file(full path) to scan for const enums.
-   * - **ignores `suffixes` while provided**
-   * - directly check `path.join(process.cwd(), file)`, should give the full path.
-   * - default: `[]` (disabled)
-   */
-  files: string[];
-
-  /**
-   * Skip these directories(full path) while scanning.
-   * - directly check `path.join(process.cwd(), file)`, should give the full path.
-   * - default: `['.git', 'test', 'tests', 'dist', 'node_modules']`
-   */
-  excludedDirectories: string[];
+  inlineNames?: Array<string | RegExp>;
 }
 
-type KeyValueEntries = [string, string][];
-
-export interface ConstEnumReplacementList {
-  /**
-   * This list is the replacement used internally. free to use, but **do not modify it**.
-   */
-  __kskb_replacement_list: [RegExp, KeyValueEntries][];
+export interface NormalizedRollupConstEnumOptions {
+  inlineNonConstEnums: boolean;
+  inlineNames?: Array<string | RegExp>;
 }

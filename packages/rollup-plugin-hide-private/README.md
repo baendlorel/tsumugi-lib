@@ -2,8 +2,6 @@
 
 ![npm version](https://img.shields.io/npm/v/rollup-plugin-hide-private.svg) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Remove selected `private` and `protected` members from generated TypeScript declaration files.
-
 This plugin is designed for declaration build steps, especially when you bundle `.d.ts` output with `rollup-plugin-dts`.
 
 **More Rollup Plugins** you might be interested in:
@@ -20,6 +18,8 @@ pnpm add -D rollup-plugin-hide-private rollup typescript
 
 ## Usage
 
+### Normal 
+
 ```ts
 import dts from 'rollup-plugin-dts';
 import hidePrivate from 'rollup-plugin-hide-private';
@@ -28,17 +28,35 @@ export default {
   input: 'dist/types/index.d.ts',
   output: [{ file: 'dist/index.d.ts', format: 'es', sourcemap: true }],
   plugins: [
-    dts(),
     hidePrivate({
       privateNames: true,
-      protectNames: [/^internal/, 'debugOnly'],
+      protectedNames: [/^internal/, 'debugOnly'],
+      publicNames: [/^debug/],
+      interfaces: ['__internal'],
+      types: [/^__typeInternal/],
       allNames: ['__internal', /^debug/],
     }),
+    dts(),
   ],
 };
 ```
 
 The plugin only processes declaration outputs such as `.d.ts`, `.d.mts` and `.d.cts`.
+
+### vite-plugin-dts
+
+Use this mode when you already have declaration files on disk and want the plugin to rewrite only selected files matched by glob patterns.
+
+```ts
+import dts from 'vite-plugin-dts';
+import { stripHiddenDeclarations } from 'rollup-plugin-hide-private';
+ dts({
+  ...,
+  beforeWriteFile: (filePath: string, content: string) => {
+    return { content: stripHiddenDeclarations(content, { allNames: [/^_/] }).code, filePath };
+  },
+}),
+```
 
 ## Options
 
@@ -50,12 +68,19 @@ interface RollupHidePrivateOptions {
   // `true` by default
   protectedNames?: boolean | Pattern[];
 
+  // `false` by default
+  publicNames?: boolean | Pattern[];
+
   // `[]` by default
-  allNames?: boolean | Pattern[];
+  allNames?: Pattern[];
+
+  // `false` by default
+  interfaces?: false | Pattern[];
+
+  // `false` by default
+  types?: false | Pattern[];
 }
 ```
-
-`Pattern` means either a string or a regular expression.
 
 
 ## Effect

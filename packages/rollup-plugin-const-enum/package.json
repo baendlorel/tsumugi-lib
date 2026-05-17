@@ -1,6 +1,6 @@
 {
   "name": "rollup-plugin-const-enum",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "author": {
     "name": "Kasukabe Tsumugi",
     "email": "futami16237@gmail.com"
@@ -32,6 +32,13 @@
     "javascript"
   ],
   "license": "MIT",
+  "dependencies": {
+    "magic-string": "^0.30.21"
+  },
+  "peerDependencies": {
+    "rollup": ">=4.0.0",
+    "typescript": ">=4.5.0"
+  },
   "bugs": {
     "url": "https://github.com/baendlorel/kt-packages/issues"
   }

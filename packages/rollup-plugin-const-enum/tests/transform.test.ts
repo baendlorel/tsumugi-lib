@@ -1,110 +1,149 @@
-import { ConstEnumHandler } from '@/const-enum.js';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { sampleEnums } from './helpers.js';
+import constEnum from '../src/index.js';
+import { createTestEnvironment, simulateTransform, simulateTransformResult } from './helpers.js';
 
-describe('ConstEnumHandler.parseConstEnums', () => {
-  it('simple', () => {
-    const list = ConstEnumHandler.parse(sampleEnums.simple);
-    expect(list).toEqual([
-      [
-        new RegExp('\\bColors.\\b'),
-        [
-          // # sorted by key length descending
-          ['Colors.Green', '1'],
-          ['Colors.Blue', '2'],
-          ['Colors.Red', '0'],
-        ],
-      ],
-    ]);
+describe('constEnum transform', () => {
+  it('inlines same-file const enums', () => {
+    const env = createTestEnvironment('same-file-' + Date.now());
+    const code = `const enum Color { Red = 0 }
+export const value = Color.Red;`;
+    const id = env.writeFile('entry.ts', code);
+
+    try {
+      const plugin = constEnum();
+      const result = simulateTransform(plugin, code, id);
+
+      expect(result).toContain('export const value = 0;');
+    } finally {
+      env.cleanup();
+    }
   });
 
-  it('stringEnum', () => {
-    const list = ConstEnumHandler.parse(sampleEnums.stringEnum);
-    expect(list).toEqual([
-      [
-        new RegExp('\\bStatus.\\b'),
-        [
-          ['Status.Inactive', '"inactive"'],
-          ['Status.Pending', '"pending"'],
-          ['Status.Active', '"active"'],
-        ],
-      ],
-    ]);
+  it('inlines imported const enums', () => {
+    const env = createTestEnvironment('imported-const-' + Date.now());
+    env.writeFile('enums.ts', `export const enum Color { Red = 0, Blue = 2 }`);
+    const code = `import { Color } from './enums';
+export const value = Color.Red + Color.Blue;`;
+    const id = env.writeFile('entry.ts', code);
+
+    try {
+      const plugin = constEnum();
+      const result = simulateTransform(plugin, code, id);
+
+      expect(result).toContain('export const value = 0 + 2;');
+    } finally {
+      env.cleanup();
+    }
   });
 
-  it('mixed', () => {
-    const list = ConstEnumHandler.parse(sampleEnums.mixed);
-    expect(list).toEqual([
-      [
-        new RegExp('\\bMixed.\\b'),
-        [
-          ['Mixed.A', '1'],
-          ['Mixed.B', '"string"'],
-          ['Mixed.C', '0x10'],
-          ['Mixed.D', '17'],
-        ],
-      ],
-    ]);
+  it('does not inline enums that are not imported', () => {
+    const env = createTestEnvironment('not-imported-' + Date.now());
+    env.writeFile('enums.ts', `export const enum Color { Red = 0 }`);
+    const code = `export const value = Color.Red;`;
+    const id = env.writeFile('entry.ts', code);
+
+    try {
+      const plugin = constEnum();
+      const result = simulateTransform(plugin, code, id);
+
+      expect(result).toBeNull();
+    } finally {
+      env.cleanup();
+    }
   });
 
-  it('multiple', () => {
-    const list = ConstEnumHandler.parse(sampleEnums.multiple);
-    expect(list).toEqual([
-      [
-        new RegExp('\\bFirst.\\b'),
-        [
-          ['First.A', '1'],
-          ['First.B', '2'],
-        ],
-      ],
-      [
-        new RegExp('\\bSecond.\\b'),
-        [
-          ['Second.X', '"x"'],
-          ['Second.Y', '"y"'],
-        ],
-      ],
-    ]);
+  it('supports namespace imports and string element access', () => {
+    const env = createTestEnvironment('namespace-import-' + Date.now());
+    env.writeFile('enums.ts', `export const enum Color { Red = 0 }`);
+    const code = `import * as palette from './enums';
+export const value = palette.Color['Red'];`;
+    const id = env.writeFile('entry.ts', code);
+
+    try {
+      const plugin = constEnum();
+      const result = simulateTransform(plugin, code, id);
+
+      expect(result).toContain('export const value = 0;');
+    } finally {
+      env.cleanup();
+    }
   });
 
-  it('withComments', () => {
-    const list = ConstEnumHandler.parse(sampleEnums.withComments);
-    expect(list).toEqual([
-      [
-        new RegExp('\\bStatus.\\b'),
-        [
-          ['Status.Inactive', '0'],
-          ['Status.Active', '1'],
-        ],
-      ],
-    ]);
+  it('only inlines regular enums when inlineNonConstEnums is enabled', () => {
+    const env = createTestEnvironment('regular-enum-' + Date.now());
+    env.writeFile('enums.ts', `export enum Color { Red = 1 }`);
+    const code = `import { Color } from './enums';
+export const value = Color.Red;`;
+    const id = env.writeFile('entry.ts', code);
+
+    try {
+      const disabled = constEnum();
+      const enabled = constEnum({ inlineNonConstEnums: true });
+
+      expect(simulateTransform(disabled, code, id)).toBeNull();
+      expect(simulateTransform(enabled, code, id)).toContain('export const value = 1;');
+    } finally {
+      env.cleanup();
+    }
   });
 
-  it('error', () => {
-    const list = ConstEnumHandler.parse(sampleEnums.error);
-    expect(list).toEqual([
-      [
-        new RegExp('\\bStatus.\\b'),
-        [
-          ['Status.a', '"23"'],
-          ['Status.b', '0'], // ! Enum member must have initializer, here it just goes on
-        ],
-      ],
-    ]);
+  it('filters by inlineNames', () => {
+    const env = createTestEnvironment('inline-names-' + Date.now());
+    env.writeFile(
+      'enums.ts',
+      `export const enum Color { Red = 0 }
+export const enum Status { Active = 'active' }`,
+    );
+    const code = `import { Color, Status } from './enums';
+export const color = Color.Red;
+export const status = Status.Active;`;
+    const id = env.writeFile('entry.ts', code);
+
+    try {
+      const plugin = constEnum({ inlineNames: ['Status'] });
+      const result = simulateTransform(plugin, code, id);
+
+      expect(result).toContain('export const color = Color.Red;');
+      expect(result).toContain('export const status = "active";');
+    } finally {
+      env.cleanup();
+    }
   });
 
-  it('final', () => {
-    const list = ConstEnumHandler.parse(sampleEnums.final);
-    expect(list).toEqual([
-      [
-        new RegExp('\\bStatus.\\b'),
-        [
-          ['Status.Inactive', '"23"'],
-          ['Status.Active', '0'],
-          ['Status.BAKDB', '1'],
-          ['Status.KDJF', '2'],
-        ],
-      ],
-    ]);
+  it('keeps numeric member-access output syntactically valid', () => {
+    const env = createTestEnvironment('numeric-member-access-' + Date.now());
+    const code = `const enum Color { Red = 0 }
+export const value = Color.Red.toString();`;
+    const id = env.writeFile('entry.ts', code);
+
+    try {
+      const plugin = constEnum();
+      const result = simulateTransform(plugin, code, id);
+
+      expect(result).toContain('export const value = (0).toString();');
+    } finally {
+      env.cleanup();
+    }
+  });
+
+  it('returns a sourcemap for transformed files', () => {
+    const env = createTestEnvironment('sourcemap-' + Date.now());
+    const code = `const enum Color { Red = 0 }
+export const value = Color.Red;`;
+    const id = env.writeFile('entry.ts', code);
+
+    try {
+      const plugin = constEnum();
+      const result = simulateTransformResult(plugin, code, id);
+
+      expect(result).not.toBeNull();
+      expect(result!.map).toBeTruthy();
+      expect((result!.map as any).file).toBe(path.basename(id));
+      expect((result!.map as any).sources.length).toBeGreaterThan(0);
+      expect((result!.map as any).mappings.length).toBeGreaterThan(0);
+    } finally {
+      env.cleanup();
+    }
   });
 });

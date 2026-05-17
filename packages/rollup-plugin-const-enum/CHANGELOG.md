@@ -1,5 +1,8 @@
 # Changelog
 
+## [2.0.0] - 2026-04-26
+- Refactor to use TypeScript compiler API for enum member inlining instead of regex-based scanning.
+
 ## [1.1.3] [1.1.4]
 
 - Fix issue the `__kskb_replacement_list` property is mangled by terser.

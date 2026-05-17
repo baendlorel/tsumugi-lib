@@ -22,6 +22,7 @@ export const $defines = Object.defineProperties;
 export const $entries = Object.entries as <T>(o: T) => Array<[keyof T, T[keyof T]]>;
 export const $jsonStringify = JSON.stringify;
 export const $getOwnPropertyDescriptors = Object.getOwnPropertyDescriptors;
+export const $freeze = Object.freeze;
 
 // # Reflect
 

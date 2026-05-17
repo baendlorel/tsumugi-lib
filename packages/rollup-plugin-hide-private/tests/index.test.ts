@@ -1,3 +1,5 @@
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { OutputChunk } from 'rollup';
 import { rollup } from 'rollup';
@@ -334,6 +336,157 @@ export declare class Example {
     expect(result.code).not.toContain('internalValue');
   });
 
+  it('can remove interface members matched by allNames by default', () => {
+    const code = `
+export interface Example {
+  visible: string;
+  debugOnly: string;
+  nested(): void;
+}
+`;
+
+    const result = stripHiddenDeclarations(
+      code,
+      {
+        allNames: ['debugOnly', 'nested'],
+      },
+      'interface-members.d.ts',
+    );
+
+    expect(result.changed).toBe(true);
+    expect(result.code).toContain('visible: string;');
+    expect(result.code).not.toContain('debugOnly');
+    expect(result.code).not.toContain('nested(): void;');
+  });
+
+  it('can remove interface members matched by interfaces patterns', () => {
+    const code = `
+export interface Example {
+  visible: string;
+  debugOnly: string;
+  debugMethod(): void;
+}
+`;
+
+    const result = stripHiddenDeclarations(
+      code,
+      {
+        interfaces: ['debugOnly', /^debugMethod$/],
+      },
+      'interface-patterns.d.ts',
+    );
+
+    expect(result.changed).toBe(true);
+    expect(result.code).toContain('visible: string;');
+    expect(result.code).not.toContain('debugOnly');
+    expect(result.code).not.toContain('debugMethod');
+  });
+
+  it('keeps interface members when interfaces is false', () => {
+    const code = `
+export interface Example {
+  visible: string;
+  debugOnly: string;
+}
+`;
+
+    const result = stripHiddenDeclarations(
+      code,
+      {
+        interfaces: false,
+      },
+      'interface-false.d.ts',
+    );
+
+    expect(result.changed).toBe(false);
+    expect(result.code).toContain('visible: string;');
+    expect(result.code).toContain('debugOnly');
+  });
+
+  it('can remove public members matched by publicNames', () => {
+    const code = `
+export declare class Example {
+  visible: string;
+  debugOnly: string;
+  debugMethod(): void;
+}
+`;
+
+    const result = stripHiddenDeclarations(
+      code,
+      {
+        privateNames: false,
+        protectedNames: false,
+        publicNames: ['debugOnly', /^debugMethod$/],
+      },
+      'public-names.d.ts',
+    );
+
+    expect(result.changed).toBe(true);
+    expect(result.code).toContain('visible: string;');
+    expect(result.code).not.toContain('debugOnly');
+    expect(result.code).not.toContain('debugMethod');
+  });
+
+  it('can remove type literal members matched by types patterns', () => {
+    const code = `
+export type Example = {
+  visible: string;
+  debugOnly: string;
+  debugMethod(): void;
+};
+`;
+
+    const result = stripHiddenDeclarations(
+      code,
+      {
+        types: ['debugOnly', /^debugMethod$/],
+      },
+      'types-patterns.d.ts',
+    );
+
+    expect(result.changed).toBe(true);
+    expect(result.code).toContain('visible: string;');
+    expect(result.code).not.toContain('debugOnly');
+    expect(result.code).not.toContain('debugMethod');
+  });
+
+  it('uses allNames for public, interface, and type members by default', () => {
+    const code = `
+export declare class ClassExample {
+  visible: string;
+  debugOnly: string;
+}
+
+export interface InterfaceExample {
+  visible: string;
+  debugOnly: string;
+}
+
+export type TypeExample = {
+  visible: string;
+  debugOnly: string;
+};
+`;
+
+    const result = stripHiddenDeclarations(
+      code,
+      {
+        privateNames: false,
+        protectedNames: false,
+        publicNames: false,
+        interfaces: false,
+        types: false,
+        allNames: ['debugOnly'],
+      },
+      'all-names-everywhere.d.ts',
+    );
+
+    expect(result.changed).toBe(true);
+    expect(result.code).toContain('visible: string;');
+    expect(result.code).not.toContain('debugOnly: string;');
+  });
+
   it('handles numeric and string literal member names', () => {
     const code = `
 export declare class Example {
@@ -375,10 +528,67 @@ export declare class Example {
 });
 
 describe('rollup-plugin-hide-private', () => {
+  it('requires filePatterns in write-files mode', () => {
+    expect(() => hidePrivate({ mode: 'write-files' })).toThrow(TypeError);
+    expect(() => hidePrivate({ mode: 'write-files', filePatterns: [] })).toThrow(TypeError);
+  });
+
+  it('rewrites matched declaration files on disk in write-files mode', async () => {
+    const tempDir = mkdtempSync(join(tmpdir(), 'rollup-plugin-hide-private-'));
+    const matchedDir = join(tempDir, 'types');
+    const unmatchedDir = join(tempDir, 'other');
+    const matchedFile = join(matchedDir, 'index.d.ts');
+    const unmatchedFile = join(unmatchedDir, 'index.d.ts');
+
+    mkdirSync(matchedDir, { recursive: true });
+    mkdirSync(unmatchedDir, { recursive: true });
+
+    writeFileSync(
+      matchedFile,
+      `
+export declare class Example {
+  visible: string;
+  private hiddenToken: string;
+}
+`,
+      'utf8',
+    );
+
+    writeFileSync(
+      unmatchedFile,
+      `
+export declare class Example {
+  visible: string;
+  private hiddenToken: string;
+}
+`,
+      'utf8',
+    );
+
+    try {
+      const plugin = hidePrivate({
+        mode: 'write-files',
+        cwd: tempDir,
+        filePatterns: ['types/**/*.d.ts'],
+      });
+
+      await plugin.writeBundle?.call({} as never);
+
+      const matchedCode = readFileSync(matchedFile, 'utf8');
+      const unmatchedCode = readFileSync(unmatchedFile, 'utf8');
+
+      expect(matchedCode).toContain('visible: string;');
+      expect(matchedCode).not.toContain('hiddenToken');
+      expect(unmatchedCode).toContain('hiddenToken');
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('generates declaration output with a sourcemap', async () => {
     const bundle = await rollup({
       input: fixturePath,
-      plugins: [dts(), hidePrivate()],
+      plugins: [hidePrivate(), dts()],
     });
 
     try {

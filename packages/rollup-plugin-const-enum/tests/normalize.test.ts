@@ -7,10 +7,8 @@ describe('normalize function', () => {
       const result = normalize();
 
       expect(result).toEqual({
-        suffixes: ['.ts', '.tsx', '.mts', '.cts'],
-        files: [],
-        excludedDirectories: ['.git', 'test', 'tests', 'dist', 'node_modules'],
-        skipDts: true,
+        inlineNonConstEnums: false,
+        inlineNames: undefined,
       });
     });
 
@@ -18,114 +16,48 @@ describe('normalize function', () => {
       const result = normalize({});
 
       expect(result).toEqual({
-        suffixes: ['.ts', '.tsx', '.mts', '.cts'],
-        files: [],
-        excludedDirectories: ['.git', 'test', 'tests', 'dist', 'node_modules'],
-        skipDts: true,
+        inlineNonConstEnums: false,
+        inlineNames: undefined,
       });
     });
   });
 
-  describe('custom suffixes', () => {
-    it('should accept custom suffixes array', () => {
-      const result = normalize({ suffixes: ['.ts', '.js'] });
+  describe('inlineNonConstEnums', () => {
+    it('should accept true', () => {
+      const result = normalize({ inlineNonConstEnums: true });
 
-      expect(result.suffixes).toEqual(['.ts', '.js']);
+      expect(result.inlineNonConstEnums).toBe(true);
     });
 
-    it('should throw error for invalid suffixes (not array)', () => {
-      expect(() => normalize({ suffixes: 'invalid' as any })).toThrow(
-        'Expected suffixes to be string[]'
-      );
-    });
-
-    it('should throw error for invalid suffixes (array with non-strings)', () => {
-      expect(() => normalize({ suffixes: ['.ts', 123, '.tsx'] as any })).toThrow(
-        'Expected suffixes to be string[]'
+    it('should reject invalid values', () => {
+      expect(() => normalize({ inlineNonConstEnums: 'invalid' as any })).toThrow(
+        'Expected inlineNonConstEnums to be boolean.',
       );
     });
   });
 
-  describe('custom files', () => {
-    it('should accept custom files array', () => {
-      const result = normalize({ files: ['src/types.ts', 'src/enums.ts'] });
-
-      expect(result.files).toEqual(['src/types.ts', 'src/enums.ts']);
-    });
-
-    it('should throw error for invalid files (not array)', () => {
-      expect(() => normalize({ files: 'invalid' as any })).toThrow('Expected files to be string[]');
-    });
-
-    it('should throw error for invalid files (array with non-strings)', () => {
-      expect(() => normalize({ files: ['valid.ts', null] as any })).toThrow(
-        'Expected files to be string[]'
-      );
-    });
-  });
-
-  describe('custom excludedDirectories', () => {
-    it('should accept custom excludedDirectories array', () => {
-      const result = normalize({ excludedDirectories: ['node_modules', 'build'] });
-
-      expect(result.excludedDirectories).toEqual(['node_modules', 'build']);
-    });
-
-    it('should throw error for invalid excludedDirectories (not array)', () => {
-      expect(() => normalize({ excludedDirectories: 'invalid' as any })).toThrow(
-        'Expected excludedDirectories to be string[]'
-      );
-    });
-
-    it('should throw error for invalid excludedDirectories (array with non-strings)', () => {
-      expect(() => normalize({ excludedDirectories: ['node_modules', {}] as any })).toThrow(
-        'Expected excludedDirectories to be string[]'
-      );
-    });
-  });
-
-  describe('skipDts option', () => {
-    it('should accept skipDts as true', () => {
-      const result = normalize({ skipDts: true });
-
-      expect(result.skipDts).toBe(true);
-    });
-
-    it('should accept skipDts as false', () => {
-      const result = normalize({ skipDts: false });
-
-      expect(result.skipDts).toBe(false);
-    });
-  });
-
-  describe('combined options', () => {
-    it('should handle multiple custom options together', () => {
+  describe('inlineNames', () => {
+    it('should accept string and RegExp entries', () => {
       const result = normalize({
-        suffixes: ['.ts'],
-        files: ['custom.ts'],
-        excludedDirectories: ['build'],
-        skipDts: false,
+        inlineNames: ['Color', /^Status$/],
       });
 
       expect(result).toEqual({
-        suffixes: ['.ts'],
-        files: ['custom.ts'],
-        excludedDirectories: ['build'],
-        skipDts: false,
+        inlineNonConstEnums: false,
+        inlineNames: ['Color', /^Status$/],
       });
     });
 
-    it('should merge partial options with defaults', () => {
-      const result = normalize({
-        suffixes: ['.ts'],
-      });
+    it('should reject non-array values', () => {
+      expect(() => normalize({ inlineNames: 'Color' as any })).toThrow(
+        'Expected inlineNames to be Array<string | RegExp>.',
+      );
+    });
 
-      expect(result).toEqual({
-        suffixes: ['.ts'],
-        files: [],
-        excludedDirectories: ['.git', 'test', 'tests', 'dist', 'node_modules'],
-        skipDts: true,
-      });
+    it('should reject invalid entries', () => {
+      expect(() => normalize({ inlineNames: ['Color', 1] as any })).toThrow(
+        'Expected inlineNames to be Array<string | RegExp>.',
+      );
     });
   });
 });
