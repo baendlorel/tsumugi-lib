@@ -2,7 +2,7 @@ import { HexagramInfoTable, type HexagramInfo } from '../core/common.js';
 import { Yao } from './yao.js';
 
 type LiuYao = [Yao, Yao, Yao, Yao, Yao, Yao];
-export const HexagramYaoIndex = ['初爻', '二爻', '三爻', '四爻', '五爻', '上爻'] as const;
+export const HexagramYaoOrder = ['初爻', '二爻', '三爻', '四爻', '五爻', '上爻'] as const;
 
 /**
  * Hexagram class represents a hexagram, which consists of 6 Yao.
@@ -135,39 +135,45 @@ export class Hexagram {
    * - e.g.：“本卦乾为天，变卦坤为地，动爻：初爻、三爻”
    */
   toDescription(): string {
-    const infos: string[] = [`本卦${this.info.id}`];
+    const hostIndex = this.info.setupInfo.findIndex((s) => s.hostGuest === '世');
+    const guestIndex = this.info.setupInfo.findIndex((s) => s.hostGuest === '应');
+    const infos: string[] = [
+      `本卦${this.info.id}`,
+      `世爻为${HexagramYaoOrder[hostIndex]}`,
+      `应爻为${HexagramYaoOrder[guestIndex]}`,
+    ];
     const changed = this.toChanged();
     if (changed) {
-      infos.push(`变卦${changed.info.id}`);
       infos.push(
-        `动爻：${this.yaos
-          .map((y, i) => (y.isDynamic ? `${HexagramYaoIndex[i]}` : null))
+        `${this.yaos
+          .map((y, i) => (y.isDynamic ? `${HexagramYaoOrder[i]}` : null))
           .filter((s): s is string => s !== null)
-          .join('、')}`,
+          .join('、')}是动爻`,
       );
+      infos.push(`变卦为${changed.info.id}`);
+
+      const changedHostIndex = changed.info.setupInfo.findIndex((s) => s.hostGuest === '世');
+      if (this.yaos[changedHostIndex].isDynamic) {
+        infos.push(`变卦世爻为${HexagramYaoOrder[changedHostIndex]}`);
+      } else {
+        infos.push(`未变出新的世爻`);
+      }
+
+      const changedGuestIndex = changed.info.setupInfo.findIndex((s) => s.hostGuest === '应');
+      if (this.yaos[changedGuestIndex].isDynamic) {
+        infos.push(`变卦应爻为${HexagramYaoOrder[changedGuestIndex]}`);
+      } else {
+        infos.push(`未变出新的应爻`);
+      }
     } else {
       infos.push('无动爻');
     }
     return infos.join('，');
   }
 
-  toDescriptionEn(): string {
-    const infos: string[] = [`Original Hexagram ${this.info.id}`];
-    const changed = this.toChanged();
-    if (changed) {
-      infos.push(`Changed Hexagram ${changed.info.id}`);
-      infos.push(
-        `Dynamic Yaos: ${this.yaos
-          .map((y, i) => (y.isDynamic ? `${HexagramYaoIndex[i]}` : null))
-          .filter((s): s is string => s !== null)
-          .join(', ')}`,
-      );
-    } else {
-      infos.push('No dynamic Yao');
-    }
-    return infos.join(', ');
-  }
+  toJson() {}
 
+  // #region Utility Methods
   clone(): Hexagram {
     return new Hexagram(this.yaos);
   }
@@ -176,7 +182,29 @@ export class Hexagram {
     return this.info.id;
   }
 
-  [Symbol.toPrimitive](hint: string) {
+  [Symbol.toPrimitive]() {
     return this.info.id;
   }
+  // #endregion
 }
+
+// #region Hexagram Json is for AI skills
+interface YaoInfo {
+  爻象: string; // 少阴少阳老阴老阳
+  是世爻: boolean;
+  是应爻: boolean;
+  六亲五行: string; // 例如：父金、兄弟水、妻财木等
+}
+
+interface HexagramJson<T extends '本卦' | '变卦'> {
+  类型: T;
+  初爻: YaoInfo;
+  二爻: YaoInfo;
+  三爻: YaoInfo;
+  四爻: YaoInfo;
+  五爻: YaoInfo;
+  上爻: YaoInfo;
+  卦名: YaoInfo;
+  变爻: T extends '变卦' ? never : string[];
+}
+// #endregion
