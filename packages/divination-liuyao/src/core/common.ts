@@ -49,6 +49,12 @@ export interface HexagramInfo {
   binary: `${0 | 1}${0 | 1}${0 | 1}${0 | 1}${0 | 1}${0 | 1}`;
 
   /**
+   * Binary to YangCounts.
+   * e.g. `'000000'` 坤为地 -> `[2, 2, 2, 2, 2, 2]`, 2 means Shao Yin.
+   */
+  yangCounts: number[];
+
+  /**
    * Name of the hexagram, which includes the names of the upper and lower trigrams.
    *
    * For example, "坤为地", "地雷复", "地水师", etc.
@@ -125,6 +131,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '世',
       },
     ],
+    yangCounts: [2, 2, 2, 2, 2, 2],
   },
   {
     binary: '100000',
@@ -155,6 +162,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '子孙酉金',
       },
     ],
+    yangCounts: [1, 2, 2, 2, 2, 2],
   },
   {
     binary: '010000',
@@ -185,6 +193,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '应',
       },
     ],
+    yangCounts: [2, 1, 2, 2, 2, 2],
   },
   {
     binary: '110000',
@@ -215,6 +224,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '子孙酉金',
       },
     ],
+    yangCounts: [1, 1, 2, 2, 2, 2],
   },
   {
     binary: '001000',
@@ -245,6 +255,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '兄弟酉金',
       },
     ],
+    yangCounts: [2, 2, 1, 2, 2, 2],
   },
   {
     binary: '101000',
@@ -275,6 +286,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '父母酉金',
       },
     ],
+    yangCounts: [1, 2, 1, 2, 2, 2],
   },
   {
     binary: '011000',
@@ -305,6 +317,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '官鬼酉金',
       },
     ],
+    yangCounts: [2, 1, 1, 2, 2, 2],
   },
   {
     binary: '111000',
@@ -335,6 +348,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '应',
       },
     ],
+    yangCounts: [1, 1, 1, 2, 2, 2],
   },
   {
     binary: '000100',
@@ -365,6 +379,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '妻财戌土',
       },
     ],
+    yangCounts: [2, 2, 2, 1, 2, 2],
   },
   {
     binary: '100100',
@@ -395,6 +410,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '世',
       },
     ],
+    yangCounts: [1, 2, 2, 1, 2, 2],
   },
   {
     binary: '010100',
@@ -425,6 +441,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '妻财戌土',
       },
     ],
+    yangCounts: [2, 1, 2, 1, 2, 2],
   },
   {
     binary: '110100',
@@ -455,6 +472,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '应',
       },
     ],
+    yangCounts: [1, 1, 2, 1, 2, 2],
   },
   {
     binary: '001100',
@@ -485,6 +503,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '父母戌土',
       },
     ],
+    yangCounts: [2, 2, 1, 1, 2, 2],
   },
   {
     binary: '101100',
@@ -515,6 +534,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '官鬼戌土',
       },
     ],
+    yangCounts: [1, 2, 1, 1, 2, 2],
   },
   {
     binary: '011100',
@@ -545,6 +565,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '应',
       },
     ],
+    yangCounts: [2, 1, 1, 1, 2, 2],
   },
   {
     binary: '111100',
@@ -575,6 +596,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '兄弟戌土',
       },
     ],
+    yangCounts: [1, 1, 1, 1, 2, 2],
   },
   {
     binary: '000010',
@@ -605,6 +627,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '应',
       },
     ],
+    yangCounts: [2, 2, 2, 2, 1, 2],
   },
   {
     binary: '100010',
@@ -635,6 +658,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '兄弟子水',
       },
     ],
+    yangCounts: [1, 2, 2, 2, 1, 2],
   },
   {
     binary: '010010',
@@ -665,6 +689,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '世',
       },
     ],
+    yangCounts: [2, 1, 2, 2, 1, 2],
   },
   {
     binary: '110010',
@@ -695,6 +720,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '兄弟子水',
       },
     ],
+    yangCounts: [1, 1, 2, 2, 1, 2],
   },
   {
     binary: '001010',
@@ -725,6 +751,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '子孙子水',
       },
     ],
+    yangCounts: [2, 2, 1, 2, 1, 2],
   },
   {
     binary: '101010',
@@ -755,6 +782,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '应',
       },
     ],
+    yangCounts: [1, 2, 1, 2, 1, 2],
   },
   {
     binary: '011010',
@@ -785,6 +813,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '父母子水',
       },
     ],
+    yangCounts: [2, 1, 1, 2, 1, 2],
   },
   {
     binary: '111010',
@@ -815,6 +844,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '妻财子水',
       },
     ],
+    yangCounts: [1, 1, 1, 2, 1, 2],
   },
   {
     binary: '000110',
@@ -845,6 +875,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '父母未土',
       },
     ],
+    yangCounts: [2, 2, 2, 1, 1, 2],
   },
   {
     binary: '100110',
@@ -875,6 +906,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '应',
       },
     ],
+    yangCounts: [1, 2, 2, 1, 1, 2],
   },
   {
     binary: '010110',
@@ -905,6 +937,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '父母未土',
       },
     ],
+    yangCounts: [2, 1, 2, 1, 1, 2],
   },
   {
     binary: '110110',
@@ -935,6 +968,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '世',
       },
     ],
+    yangCounts: [1, 1, 2, 1, 1, 2],
   },
   {
     binary: '001110',
@@ -965,6 +999,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '应',
       },
     ],
+    yangCounts: [2, 2, 1, 1, 1, 2],
   },
   {
     binary: '101110',
@@ -995,6 +1030,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '官鬼未土',
       },
     ],
+    yangCounts: [1, 2, 1, 1, 1, 2],
   },
   {
     binary: '011110',
@@ -1025,6 +1061,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '妻财未土',
       },
     ],
+    yangCounts: [2, 1, 1, 1, 1, 2],
   },
   {
     binary: '111110',
@@ -1055,6 +1092,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '兄弟未土',
       },
     ],
+    yangCounts: [1, 1, 1, 1, 1, 2],
   },
   {
     binary: '000001',
@@ -1085,6 +1123,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '妻财卯木',
       },
     ],
+    yangCounts: [2, 2, 2, 2, 2, 1],
   },
   {
     binary: '100001',
@@ -1115,6 +1154,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '兄弟寅木',
       },
     ],
+    yangCounts: [1, 2, 2, 2, 2, 1],
   },
   {
     binary: '010001',
@@ -1145,6 +1185,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '父母寅木',
       },
     ],
+    yangCounts: [2, 1, 2, 2, 2, 1],
   },
   {
     binary: '110001',
@@ -1175,6 +1216,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '应',
       },
     ],
+    yangCounts: [1, 1, 2, 2, 2, 1],
   },
   {
     binary: '001001',
@@ -1205,6 +1247,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '世',
       },
     ],
+    yangCounts: [2, 2, 1, 2, 2, 1],
   },
   {
     binary: '101001',
@@ -1235,6 +1278,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '官鬼寅木',
       },
     ],
+    yangCounts: [1, 2, 1, 2, 2, 1],
   },
   {
     binary: '011001',
@@ -1265,6 +1309,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '应',
       },
     ],
+    yangCounts: [2, 1, 1, 2, 2, 1],
   },
   {
     binary: '111001',
@@ -1295,6 +1340,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '官鬼寅木',
       },
     ],
+    yangCounts: [1, 1, 1, 2, 2, 1],
   },
   {
     binary: '000101',
@@ -1325,6 +1371,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '官鬼巳火',
       },
     ],
+    yangCounts: [2, 2, 2, 1, 2, 1],
   },
   {
     binary: '100101',
@@ -1355,6 +1402,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '子孙巳火',
       },
     ],
+    yangCounts: [1, 2, 2, 1, 2, 1],
   },
   {
     binary: '010101',
@@ -1385,6 +1433,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '应',
       },
     ],
+    yangCounts: [2, 1, 2, 1, 2, 1],
   },
   {
     binary: '110101',
@@ -1415,6 +1464,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '父母巳火',
       },
     ],
+    yangCounts: [1, 1, 2, 1, 2, 1],
   },
   {
     binary: '001101',
@@ -1445,6 +1495,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '兄弟巳火',
       },
     ],
+    yangCounts: [2, 2, 1, 1, 2, 1],
   },
   {
     binary: '101101',
@@ -1475,6 +1526,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '世',
       },
     ],
+    yangCounts: [1, 2, 1, 1, 2, 1],
   },
   {
     binary: '011101',
@@ -1505,6 +1557,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '兄弟巳火',
       },
     ],
+    yangCounts: [2, 1, 1, 1, 2, 1],
   },
   {
     binary: '111101',
@@ -1535,6 +1588,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '应',
       },
     ],
+    yangCounts: [1, 1, 1, 1, 2, 1],
   },
   {
     binary: '000011',
@@ -1565,6 +1619,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '妻财卯木',
       },
     ],
+    yangCounts: [2, 2, 2, 2, 1, 1],
   },
   {
     binary: '100011',
@@ -1595,6 +1650,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '应',
       },
     ],
+    yangCounts: [1, 2, 2, 2, 1, 1],
   },
   {
     binary: '010011',
@@ -1625,6 +1681,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '父母卯木',
       },
     ],
+    yangCounts: [2, 1, 2, 2, 1, 1],
   },
   {
     binary: '110011',
@@ -1655,6 +1712,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '官鬼卯木',
       },
     ],
+    yangCounts: [1, 1, 2, 2, 1, 1],
   },
   {
     binary: '001011',
@@ -1685,6 +1743,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '应',
       },
     ],
+    yangCounts: [2, 2, 1, 2, 1, 1],
   },
   {
     binary: '101011',
@@ -1715,6 +1774,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '兄弟卯木',
       },
     ],
+    yangCounts: [1, 2, 1, 2, 1, 1],
   },
   {
     binary: '011011',
@@ -1745,6 +1805,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '世',
       },
     ],
+    yangCounts: [2, 1, 1, 2, 1, 1],
   },
   {
     binary: '111011',
@@ -1775,6 +1836,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '兄弟卯木',
       },
     ],
+    yangCounts: [1, 1, 1, 2, 1, 1],
   },
   {
     binary: '000111',
@@ -1805,6 +1867,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '应',
       },
     ],
+    yangCounts: [2, 2, 2, 1, 1, 1],
   },
   {
     binary: '100111',
@@ -1835,6 +1898,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '妻财戌土',
       },
     ],
+    yangCounts: [1, 2, 2, 1, 1, 1],
   },
   {
     binary: '010111',
@@ -1865,6 +1929,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '子孙戌土',
       },
     ],
+    yangCounts: [2, 1, 2, 1, 1, 1],
   },
   {
     binary: '110111',
@@ -1895,6 +1960,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '兄弟戌土',
       },
     ],
+    yangCounts: [1, 1, 2, 1, 1, 1],
   },
   {
     binary: '001111',
@@ -1925,6 +1991,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '父母戌土',
       },
     ],
+    yangCounts: [2, 2, 1, 1, 1, 1],
   },
   {
     binary: '101111',
@@ -1955,6 +2022,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '应',
       },
     ],
+    yangCounts: [1, 2, 1, 1, 1, 1],
   },
   {
     binary: '011111',
@@ -1985,6 +2053,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         kin: '父母戌土',
       },
     ],
+    yangCounts: [2, 1, 1, 1, 1, 1],
   },
   {
     binary: '111111',
@@ -2015,6 +2084,7 @@ export const HexagramList: readonly HexagramInfo[] = Object.freeze([
         hostGuest: '世',
       },
     ],
+    yangCounts: [1, 1, 1, 1, 1, 1],
   },
 ]);
 

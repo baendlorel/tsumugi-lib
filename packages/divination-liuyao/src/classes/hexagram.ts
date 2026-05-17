@@ -37,7 +37,7 @@ export class Hexagram {
     const exist = HexagramList.find(
       (h) => h.id === id || h.id.slice(2) === id || (h.id.startsWith(id) && id.length > 1),
     );
-    return exist ? new Hexagram(exist.binary.split('').map((d) => new Yao(d === '1' ? 1 : 2))) : null;
+    return exist ? Hexagram.fromYangCounts(exist.yangCounts) : null;
   }
 
   /**
@@ -45,7 +45,7 @@ export class Hexagram {
    */
   static fromPalace(palace: string): Hexagram | null {
     const exist = HexagramList.find((h) => h.id[2] === palace);
-    return exist ? new Hexagram(exist.binary.split('').map((d) => new Yao(d === '1' ? 1 : 2))) : null;
+    return exist ? Hexagram.fromYangCounts(exist.yangCounts) : null;
   }
 
   /**
@@ -103,8 +103,8 @@ export class Hexagram {
     }
   }
 
-  setYao(index: number, countOfYang: number): void {
-    this.yaos[index].set(countOfYang);
+  setYao(index: number, yangCount: number): void {
+    this.yaos[index].set(yangCount);
   }
 
   toChanged(): Hexagram | null {
@@ -137,8 +137,28 @@ export class Hexagram {
     } else {
       infos.push('无动爻');
     }
-
     return infos.join('，');
+  }
+
+  toDescriptionEn(): string {
+    const infos: string[] = [`Original Hexagram ${this.info.id}`];
+    const changed = this.toChanged();
+    if (changed) {
+      infos.push(`Changed Hexagram ${changed.info.id}`);
+      infos.push(
+        `Dynamic Yaos: ${this.yaos
+          .map((y, i) => (y.isDynamic ? `${YaoIndex[i]}` : null))
+          .filter((s): s is string => s !== null)
+          .join(', ')}`,
+      );
+    } else {
+      infos.push('No dynamic Yao');
+    }
+    return infos.join(', ');
+  }
+
+  clone(): Hexagram {
+    return new Hexagram(this.yaos);
   }
 
   toString(): string {
