@@ -1,95 +1,105 @@
-import { Hexagrams, type HexagramInfo } from '../core/common.js';
+import { HexagramList, type HexagramInfo } from '../core/common.js';
 import { Yao } from './yao.js';
 
 export type LiuYao = [Yao, Yao, Yao, Yao, Yao, Yao];
 export const YaoIndex = ['初爻', '二爻', '三爻', '四爻', '五爻', '上爻'] as const;
-let uid = 1;
 
 /**
- * 64卦类，包含了卦象的基本信息和方法
- * - 默认创建“乾为天”
+ * Hexagram class represents a hexagram, which consists of 6 Yao.
+ * - Each Yao can be either yin or yang, and can be changing or not.
+ * - The hexagram can be constructed from an array of Yao or an array of counts of yang.
+ * - Creates “乾为天” by default.
  */
 export class Hexagram {
+  /**
+   * Try to create a Hexagram from an array of Yaos. If the input is invalid, null will be returned.
+   */
   static fromYaos(yaos: Yao[]): Hexagram | null {
     try {
       return new Hexagram(yaos);
-    } catch (e) {
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Try to create a Hexagram from an array of counts of Yang. If the input is invalid, null will be returned.
+   */
+  static fromYangCounts(counts: number[]): Hexagram | null {
+    try {
+      return new Hexagram(counts.map((c) => new Yao(c)));
+    } catch {
       return null;
     }
   }
 
   static fromId(id: string): Hexagram | null {
-    const exist = Hexagrams.list.find(
+    const exist = HexagramList.find(
       (h) => h.id === id || h.id.slice(2) === id || (h.id.startsWith(id) && id.length > 1),
     );
-    return exist ? new Hexagram(exist.binary.split('').map((d) => (parseInt(d) === 1 ? 1 : 2))) : null;
+    return exist ? new Hexagram(exist.binary.split('').map((d) => new Yao(d === '1' ? 1 : 2))) : null;
   }
 
   /**
-   * 本宫卦
-   * - 用天、地、风...查找本宫卦
+   * Find Original Palace Hexagram by the palace name, which is the last character of the hexagram id. For example, '天' for '乾为天', '地' for '坤为地', etc.
    */
-  static fromIntrinsic(family: string): Hexagram | null {
-    const exist = Hexagrams.list.find((h) => h.id[2] === family);
-    return exist ? new Hexagram(exist.binary.split('').map((d) => (parseInt(d) === 1 ? 1 : 2))) : null;
+  static fromPalace(palace: string): Hexagram | null {
+    const exist = HexagramList.find((h) => h.id[2] === palace);
+    return exist ? new Hexagram(exist.binary.split('').map((d) => new Yao(d === '1' ? 1 : 2))) : null;
   }
 
-  readonly uid = uid++;
-
   /**
-   * 6个爻位，从下往上标记。
-   * 索引从0-5，0表示初爻，5表示上爻
+   * 6 Yao positions, indexed from bottom to top.
+   * Index from 0 to 5, where 0 is the first Yao (初爻) and 5 is the sixth Yao (上爻).
    */
   readonly yaos: LiuYao;
 
   /**
-   * 固定的卦象信息
+   * HexagramInfo of this hexagram, which can be used to get more information about this hexagram, such as its name, sign, phase, palace, etc.
    */
   get info(): HexagramInfo {
-    return Hexagrams.findByYaos(this.yaos);
+    return HexagramList.find((h) => h.binary === this.yaos.map((y) => y.polar).join(''))!;
   }
 
   /**
-   * 是否存在动爻
+   * Whether the 6 Yaos of this hexagram contain any dynamic Yao.
    */
   get isDynamic(): boolean {
     return this.yaos.some((y) => y.isDynamic || y.isChanged);
   }
 
   /**
-   * 是否已经是变动过的卦象
+   * Whether this hexagram has already changed to another hexagram. Once a hexagram is changed, it cannot change again.
    */
   get isChanged(): boolean {
     return this.yaos.some((y) => y.isChanged);
   }
 
   /**
-   * 外卦是否变
+   * Outer trigram of this hexagram, which consists of the last three yao (四爻、五爻、上爻).
+   * @returns A trigram if the outer trigram is dynamic.
    */
   get dynamicOuter(): boolean {
     return this.yaos.slice(3).some((y) => y.isDynamic || y.isChanged);
   }
 
   /**
-   * 内卦是否变
+   * Inner trigram of this hexagram, which consists of the first three yao (初爻、二爻、三爻).
+   * @returns A trigram if the inner trigram is dynamic.
    */
   get dynamicInner(): boolean {
     return this.yaos.slice(0, 3).some((y) => y.isDynamic || y.isChanged);
   }
 
-  constructor(yaos: Yao[]);
-  constructor(countsOfYang?: number[]);
-  constructor(array: number[] | Yao[] = [1, 1, 1, 1, 1, 1]) {
-    if (array.length !== 6) {
-      throw new Error('卦象必须由6个爻组成');
+  constructor(yaos: Yao[]) {
+    if (yaos.length !== 6) {
+      throw new Error('Array length mismatch, A Hexagram must be constructed with exactly 6 Yaos or 6 counts of yang');
     }
 
-    if (array.every((a) => a instanceof Yao)) {
-      this.yaos = array.map((a) => a.clone()) as LiuYao;
-    } else if (array.every((a) => typeof a === 'number')) {
-      this.yaos = array.map((d) => new Yao(d)) as LiuYao;
+    if (yaos.every((a) => a instanceof Yao)) {
+      this.yaos = yaos.map((a) => a.clone()) as LiuYao;
     } else {
-      throw new Error('构造函数参数必须是数字数组或爻对象数组');
+      throw new Error('Invalid Arguments, Hexagram must be constructed with exactly 6 Yaos or 6 counts of yang');
     }
   }
 
@@ -110,7 +120,8 @@ export class Hexagram {
   }
 
   /**
-   * 描述此卦叫什么名字、第几爻是动爻，从什么卦变为什么卦
+   * Describe this hexagram in a human-readable way, including the original hexagram, the changed hexagram (if any), and the dynamic yao (if any).
+   * - e.g.：“本卦乾为天，变卦坤为地，动爻：初爻、三爻”
    */
   toDescription(): string {
     const infos: string[] = [`本卦${this.info.id}`];
@@ -128,5 +139,13 @@ export class Hexagram {
     }
 
     return infos.join('，');
+  }
+
+  toString(): string {
+    return this.info.id;
+  }
+
+  [Symbol.toPrimitive](hint: string) {
+    return this.info.id;
   }
 }
