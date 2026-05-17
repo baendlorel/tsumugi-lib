@@ -47,7 +47,7 @@ describe('Yao static methods', () => {
 
 describe('Hexagram static methods', () => {
   it('fromBinary creates a hexagram from quaternary digits', () => {
-    const hexagram = Hexagram.fromBinary('112233');
+    const hexagram = Hexagram.fromQuaternary('112233');
 
     expect(hexagram?.yaos.map((yao) => yao.yangCount)).toEqual([1, 1, 2, 2, 3, 3]);
     expect(hexagram?.info.id).toBe('风泽中孚');
