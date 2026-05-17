@@ -12,6 +12,7 @@
 		"manifest": "tsx ./scripts/manifest.ts",
 		"lines": "tsx ./scripts/lines.ts",
 		"build": "tsx ./scripts/index.ts --build",
+		"skill": "tsx ./scripts/index.ts --skill",
 		"pub": "tsx ./scripts/index.ts --publish",
 		"test": "tsx ./scripts/index.ts --test",
 		"cover": "pnpm -r --if-present run cover",

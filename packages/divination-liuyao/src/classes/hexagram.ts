@@ -1,4 +1,4 @@
-import { HexagramInfoTable, type HexagramInfo } from '../core/common.js';
+import { HexagramInfoTable, PalaceOrderTable, type HexagramInfo } from '../core/common.js';
 import { Yao } from './yao.js';
 
 type LiuYao = [Yao, Yao, Yao, Yao, Yao, Yao];
@@ -71,6 +71,11 @@ export class Hexagram {
    */
   get info(): HexagramInfo {
     return HexagramInfoTable.find((h) => h.binary === this.yaos.map((y) => y.polar).join(''))!;
+  }
+
+  get palace(): string {
+    const i = this.info;
+    return `${i.palace}宫（${i.phase}）${PalaceOrderTable[i.palaceIndex].name}`;
   }
 
   /**
@@ -233,6 +238,7 @@ export class Hexagram {
           六亲地支五行: si[0].kin,
         },
         卦名: this.info.id,
+        宫: this.palace,
         变爻: this.isDynamic
           ? this.yaos
               .map((y, i) => (y.isDynamic ? HexagramYaoOrder[i] : null))
@@ -272,6 +278,7 @@ export class Hexagram {
               六亲地支五行: csi[0].kin,
             },
             卦名: changed.info.id,
+            宫: changed.palace,
           }
         : null,
       世应变化: hostGuestChange.join('，'),
@@ -308,6 +315,7 @@ interface HexagramAIReadable<T extends '本卦' | '变卦'> {
   五爻: YaoInfo;
   上爻: YaoInfo;
   卦名: string;
+  宫: string;
   变爻?: string[];
 }
 // #endregion

@@ -26,12 +26,12 @@ import type { SetupGramInfo } from './setup-gram.js';
 泰,大畜,需,小畜,大壮,大有,夬,乾
 */
 
-interface PalaceIndexName {
+interface PalaceOrderName {
   name: string;
   nameEn: string;
 }
 
-export const PalaceIndexTable: PalaceIndexName[] = [
+export const PalaceOrderTable: PalaceOrderName[] = [
   { name: '本宫卦', nameEn: 'Original Palace' },
   { name: '一世卦', nameEn: 'First Generation' },
   { name: '二世卦', nameEn: 'Second Generation' },

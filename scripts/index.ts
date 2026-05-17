@@ -2,6 +2,7 @@
 
 import { build } from './build.js';
 import { publish } from './publish.js';
+import { skill } from './skill.js';
 import { test } from './test.js';
 
 const task = process.argv[2];
@@ -12,6 +13,8 @@ if (task === '--publish') {
   build(who);
 } else if (task === '--test') {
   test(who);
+} else if (task === '--skill') {
+  skill(who);
 } else {
   console.error(`Unknown task: ${task}`);
 }
