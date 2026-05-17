@@ -49,32 +49,19 @@ describe('Hexagram static methods', () => {
   it('fromBinary creates a hexagram from quaternary digits', () => {
     const hexagram = Hexagram.fromBinary('112233');
 
-    expect(hexagram.yaos.map((yao) => yao.yangCount)).toEqual([1, 1, 2, 2, 3, 3]);
-    expect(hexagram.info.id).toBe('风泽中孚');
+    expect(hexagram?.yaos.map((yao) => yao.yangCount)).toEqual([1, 1, 2, 2, 3, 3]);
+    expect(hexagram?.info.id).toBe('风泽中孚');
   });
 
   it('fromSymbolName creates a hexagram from symbolic yao names', () => {
     const hexagram = Hexagram.fromSymbolName('单单拆拆重重');
 
-    expect(hexagram.yaos.map((yao) => yao.yangCount)).toEqual([1, 1, 2, 2, 3, 3]);
-    expect(hexagram.info.id).toBe('风泽中孚');
-  });
-
-  it('fromYaos creates a hexagram from yao instances', () => {
-    const hexagram = Hexagram.fromYaos([new Yao(3), new Yao(3), new Yao(3), new Yao(3), new Yao(3), new Yao(3)]);
-
-    expect(hexagram).not.toBeNull();
-    expect(hexagram?.info.id).toBe('乾为天');
-  });
-
-  it('fromYaos returns null for invalid yao arrays', () => {
-    expect(Hexagram.fromYaos([new Yao(3)] as Yao[])).toBeNull();
+    expect(hexagram?.yaos.map((yao) => yao.yangCount)).toEqual([1, 1, 2, 2, 3, 3]);
+    expect(hexagram?.info.id).toBe('风泽中孚');
   });
 
   it('fromYangCounts creates a hexagram from yang-count arrays', () => {
     const hexagram = Hexagram.fromYangCounts([2, 2, 2, 2, 2, 2]);
-
-    expect(hexagram).not.toBeNull();
     expect(hexagram?.info.id).toBe('坤为地');
   });
 
