@@ -23,39 +23,63 @@ export class Yao {
    * - A symbol representing the Yao (e.g. '交', '单', '拆', '重')
    * - A name representing the Yao (e.g. '老阴', '少阳', '少阴', '老阳')
    * - A digit representing the count of yang (e.g. '0', '1', '2', '3')
-   * - Symbols in ancient books representing a Yao (e.g. '×' for 0, '’' for 1, '”' for 2, '○' for 3)
+   * - Symbols in ancient books representing a Yao ()
    * - A field of a TrigramInfo object (e.g. id, binary, nameEn, represents, representsEn, sign)
    * If the input matches any of these, a corresponding Yao will be created.
    * Otherwise, null will be returned.
    */
-  static from(arg: any): Yao | null {
-    // 尝试从字符创建
-    if (_symbolNames.includes(arg)) {
-      return new Yao(_names.indexOf(arg));
-    }
-    if (_symbols.includes(arg)) {
-      return new Yao(_symbols.indexOf(arg));
-    }
-    if (_digits.includes(arg)) {
-      return new Yao(_digits.indexOf(arg));
-    }
 
-    // try to create it from fields of a trigram
+  /**
+   * Creating a Yao from symbol.
+   * @param symbol e.g. '×' for 0, '’' for 1, '”' for 2, '○' for 3.
+   */
+  static fromSymbol(symbol: string): Yao | null {
+    const index = _symbols.indexOf(symbol);
+    return index !== -1 ? new Yao(index) : null;
+  }
+
+  /**
+   * Creating a Yao from symbolName.
+   * @param symbolName e.g. '交' for 0, '单' for 1, '拆' for 2, '重' for 3.
+   */
+  static fromSymbolName(symbolName: string): Yao | null {
+    const index = _symbolNames.indexOf(symbolName);
+    return index !== -1 ? new Yao(index) : null;
+  }
+
+  /**
+   * Creating a Yao from name.
+   * @param name e.g. '老阴', '少阳', '少阴', '老阳'.
+   */
+  static fromName(name: string): Yao | null {
+    const index = _names.indexOf(name as any);
+    return index !== -1 ? new Yao(index) : null;
+  }
+
+  /**
+   * Create a Yao from a digit string representing the count of yang.
+   */
+  static fromDigitString(digit: string): Yao | null {
+    const index = _digits.indexOf(digit);
+    return index !== -1 ? new Yao(index) : null;
+  }
+
+  /**
+   * Create a Yao from any Trigram field value.
+   * @param value `{id: '坤', binary: '000', yangCount: 0}`, so `'坤'`, `'000'` and `0` can all be used.
+   */
+  static fromTrigramField(value: string | number): Yao | null {
     const trigram = TrigramList.find(
       (v) =>
-        v.id === arg ||
-        v.yangCount === arg ||
-        v.binary === arg ||
-        v.nameEn === arg ||
-        v.represents === arg ||
-        v.representsEn === arg ||
-        v.sign === arg,
+        v.id === value ||
+        v.yangCount === value ||
+        v.binary === value ||
+        v.nameEn === value ||
+        v.represents === value ||
+        v.representsEn === value ||
+        v.sign === value,
     );
-    if (trigram) {
-      return new Yao(trigram.yangCount);
-    }
-
-    return null;
+    return trigram ? new Yao(trigram.yangCount) : null;
   }
 
   private _yangCount: 0 | 1 | 2 | 3;

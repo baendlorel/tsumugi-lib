@@ -1,0 +1,105 @@
+import { describe, expect, it } from 'vitest';
+import { Hexagram, Yao } from '../src/index.js';
+
+describe('Yao static methods', () => {
+  it('getName maps every yang count to its yao name', () => {
+    expect(Yao.getName(0)).toBe('老阴');
+    expect(Yao.getName(1)).toBe('少阳');
+    expect(Yao.getName(2)).toBe('少阴');
+    expect(Yao.getName(3)).toBe('老阳');
+  });
+
+  it('fromSymbol creates yao instances from ancient symbols', () => {
+    expect(Yao.fromSymbol('×')?.yangCount).toBe(0);
+    expect(Yao.fromSymbol('’')?.yangCount).toBe(1);
+    expect(Yao.fromSymbol('”')?.yangCount).toBe(2);
+    expect(Yao.fromSymbol('○')?.yangCount).toBe(3);
+    expect(Yao.fromSymbol('x')).toBeNull();
+  });
+
+  it('fromSymbolName creates yao instances from symbolic names', () => {
+    expect(Yao.fromSymbolName('交')?.yangCount).toBe(0);
+    expect(Yao.fromSymbolName('单')?.yangCount).toBe(1);
+    expect(Yao.fromSymbolName('拆')?.yangCount).toBe(2);
+    expect(Yao.fromSymbolName('重')?.yangCount).toBe(3);
+    expect(Yao.fromSymbolName('甲')).toBeNull();
+  });
+
+  it('fromName creates yao instances from yao names', () => {
+    expect(Yao.fromName('老阴')?.yangCount).toBe(0);
+    expect(Yao.fromName('少阳')?.yangCount).toBe(1);
+    expect(Yao.fromName('少阴')?.yangCount).toBe(2);
+    expect(Yao.fromName('老阳')?.yangCount).toBe(3);
+    expect(Yao.fromName('无名')).toBeNull();
+  });
+
+  it('fromTrigramField creates yao instances from trigram metadata fields', () => {
+    expect(Yao.fromTrigramField('乾')?.yangCount).toBe(3);
+    expect(Yao.fromTrigramField('111')?.yangCount).toBe(3);
+    expect(Yao.fromTrigramField('qian')?.yangCount).toBe(3);
+    expect(Yao.fromTrigramField('天')?.yangCount).toBe(3);
+    expect(Yao.fromTrigramField('heaven')?.yangCount).toBe(3);
+    expect(Yao.fromTrigramField('☰')?.yangCount).toBe(3);
+    expect(Yao.fromTrigramField(3)?.yangCount).toBe(3);
+    expect(Yao.fromTrigramField('invalid')).toBeNull();
+  });
+});
+
+describe('Hexagram static methods', () => {
+  it('fromBinary creates a hexagram from quaternary digits', () => {
+    const hexagram = Hexagram.fromBinary('112233');
+
+    expect(hexagram.yaos.map((yao) => yao.yangCount)).toEqual([1, 1, 2, 2, 3, 3]);
+    expect(hexagram.info.id).toBe('风泽中孚');
+  });
+
+  it('fromSymbolName creates a hexagram from symbolic yao names', () => {
+    const hexagram = Hexagram.fromSymbolName('单单拆拆重重');
+
+    expect(hexagram.yaos.map((yao) => yao.yangCount)).toEqual([1, 1, 2, 2, 3, 3]);
+    expect(hexagram.info.id).toBe('风泽中孚');
+  });
+
+  it('fromYaos creates a hexagram from yao instances', () => {
+    const hexagram = Hexagram.fromYaos([new Yao(3), new Yao(3), new Yao(3), new Yao(3), new Yao(3), new Yao(3)]);
+
+    expect(hexagram).not.toBeNull();
+    expect(hexagram?.info.id).toBe('乾为天');
+  });
+
+  it('fromYaos returns null for invalid yao arrays', () => {
+    expect(Hexagram.fromYaos([new Yao(3)] as Yao[])).toBeNull();
+  });
+
+  it('fromYangCounts creates a hexagram from yang-count arrays', () => {
+    const hexagram = Hexagram.fromYangCounts([2, 2, 2, 2, 2, 2]);
+
+    expect(hexagram).not.toBeNull();
+    expect(hexagram?.info.id).toBe('坤为地');
+  });
+
+  it('fromYangCounts returns null for invalid yang-count arrays', () => {
+    expect(Hexagram.fromYangCounts([0, 1, 2])).toBeNull();
+    expect(Hexagram.fromYangCounts([0, 1, 2, 3, 4, 0])).toBeNull();
+  });
+
+  it('fromId finds hexagrams by exact id, suffix, and unambiguous prefix', () => {
+    expect(Hexagram.fromId('乾为天')?.info.id).toBe('乾为天');
+    expect(Hexagram.fromId('天')?.info.id).toBe('乾为天');
+    expect(Hexagram.fromId('地雷')?.info.id).toBe('地雷复');
+  });
+
+  it('fromId returns null when no matching id exists', () => {
+    expect(Hexagram.fromId('不存在')).toBeNull();
+    expect(Hexagram.fromId('乾')).toBeNull();
+  });
+
+  it('fromPalace finds original palace hexagrams by palace name', () => {
+    expect(Hexagram.fromPalace('天')?.info.id).toBe('乾为天');
+    expect(Hexagram.fromPalace('地')?.info.id).toBe('坤为地');
+  });
+
+  it('fromPalace returns null when the palace name does not exist', () => {
+    expect(Hexagram.fromPalace('云')).toBeNull();
+  });
+});
