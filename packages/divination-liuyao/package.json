@@ -1,13 +1,13 @@
 {
-  "name": "bind-params",
-  "version": "1.1.6",
+  "name": "liuyao",
+  "version": "0.1.0",
   "author": {
     "name": "Kasukabe Tsumugi",
     "email": "futami16237@gmail.com"
   },
   "purpose": "npm",
-  "description": "Bind the first N parameters of a function, with full type hints!",
-  "description_zh": "为函数固定前N个参数，有完整的类型提示！",
+  "description": "Offers metadata for the Chinese Liu Yao divination, sourced from works such as 'Zeng Shan Bu Yi'.",
+  "description_zh": "提供六爻卦象的元数据，来自《增删卜易》等著作",
   "type": "module",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
