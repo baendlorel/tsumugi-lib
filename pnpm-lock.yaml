@@ -71,6 +71,12 @@ importers:
 
   packages/defered-branch: {}
 
+  packages/divination-liuyao:
+    dependencies:
+      solarlunar:
+        specifier: ^3.1.0
+        version: 3.1.0
+
   packages/flat-pair: {}
 
   packages/function-feature:
@@ -106,6 +112,12 @@ importers:
       magic-string:
         specifier: ^0.30.21
         version: 0.30.21
+      rollup:
+        specifier: '>=4.0.0'
+        version: 4.60.2
+      typescript:
+        specifier: '>=4.5.0'
+        version: 6.0.3
 
   packages/rollup-plugin-func-macro:
     dependencies:
@@ -1439,6 +1451,9 @@ packages:
     resolution: {integrity: sha512-KAkBqZl3c2GvNgNhcoyJae1aKldDW0LO279wF9bk1PnluRTETKBq0WyzRXxEhoQLk56yHaOY4JCBEKDuJIET5g==}
     engines: {node: '>=20.0.0'}
 
+  solarlunar@3.1.0:
+    resolution: {integrity: sha512-PCJsIeSaMyQVK6TZk+tlPNaoAlk02+2UxhI/DS+K0zdLkwTihMp4px6S+Jv6HPPC0p7QsUM18WSs2/HEC1o0wQ==}
+
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
@@ -2648,6 +2663,8 @@ snapshots:
       simple-concat: 1.0.1
 
   smob@1.6.1: {}
+
+  solarlunar@3.1.0: {}
 
   source-map-js@1.2.1: {}
 

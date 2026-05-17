@@ -40,5 +40,8 @@
   "bugs": {
     "url": "https://github.com/baendlorel/kt-packages/issues"
   },
-  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/liuyao#readme"
+  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/liuyao#readme",
+  "dependencies": {
+    "solarlunar": "^3.1.0"
+  }
 }
