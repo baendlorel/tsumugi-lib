@@ -14,8 +14,9 @@ export class Hexagram {
   /**
    * Use tokens like `'012132'` to create a Hexagram, where each digit represents the count of Yang in the corresponding Yao (0 for 老阴, 1 for 少阳, 2 for 少阴, 3 for 老阳). The first digit represents the first Yao (初爻) and the last digit represents the sixth Yao (上爻).
    */
-  static fromBinary(quaternary: string): Hexagram {
-    return new Hexagram(quaternary.split('').map((c) => new Yao(parseInt(c))));
+  static fromBinary(quaternary: string): Hexagram | null {
+    const yaos = quaternary.split('').map(Yao.fromDigitString);
+    return yaos.every((y): y is Yao => y !== null) ? new Hexagram(yaos) : null;
   }
 
   /**
@@ -24,19 +25,9 @@ export class Hexagram {
    * Since 交 is 0, 单 is 1, 拆 is 2, and 重 is 3, the above token is equivalent to '112233'.
    * Which returns '风泽中孚' with its 5th and 6th Yao being dynamic.
    */
-  static fromSymbolName(quaternary: string): Hexagram {
-    return new Hexagram(quaternary.split('').map((c) => new Yao(parseInt(c))));
-  }
-
-  /**
-   * Try to create a Hexagram from an array of Yaos. If the input is invalid, null will be returned.
-   */
-  static fromYaos(yaos: Yao[]): Hexagram | null {
-    try {
-      return new Hexagram(yaos);
-    } catch {
-      return null;
-    }
+  static fromSymbolName(symbolNames: string): Hexagram | null {
+    const yaos = symbolNames.split('').map(Yao.fromSymbolName);
+    return yaos.every((y): y is Yao => y !== null) ? new Hexagram(yaos) : null;
   }
 
   /**
@@ -108,6 +99,9 @@ export class Hexagram {
     return this.yaos.slice(0, 3).some((y) => y.isDynamic || y.isChanged);
   }
 
+  /**
+   * Create a Hexagram from an array of Yao with length 6.
+   */
   constructor(yaos: Yao[]) {
     if (yaos.length !== 6) {
       throw new Error('Array length mismatch, A Hexagram must be constructed with exactly 6 Yaos or 6 counts of yang');
