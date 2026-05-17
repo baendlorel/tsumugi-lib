@@ -2019,33 +2019,55 @@ export const Hexagrams = {
 };
 
 export interface TrigramInfo {
-  binary: string;
-  yangCount: number;
+  /**
+   * Presents the trigram as a 3-digit binary string. 1 represents a Yang line and 0 represents a Yin line.
+   *
+   * For example, "111" for 乾, "100" for 震, etc.
+   */
+  binary: `${0 | 1}${0 | 1}${0 | 1}`;
+
+  /**
+   * How many Yang Yaos are in the trigram, such as 0 for 坤, 1 for 震, 2 for 兑, etc.
+   */
+  yangCount: 0 | 1 | 2 | 3;
+
+  /**
+   * Name of the trigram in Chinese, such as "乾", "坤", "震", etc.
+   */
   name: string;
+
+  /**
+   * Name of the trigram in English, such as "Qian", "Kun", "Zhen", etc.
+   */
+  nameEn: string;
+
+  /**
+   * What the trigram represents in Chinese, such as "天", "地", "水", etc.
+   */
   represents: string;
+
+  /**
+   * What the trigram represents in English, such as "heaven", "earth", "water", etc.
+   */
+  representsEn: string;
+
+  /**
+   * Unicode character representing the trigram, such as "☰" for 乾, "☷" for 坤, etc.
+   */
   sign: string;
 }
 
 // 老阳：○，老阴：×，少阳：’，少阴：”
-export const Trigram = {
-  list: [
-    { binary: '000', yangCount: 0, name: '坤', represents: '地', sign: '☷' },
-    { binary: '100', yangCount: 1, name: '震', represents: '雷', sign: '☳' },
-    { binary: '010', yangCount: 1, name: '坎', represents: '水', sign: '☵' },
-    { binary: '110', yangCount: 2, name: '兑', represents: '泽', sign: '☱' },
-    { binary: '001', yangCount: 1, name: '艮', represents: '山', sign: '☶' },
-    { binary: '101', yangCount: 2, name: '离', represents: '火', sign: '☲' },
-    { binary: '011', yangCount: 2, name: '巽', represents: '风', sign: '☴' },
-    { binary: '111', yangCount: 3, name: '乾', represents: '天', sign: '☰' },
-  ] satisfies TrigramInfo[],
-  find(binary: string) {
-    const trigram = this.list.find((t) => t.binary === binary);
-    if (!trigram) {
-      throw new Error(`八卦：无法通过二进制找到卦象 ${binary}`);
-    }
-    return trigram;
-  },
-  findByName(name: string) {
-    return this.list.find((t) => t.name === name);
-  },
-};
+/**
+ * List of all trigrams in the I Ching, with their binary representation, number of yang lines, name, what they represent, and their corresponding sign.
+ */
+export const TrigramList: readonly TrigramInfo[] = Object.freeze([
+  { binary: '000', yangCount: 0, name: '坤', represents: '地', nameEn: '', representsEn: '', sign: '☷' },
+  { binary: '100', yangCount: 1, name: '震', represents: '雷', nameEn: '', representsEn: '', sign: '☳' },
+  { binary: '010', yangCount: 1, name: '坎', represents: '水', nameEn: '', representsEn: '', sign: '☵' },
+  { binary: '110', yangCount: 2, name: '兑', represents: '泽', nameEn: '', representsEn: '', sign: '☱' },
+  { binary: '001', yangCount: 1, name: '艮', represents: '山', nameEn: '', representsEn: '', sign: '☶' },
+  { binary: '101', yangCount: 2, name: '离', represents: '火', nameEn: '', representsEn: '', sign: '☲' },
+  { binary: '011', yangCount: 2, name: '巽', represents: '风', nameEn: '', representsEn: '', sign: '☴' },
+  { binary: '111', yangCount: 3, name: '乾', represents: '天', nameEn: '', representsEn: '', sign: '☰' },
+]);
