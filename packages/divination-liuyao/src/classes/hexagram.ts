@@ -1,8 +1,8 @@
-import { HexagramList, type HexagramInfo } from '../core/common.js';
+import { HexagramInfoTable, type HexagramInfo } from '../core/common.js';
 import { Yao } from './yao.js';
 
 type LiuYao = [Yao, Yao, Yao, Yao, Yao, Yao];
-export const YaoIndex = ['初爻', '二爻', '三爻', '四爻', '五爻', '上爻'] as const;
+export const HexagramYaoIndex = ['初爻', '二爻', '三爻', '四爻', '五爻', '上爻'] as const;
 
 /**
  * Hexagram class represents a hexagram, which consists of 6 Yao.
@@ -14,7 +14,7 @@ export class Hexagram {
   /**
    * Use tokens like `'012132'` to create a Hexagram, where each digit represents the count of Yang in the corresponding Yao (0 for 老阴, 1 for 少阳, 2 for 少阴, 3 for 老阳). The first digit represents the first Yao (初爻) and the last digit represents the sixth Yao (上爻).
    */
-  static fromBinary(quaternary: string): Hexagram | null {
+  static fromQuaternary(quaternary: string): Hexagram | null {
     const yaos = quaternary.split('').map(Yao.fromDigitString);
     return yaos.every((y): y is Yao => y !== null) ? new Hexagram(yaos) : null;
   }
@@ -42,7 +42,7 @@ export class Hexagram {
   }
 
   static fromId(id: string): Hexagram | null {
-    const exist = HexagramList.find(
+    const exist = HexagramInfoTable.find(
       (h) => h.id === id || h.id.slice(2) === id || (h.id.startsWith(id) && id.length > 1),
     );
     return exist ? Hexagram.fromYangCounts(exist.yangCounts) : null;
@@ -52,7 +52,7 @@ export class Hexagram {
    * Find Original Palace Hexagram by the palace name, which is the last character of the hexagram id. For example, '天' for '乾为天', '地' for '坤为地', etc.
    */
   static fromPalace(palace: string): Hexagram | null {
-    const exist = HexagramList.find((h) => h.id[2] === palace);
+    const exist = HexagramInfoTable.find((h) => h.id[2] === palace);
     return exist ? Hexagram.fromYangCounts(exist.yangCounts) : null;
   }
 
@@ -66,7 +66,7 @@ export class Hexagram {
    * HexagramInfo of this hexagram, which can be used to get more information about this hexagram, such as its name, sign, phase, palace, etc.
    */
   get info(): HexagramInfo {
-    return HexagramList.find((h) => h.binary === this.yaos.map((y) => y.polar).join(''))!;
+    return HexagramInfoTable.find((h) => h.binary === this.yaos.map((y) => y.polar).join(''))!;
   }
 
   /**
@@ -141,7 +141,7 @@ export class Hexagram {
       infos.push(`变卦${changed.info.id}`);
       infos.push(
         `动爻：${this.yaos
-          .map((y, i) => (y.isDynamic ? `${YaoIndex[i]}` : null))
+          .map((y, i) => (y.isDynamic ? `${HexagramYaoIndex[i]}` : null))
           .filter((s): s is string => s !== null)
           .join('、')}`,
       );
@@ -158,7 +158,7 @@ export class Hexagram {
       infos.push(`Changed Hexagram ${changed.info.id}`);
       infos.push(
         `Dynamic Yaos: ${this.yaos
-          .map((y, i) => (y.isDynamic ? `${YaoIndex[i]}` : null))
+          .map((y, i) => (y.isDynamic ? `${HexagramYaoIndex[i]}` : null))
           .filter((s): s is string => s !== null)
           .join(', ')}`,
       );

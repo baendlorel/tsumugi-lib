@@ -1,4 +1,4 @@
-import { TrigramList } from '../core/common.js';
+import { TrigramInfoTable } from '../core/common.js';
 
 const _names = ['老阴', '少阳', '少阴', '老阳'] as const;
 const _symbolNames = '交单拆重' as const;
@@ -69,7 +69,7 @@ export class Yao {
    * @param value `{id: '坤', binary: '000', yangCount: 0}`, so `'坤'`, `'000'` and `0` can all be used.
    */
   static fromTrigramField(value: string | number): Yao | null {
-    const trigram = TrigramList.find(
+    const trigram = TrigramInfoTable.find(
       (v) =>
         v.id === value ||
         v.yangCount === value ||

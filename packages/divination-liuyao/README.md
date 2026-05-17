@@ -6,11 +6,11 @@ For more packages, see [my homepage](https://baendlorel.github.io/?repoType=npm)
 
 ## Features
 
-- Create a yao from its yang-count representation.
-- Build a hexagram from six yao lines or from a known hexagram name.
+- Create a yao from its Yang-count representation, quaternary or various arguments.
+- Build a hexagram from six Yao lines or from a known hexagram name.
 - Inspect hexagram metadata such as its name, palace, phase, and setup information.
 - Derive the changed hexagram for dynamic lines.
-- Access six-god ordering data for different heavenly stems.
+- Access Six God ordering data for different heavenly stems.
 
 ## Installation
 
@@ -23,16 +23,9 @@ pnpm add liuyao
 ```ts
 import { Hexagram, Yao, SixGodList } from 'liuyao';
 
-const hexagram = Hexagram.fromYaos([
-	new Yao(3),
-	new Yao(1),
-	new Yao(2),
-	new Yao(2),
-	new Yao(1),
-	new Yao(0),
-]);
+const hexagram = Hexagram.fromQuaternary('111222'); // gets a Hexagram instance of '地天泰'
 
-if (!hexagram) {
+if (hexagram === null) {
 	throw new Error('Invalid hexagram');
 }
 
@@ -101,11 +94,19 @@ Useful factory methods:
 
 The package currently exports:
 
+**Classes:**
 - `Hexagram`
 - `Yao`
-- `YaoIndex`
-- `SixGodList`
+
+**Data Lists:**
+- `HexagramList`(六十四卦): Includes 64 static hexagram info objects with traditional metadata.
+- `HexagramYaoIndex`(六十四卦爻位名)
+- `TrigramList`(八卦): Includes 8 static trigram info objects with traditional metadata.
+- `SixGodList`(六神表)
+
+**Types:**
 - type `SixGod`
+- type `SixGodInfo`
 - type `SetupGramInfo`
 
 ## Notes

@@ -31,7 +31,7 @@ interface PalaceIndexName {
   nameEn: string;
 }
 
-export const PalaceIndexList: PalaceIndexName[] = [
+export const PalaceIndexTable: PalaceIndexName[] = [
   { name: '本宫卦', nameEn: 'Original Palace' },
   { name: '一世卦', nameEn: 'First Generation' },
   { name: '二世卦', nameEn: 'Second Generation' },
@@ -101,7 +101,7 @@ export interface HexagramInfo {
   setupInfo: [SetupGramInfo, SetupGramInfo, SetupGramInfo, SetupGramInfo, SetupGramInfo, SetupGramInfo];
 }
 
-export const HexagramList: readonly HexagramInfo[] = Object.freeze([
+export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
   {
     binary: '000000',
     id: '坤为地',
@@ -2131,7 +2131,7 @@ export interface TrigramInfo {
 /**
  * List of all trigrams in the I Ching, with their binary representation, number of yang lines, name, what they represent, and their corresponding sign.
  */
-export const TrigramList: readonly TrigramInfo[] = Object.freeze([
+export const TrigramInfoTable: readonly TrigramInfo[] = Object.freeze([
   { id: '坤', binary: '000', yangCount: 0, represents: '地', nameEn: 'kun', representsEn: 'earth', sign: '☷' },
   { id: '震', binary: '100', yangCount: 1, represents: '雷', nameEn: 'zhen', representsEn: 'thunder', sign: '☳' },
   { id: '坎', binary: '010', yangCount: 1, represents: '水', nameEn: 'kan', representsEn: 'water', sign: '☵' },

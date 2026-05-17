@@ -26,7 +26,7 @@ export interface SixGodInfo {
 /**
  * @see 《增删卜易·六神章》
  */
-export const SixGodList: readonly SixGodInfo[] = Object.freeze([
+export const SixGodTable: readonly SixGodInfo[] = Object.freeze([
   {
     heavenlyStem: '甲',
     gods: ['青龙', '朱雀', '勾陈', '螣蛇', '白虎', '玄武'] as SixGod[],
