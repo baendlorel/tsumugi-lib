@@ -26,16 +26,21 @@ import type { SetupGramInfo } from './setup-gram.js';
 泰,大畜,需,小畜,大壮,大有,夬,乾
 */
 
-export const FamilyIndexName = [
-  '本宫卦',
-  '一世卦',
-  '二世卦',
-  '三世卦',
-  '四世卦',
-  '五世卦',
-  '游魂卦',
-  '归魂卦',
-] as const;
+interface PalaceIndexName {
+  name: string;
+  nameEn: string;
+}
+
+export const PalaceIndexList: PalaceIndexName[] = [
+  { name: '本宫卦', nameEn: 'Original Palace' },
+  { name: '一世卦', nameEn: 'First Generation' },
+  { name: '二世卦', nameEn: 'Second Generation' },
+  { name: '三世卦', nameEn: 'Third Generation' },
+  { name: '四世卦', nameEn: 'Fourth Generation' },
+  { name: '五世卦', nameEn: 'Fifth Generation' },
+  { name: '游魂卦', nameEn: 'Wandering Soul' },
+  { name: '归魂卦', nameEn: 'Returning Soul' },
+];
 
 export interface HexagramInfo {
   /**
@@ -90,7 +95,7 @@ export interface HexagramInfo {
   setupInfo: [SetupGramInfo, SetupGramInfo, SetupGramInfo, SetupGramInfo, SetupGramInfo, SetupGramInfo];
 }
 
-export const Hexagrams: HexagramInfo[] = [
+export const HexagramList: readonly HexagramInfo[] = Object.freeze([
   {
     binary: '000000',
     id: '坤为地',
@@ -2011,7 +2016,7 @@ export const Hexagrams: HexagramInfo[] = [
       },
     ],
   },
-];
+]);
 
 export interface TrigramInfo {
   /**
