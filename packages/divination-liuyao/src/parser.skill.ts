@@ -30,15 +30,13 @@ function getLunarInfo() {
     return null;
   }
 
-  const l = solar2lunar(datetime.getFullYear(), datetime.getMonth() + 1, datetime.getDate());
+  const l = solar2lunar.solar2lunar(datetime.getFullYear(), datetime.getMonth() + 1, datetime.getDate());
 
   if (l === -1) {
     return null;
   }
 
-  const shichen = getShichen(datetime);
-  const gods = SixGodTable.find((g) => g.heavenlyStem === shichen)!.gods;
-
+  const gods = SixGodTable.find((g) => g.heavenlyStem === l.gzDay[0])!.gods;
   return {
     年: l.gzYear,
     月: l.gzMonth,
@@ -55,4 +53,4 @@ function getLunarInfo() {
   };
 }
 
-console.log({ 卦象: getInfo()?.toAIReadable(), 时辰信息: getLunarInfo() });
+console.dir({ version: 'UPDATED_AT', 卦象: getInfo()?.toAIReadable(), 时辰信息: getLunarInfo() }, { depth: 6 });
