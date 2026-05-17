@@ -41,6 +41,10 @@ export class Hexagram {
     }
   }
 
+  /**
+   * Create a Hexagram from its id, which is the name of the hexagram without the palace name.
+   * @param id "坤为地", "地雷复", "地水师"
+   */
   static fromId(id: string): Hexagram | null {
     const exist = HexagramInfoTable.find(
       (h) => h.id === id || h.id.slice(2) === id || (h.id.startsWith(id) && id.length > 1),
@@ -174,42 +178,59 @@ export class Hexagram {
   /**
    * This output is meant for AI skills.
    */
-  toAIReadable(): { 本卦: HexagramAIReadable<'本卦'>; 变卦: HexagramAIReadable<'变卦'> | null } {
+  toAIReadable(): { 本卦: HexagramAIReadable<'本卦'>; 变卦: HexagramAIReadable<'变卦'> | null; 世应变化: string } {
     const si = this.info.setupInfo;
     const changed = this.toChanged();
     const csi = changed?.info.setupInfo;
 
+    const hostGuestChange: string[] = [];
+    if (csi) {
+      const dynamicIndexes = this.yaos.map((y, i) => (y.isDynamic ? i : null)).filter((y) => y !== null);
+      csi.forEach((s, i) => {
+        if (dynamicIndexes.includes(i)) {
+          if (s.hostGuest === '世') {
+            hostGuestChange.push(`新世爻为${changed.info.id}的${HexagramYaoOrder[i]}`);
+          }
+          if (s.hostGuest === '应') {
+            hostGuestChange.push(`新应爻为${changed.info.id}的${HexagramYaoOrder[i]}`);
+          }
+        }
+      });
+    } else {
+      hostGuestChange.push('没有新的世应爻出现，世应不变');
+    }
+
     return {
       本卦: {
-        初爻: {
-          爻象: this.yaos[0].name,
-          类型: si[0].hostGuest || null,
-          六亲五行: si[0].kin,
-        },
-        二爻: {
-          爻象: this.yaos[1].name,
-          类型: si[1].hostGuest || null,
-          六亲五行: si[1].kin,
-        },
-        三爻: {
-          爻象: this.yaos[2].name,
-          类型: si[2].hostGuest || null,
-          六亲五行: si[2].kin,
-        },
-        四爻: {
-          爻象: this.yaos[3].name,
-          类型: si[3].hostGuest || null,
-          六亲五行: si[3].kin,
+        上爻: {
+          爻: this.yaos[5].name,
+          类型: si[5].hostGuest || null,
+          六亲地支五行: si[5].kin,
         },
         五爻: {
-          爻象: this.yaos[4].name,
+          爻: this.yaos[4].name,
           类型: si[4].hostGuest || null,
-          六亲五行: si[4].kin,
+          六亲地支五行: si[4].kin,
         },
-        上爻: {
-          爻象: this.yaos[5].name,
-          类型: si[5].hostGuest || null,
-          六亲五行: si[5].kin,
+        四爻: {
+          爻: this.yaos[3].name,
+          类型: si[3].hostGuest || null,
+          六亲地支五行: si[3].kin,
+        },
+        三爻: {
+          爻: this.yaos[2].name,
+          类型: si[2].hostGuest || null,
+          六亲地支五行: si[2].kin,
+        },
+        二爻: {
+          爻: this.yaos[1].name,
+          类型: si[1].hostGuest || null,
+          六亲地支五行: si[1].kin,
+        },
+        初爻: {
+          爻: this.yaos[0].name,
+          类型: si[0].hostGuest || null,
+          六亲地支五行: si[0].kin,
         },
         卦名: this.info.id,
         变爻: this.isDynamic
@@ -220,39 +241,40 @@ export class Hexagram {
       },
       变卦: csi
         ? {
-            初爻: {
-              爻象: changed.yaos[0].name,
-              类型: csi[0].hostGuest || null,
-              六亲五行: csi[0].kin,
-            },
-            二爻: {
-              爻象: changed.yaos[1].name,
-              类型: csi[1].hostGuest || null,
-              六亲五行: csi[1].kin,
-            },
-            三爻: {
-              爻象: changed.yaos[2].name,
-              类型: csi[2].hostGuest || null,
-              六亲五行: csi[2].kin,
-            },
-            四爻: {
-              爻象: changed.yaos[3].name,
-              类型: csi[3].hostGuest || null,
-              六亲五行: csi[3].kin,
+            上爻: {
+              爻: changed.yaos[5].name,
+              类型: csi[5].hostGuest || null,
+              六亲地支五行: csi[5].kin,
             },
             五爻: {
-              爻象: changed.yaos[4].name,
+              爻: changed.yaos[4].name,
               类型: csi[4].hostGuest || null,
-              六亲五行: csi[4].kin,
+              六亲地支五行: csi[4].kin,
             },
-            上爻: {
-              爻象: changed.yaos[5].name,
-              类型: csi[5].hostGuest || null,
-              六亲五行: csi[5].kin,
+            四爻: {
+              爻: changed.yaos[3].name,
+              类型: csi[3].hostGuest || null,
+              六亲地支五行: csi[3].kin,
+            },
+            三爻: {
+              爻: changed.yaos[2].name,
+              类型: csi[2].hostGuest || null,
+              六亲地支五行: csi[2].kin,
+            },
+            二爻: {
+              爻: changed.yaos[1].name,
+              类型: csi[1].hostGuest || null,
+              六亲地支五行: csi[1].kin,
+            },
+            初爻: {
+              爻: changed.yaos[0].name,
+              类型: csi[0].hostGuest || null,
+              六亲地支五行: csi[0].kin,
             },
             卦名: changed.info.id,
           }
         : null,
+      世应变化: hostGuestChange.join('，'),
     };
   }
 
@@ -273,9 +295,9 @@ export class Hexagram {
 
 // #region Hexagram Json is for AI skills
 interface YaoInfo {
-  爻象: string; // 少阴少阳老阴老阳
+  爻: string; // 少阴少阳老阴老阳
   类型: '世' | '应' | null;
-  六亲五行: string; // 例如：父金、兄弟水、妻财木等
+  六亲地支五行: string; // 例如：父金、兄弟水、妻财木等
 }
 
 interface HexagramAIReadable<T extends '本卦' | '变卦'> {

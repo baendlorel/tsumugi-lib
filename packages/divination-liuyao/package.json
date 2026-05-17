@@ -16,6 +16,9 @@
     "import": "./dist/index.mjs",
     "default": "./dist/index.mjs"
   },
+  "scripts": {
+    "skill": "rollup -c ./rollup.config.skill.mjs"
+  },
   "files": [
     "dist"
   ],
