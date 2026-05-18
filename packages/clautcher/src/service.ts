@@ -1,30 +1,11 @@
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path, { join } from 'node:path';
-
-export interface ClaudePaths {
-  claudeDir: string;
-  settingsFile: string;
-}
+import { state } from './state.js';
 
 export interface ProfileSummary {
   name: string;
   filePath: string;
   isActive: boolean;
-}
-
-interface SwitchState {
-  activeProfile: string;
-  updatedAt: string;
-}
-
-export function resolveClaudePaths(
-  claudeDir = process.env.CLAUTCHER_CLAUDE_DIR ?? join(homedir(), '.claude'),
-): ClaudePaths {
-  return {
-    claudeDir,
-    settingsFile: join(claudeDir, 'settings.json'),
-  };
 }
 
 export function listProfiles(claudeDir: string): ProfileSummary[] {
@@ -52,17 +33,16 @@ export function listProfiles(claudeDir: string): ProfileSummary[] {
 }
 
 export function switchProfile(profileName: string, claudeDir?: string) {
-  const paths = resolveClaudePaths(claudeDir);
-  const profiles = listProfiles(paths.claudeDir);
+  const profiles = listProfiles(state.claudeDir);
   const profile = profiles.find((p) => p.name === profileName);
 
   if (!profile) {
     throw new Error(`Profile not found: ${profileName}`);
   }
 
-  mkdirSync(paths.claudeDir, { recursive: true });
+  mkdirSync(state.claudeDir, { recursive: true });
   const content = readFileSync(profile.filePath);
-  writeFileSync(paths.settingsFile, content);
+  writeFileSync(state.settingsFile, content);
 
   return profile;
 }

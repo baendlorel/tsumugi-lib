@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-import { fileURLToPath } from 'node:url';
 import { HELP, parseArgv } from './command.js';
-import { listProfiles, resolveClaudePaths, switchProfile } from './service.js';
+import { listProfiles, switchProfile } from './service.js';
+import { state } from './state.js';
 
 export function runCli(argv: string[] = process.argv.slice(2)): number {
   try {
@@ -14,11 +14,10 @@ export function runCli(argv: string[] = process.argv.slice(2)): number {
     }
 
     if (command.kind === 'list') {
-      const paths = resolveClaudePaths();
-      const profiles = listProfiles(paths.claudeDir);
+      const profiles = listProfiles(state.claudeDir);
 
       if (profiles.length === 0) {
-        console.log(`No settings.<profileName>.json found in ${paths.claudeDir}`);
+        console.log(`No settings.<profileName>.json found in ${state.claudeDir}`);
         return 0;
       }
 
@@ -39,5 +38,3 @@ export function runCli(argv: string[] = process.argv.slice(2)): number {
     return 1;
   }
 }
-
-process.exitCode = runCli();
