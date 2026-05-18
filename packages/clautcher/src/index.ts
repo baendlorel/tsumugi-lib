@@ -4,7 +4,7 @@ import { help } from './services/help.js';
 import { list } from './services/list.js';
 import { use } from './services/use.js';
 import { version } from './services/version.js';
-import { state } from './state.js';
+import { state } from './common.js';
 
 function main(argv: string[] = process.argv.slice(2)): number {
   try {

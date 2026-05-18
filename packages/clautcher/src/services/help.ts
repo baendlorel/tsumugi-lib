@@ -1,4 +1,4 @@
-import { state } from '../state.js';
+import { state } from '../common.js';
 
 export function help() {
   const rawCommands = [

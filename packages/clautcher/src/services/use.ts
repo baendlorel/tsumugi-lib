@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { getList } from './list.js';
-import { state } from '../state.js';
+import { state } from '../common.js';
 import path from 'node:path';
 
 export function use(name: string, claudeDir: string, settingsFile: string) {

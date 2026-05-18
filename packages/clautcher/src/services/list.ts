@@ -1,6 +1,6 @@
 import { readdirSync } from 'node:fs';
 import path from 'node:path';
-import { state } from '../state.js';
+import { state } from '../common.js';
 
 export interface ProfileSummary {
   /**
