@@ -1,0 +1,47 @@
+{
+  "name": "clautcher",
+  "version": "0.1.0",
+  "author": {
+    "name": "Kasukabe Tsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "purpose": "npm",
+  "description": "Switch Claude settings.json profiles from the command line.",
+  "description_zh": "通过命令行切换 Claude 的 settings.json 配置。",
+  "type": "module",
+  "bin": {
+    "clautcher": "./dist/cli.js"
+  },
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsx build.ts",
+    "test": "vitest run tests --config ../../vitest.config.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/tsumugi-lib.git",
+    "directory": "packages/clautcher"
+  },
+  "keywords": [
+    "claude",
+    "settings",
+    "cli",
+    "typescript",
+    "nodenext"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/baendlorel/tsumugi-lib/issues"
+  },
+  "homepage": "https://github.com/baendlorel/tsumugi-lib/tree/main/packages/clautcher#readme"
+}
