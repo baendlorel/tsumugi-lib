@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { fileURLToPath } from 'node:url';
-import { getHelpText, parseArgv } from './command.js';
+import { HELP, parseArgv } from './command.js';
 import { listProfiles, resolveClaudePaths, switchProfile } from './service.js';
 
 export function runCli(argv: string[] = process.argv.slice(2)): number {
@@ -9,7 +9,7 @@ export function runCli(argv: string[] = process.argv.slice(2)): number {
     const command = parseArgv(argv);
 
     if (command.kind === 'help') {
-      console.log(getHelpText());
+      console.log(HELP);
       return 0;
     }
 
@@ -18,7 +18,7 @@ export function runCli(argv: string[] = process.argv.slice(2)): number {
       const profiles = listProfiles(paths.claudeDir);
 
       if (profiles.length === 0) {
-        console.log(`No profiles found in ${paths.profilesDir}`);
+        console.log(`No settings.<profileName>.json found in ${paths.claudeDir}`);
         return 0;
       }
 
@@ -29,20 +29,15 @@ export function runCli(argv: string[] = process.argv.slice(2)): number {
       return 0;
     }
 
-    const settingsFile = switchProfile(command.profile);
-    console.log(`Switched Claude settings to profile: ${command.profile}`);
-    console.log(`Updated file: ${settingsFile}`);
+    const settingsFile = switchProfile(command.args[0]);
+    console.log(`Switched Claude settings to ${settingsFile.name}`);
     return 0;
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     console.error('');
-    console.error(getHelpText());
+    console.error(HELP);
     return 1;
   }
 }
 
-const isDirectExecution = process.argv[1] !== undefined && fileURLToPath(import.meta.url) === process.argv[1];
-
-if (isDirectExecution) {
-  process.exitCode = runCli();
-}
+process.exitCode = runCli();

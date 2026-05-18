@@ -1,12 +1,10 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import path, { join } from 'node:path';
 
 export interface ClaudePaths {
   claudeDir: string;
-  profilesDir: string;
   settingsFile: string;
-  stateFile: string;
 }
 
 export interface ProfileSummary {
@@ -25,86 +23,46 @@ export function resolveClaudePaths(
 ): ClaudePaths {
   return {
     claudeDir,
-    profilesDir: join(claudeDir, 'profiles'),
     settingsFile: join(claudeDir, 'settings.json'),
-    stateFile: join(claudeDir, '.clautcher.json'),
   };
 }
 
-export function getProfilePath(profileName: string, claudeDir?: string): string {
-  const paths = resolveClaudePaths(claudeDir);
-  return join(paths.profilesDir, `${profileName}.json`);
-}
+export function listProfiles(claudeDir: string): ProfileSummary[] {
+  const activeProfile =
+    JSON.parse(readFileSync(path.join(claudeDir, 'settings.json'), 'utf-8'))?.__clautcher_activated_profile ||
+    '<:No Active Profile:>';
 
-export function getActiveProfileName(claudeDir?: string): string | null {
-  const paths = resolveClaudePaths(claudeDir);
-  if (!existsSync(paths.stateFile) || !existsSync(paths.settingsFile)) {
-    return null;
-  }
-
-  try {
-    const state = JSON.parse(readFileSync(paths.stateFile, 'utf-8')) as Partial<SwitchState>;
-    if (!state.activeProfile) {
-      return null;
-    }
-
-    const profileFile = getProfilePath(state.activeProfile, claudeDir);
-    if (!existsSync(profileFile)) {
-      return null;
-    }
-
-    const profileContent = readFileSync(profileFile, 'utf-8').trim();
-    const settingsContent = readFileSync(paths.settingsFile, 'utf-8').trim();
-
-    return profileContent === settingsContent ? state.activeProfile : null;
-  } catch {
-    return null;
-  }
-}
-
-export function listProfiles(claudeDir?: string): ProfileSummary[] {
-  const paths = resolveClaudePaths(claudeDir);
-  if (!existsSync(paths.profilesDir)) {
-    return [];
-  }
-
-  const activeProfile = getActiveProfileName(claudeDir);
-
-  return readdirSync(paths.profilesDir, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
+  return readdirSync(claudeDir, { withFileTypes: true })
+    .filter(
+      (entry) =>
+        entry.isFile() &&
+        entry.name !== 'settings.json' &&
+        entry.name.startsWith('settings.') &&
+        entry.name.endsWith('.json'),
+    )
     .map((entry) => {
-      const name = entry.name.slice(0, -'.json'.length);
+      const name = entry.name.replace(/^settings\.(.+)\.json$/, '$1');
       return {
         name,
-        filePath: join(paths.profilesDir, entry.name),
+        filePath: join(claudeDir, entry.name),
         isActive: name === activeProfile,
       };
     })
     .sort((left, right) => left.name.localeCompare(right.name));
 }
 
-export function switchProfile(profileName: string, claudeDir?: string): string {
+export function switchProfile(profileName: string, claudeDir?: string) {
   const paths = resolveClaudePaths(claudeDir);
-  const profileFile = getProfilePath(profileName, claudeDir);
+  const profiles = listProfiles(paths.claudeDir);
+  const profile = profiles.find((p) => p.name === profileName);
 
-  if (!existsSync(profileFile)) {
-    throw new Error(`Profile "${profileName}" was not found in ${paths.profilesDir}.`);
+  if (!profile) {
+    throw new Error(`Profile not found: ${profileName}`);
   }
 
   mkdirSync(paths.claudeDir, { recursive: true });
-  copyFileSync(profileFile, paths.settingsFile);
-  writeFileSync(
-    paths.stateFile,
-    JSON.stringify(
-      {
-        activeProfile: profileName,
-        updatedAt: new Date().toISOString(),
-      } satisfies SwitchState,
-      null,
-      2,
-    ) + '\n',
-    'utf-8',
-  );
+  const content = readFileSync(profile.filePath);
+  writeFileSync(paths.settingsFile, content);
 
-  return paths.settingsFile;
+  return profile;
 }
