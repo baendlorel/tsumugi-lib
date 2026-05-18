@@ -13,7 +13,7 @@ export function use(name: string, claudeDir: string, settingsFile: string) {
 
   mkdirSync(claudeDir, { recursive: true });
   const content = state.loadSettings(claudeDir, profile.fileName);
-  content.__clautcher_activated_profile = name;
+  content['__clautcher_activated_profile'] = name;
   writeFileSync(path.join(claudeDir, settingsFile), JSON.stringify(content, null, 2));
   console.log(`Switched to settings: ${name}`);
 }
