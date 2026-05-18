@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { help } from './services/help.js';
 import { list } from './services/list.js';
 import { use } from './services/use.js';
