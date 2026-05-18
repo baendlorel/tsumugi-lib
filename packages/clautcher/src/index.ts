@@ -47,3 +47,5 @@ function main(argv: string[] = process.argv): number {
 }
 
 process.exitCode = main();
+
+export { switcher };
