@@ -1,6 +1,6 @@
 {
   "name": "clautcher",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "author": {
     "name": "Kasukabe Tsumugi",
     "email": "futami16237@gmail.com"
@@ -10,22 +10,19 @@
   "description_zh": "通过命令行切换 Claude 的 settings.json 配置。",
   "type": "module",
   "bin": {
-    "clautcher": "./dist/index.js"
+    "clautcher": "./dist/index.mjs"
   },
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
     }
   },
   "files": [
     "dist"
   ],
-  "scripts": {
-    "test": "vitest run tests --config ../../vitest.config.ts"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/baendlorel/tsumugi-lib.git",
