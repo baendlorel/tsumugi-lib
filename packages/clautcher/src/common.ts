@@ -3,7 +3,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 interface ClaudeSettings {
-  __clautcher_activated_profile?: string;
+  __clautcher_activated_settings?: string;
   [key: string]: unknown;
 }
 
@@ -17,4 +17,13 @@ export namespace state {
   }
 
   export const HelpList: Array<{ command: string; description: string }> = [];
+}
+
+type ClautcherErrorType = 'UnknownCommand' | 'NotEnoughArguments' | 'SettingsFileNotFound';
+export class ClautcherError extends Error {
+  public type: ClautcherErrorType;
+  constructor(message: string, type: ClautcherErrorType) {
+    super(message);
+    this.type = type;
+  }
 }

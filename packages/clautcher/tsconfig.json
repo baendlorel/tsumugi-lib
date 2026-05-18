@@ -4,11 +4,11 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "rootDir": "./src",
+    "rootDir": "..",
     "outDir": "./dist",
     "declaration": false,
     "declarationMap": false,
     "noEmit": true
   },
-  "include": ["src/**/*.ts"]
+  "include": ["./src/**/*.ts", "../_shared/**/*.ts"]
 }

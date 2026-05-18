@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 
+import { cctl } from '../../_shared/utils/color.js';
+
 import { help } from './services/help.js';
 import { list } from './services/list.js';
 import { use } from './services/use.js';
 import { version } from './services/version.js';
-import { state } from './common.js';
+
+import { ClautcherError, state } from './common.js';
 
 function main(argv: string[] = process.argv.slice(2)): number {
   try {
@@ -32,18 +35,26 @@ function main(argv: string[] = process.argv.slice(2)): number {
 
     if (command === 'use') {
       if (rest.length === 0) {
-        throw new Error('The use command requires a profile name.');
+        throw new ClautcherError('The use command requires a profile name.', 'NotEnoughArguments');
       }
 
       use(rest[0], state.ClaudeDir, state.SettingsFile);
       return 0;
     }
 
-    throw new Error(`Unknown command: ${command}`);
+    throw new ClautcherError(`Unknown command: ${command}`, 'UnknownCommand');
   } catch (error) {
-    console.error(error instanceof Error ? error.message : String(error));
-    console.error('');
-    help();
+    if (!(error instanceof ClautcherError)) {
+      console.error(error);
+      return 1;
+    }
+
+    if (error.type === 'UnknownCommand' || error.type === 'NotEnoughArguments') {
+      console.error(cctl.red + error.message + cctl.reset);
+      console.error('');
+      help();
+    }
+
     return 1;
   }
 }
