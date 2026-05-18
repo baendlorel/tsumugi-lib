@@ -10,7 +10,7 @@
   "description_zh": "通过命令行切换 Claude 的 settings.json 配置。",
   "type": "module",
   "bin": {
-    "clautcher": "./dist/cli.js"
+    "clautcher": "./dist/index.js"
   },
   "types": "./dist/index.d.ts",
   "exports": {
