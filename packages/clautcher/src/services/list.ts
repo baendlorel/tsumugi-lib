@@ -1,16 +1,17 @@
-import { readFileSync, readdirSync } from 'node:fs';
-import path, { join } from 'node:path';
+import { readdirSync } from 'node:fs';
+import path from 'node:path';
+import { state } from '../state.js';
 
 export interface ProfileSummary {
   name: string;
+  fileName: string;
   filePath: string;
   isActive: boolean;
 }
 
 export function list(claudeDir: string): ProfileSummary[] {
   const activeProfile =
-    JSON.parse(readFileSync(path.join(claudeDir, 'settings.json'), 'utf-8'))?.__clautcher_activated_profile ||
-    '<:No Active Profile:>';
+    state.loadSettings(claudeDir, state.SettingsFile)?.__clautcher_activated_profile || '<:No Active Profile:>';
 
   return readdirSync(claudeDir, { withFileTypes: true })
     .filter(
@@ -24,7 +25,8 @@ export function list(claudeDir: string): ProfileSummary[] {
       const name = entry.name.replace(/^settings\.(.+)\.json$/, '$1');
       return {
         name,
-        filePath: join(claudeDir, entry.name),
+        fileName: entry.name,
+        filePath: path.join(claudeDir, entry.name),
         isActive: name === activeProfile,
       };
     })

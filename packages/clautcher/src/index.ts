@@ -1,6 +1,6 @@
 import { help } from './services/help.js';
 import { list } from './services/list.js';
-import { switchSettings } from './services/switch.js';
+import { switcher } from './services/switch.js';
 import { version } from './services/version.js';
 import { state } from './state.js';
 
@@ -24,7 +24,7 @@ function main(argv: string[] = process.argv): number {
     }
 
     if (command === 'list') {
-      list(state.claudeDir);
+      list(state.ClaudeDir);
       return 0;
     }
 
@@ -33,7 +33,7 @@ function main(argv: string[] = process.argv): number {
         throw new Error('The switch command requires a profile name.');
       }
 
-      switchSettings(rest[0], state.claudeDir, state.settingsFile);
+      switcher(rest[0], state.ClaudeDir, state.SettingsFile);
       return 0;
     }
 

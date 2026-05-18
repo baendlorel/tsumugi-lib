@@ -1,7 +1,8 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { list } from './list.js';
+import { state } from '../state.js';
 
-export function switchSettings(profileName: string, claudeDir: string, settingsFile: string) {
+export function switcher(profileName: string, claudeDir: string, settingsFile: string) {
   const profiles = list(claudeDir);
   const profile = profiles.find((p) => p.name === profileName);
 
@@ -10,8 +11,8 @@ export function switchSettings(profileName: string, claudeDir: string, settingsF
   }
 
   mkdirSync(claudeDir, { recursive: true });
-  const content = readFileSync(profile.filePath);
-  writeFileSync(settingsFile, content);
-
+  const content = state.loadSettings(claudeDir, profile.name);
+  content.__clautcher_activated_profile = profileName;
+  writeFileSync(settingsFile, JSON.stringify(content, null, 2));
   return profile;
 }
