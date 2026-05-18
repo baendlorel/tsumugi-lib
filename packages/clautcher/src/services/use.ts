@@ -11,7 +11,7 @@ export function use(profileName: string, claudeDir: string, settingsFile: string
   }
 
   mkdirSync(claudeDir, { recursive: true });
-  const content = state.loadSettings(claudeDir, profile.name);
+  const content = state.loadSettings(claudeDir, profile.fileName);
   content.__clautcher_activated_profile = profileName;
   writeFileSync(settingsFile, JSON.stringify(content, null, 2));
   return profile;

@@ -3,9 +3,18 @@ import path from 'node:path';
 import { state } from '../state.js';
 
 export interface ProfileSummary {
+  /**
+   * File name with no prefix and suffix. For example, if the file name is `settings.work.json`, the name will be `work`.
+   */
   name: string;
+
+  /**
+   * File name with prefix and suffix. For example, `settings.work.json`.
+   */
   fileName: string;
+
   filePath: string;
+
   isActive: boolean;
 }
 
