@@ -14,7 +14,7 @@ export function use(name: string, claudeDir: string, settingsFile: string) {
 
   mkdirSync(claudeDir, { recursive: true });
   const content = state.loadSettings(claudeDir, file.fileName);
-  content['__clautcher_activated_settings'] = name;
+  content.clautcher_activated_settings = name;
   writeFileSync(path.join(claudeDir, settingsFile), JSON.stringify(content, null, 2));
   console.log(`Switched to settings: ${cctl.brightGreen}${cctl.bold}${file.fileName}${cctl.reset}`);
 }

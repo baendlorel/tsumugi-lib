@@ -21,7 +21,7 @@ export interface ProfileSummary {
 
 export function getList(claudeDir: string): ProfileSummary[] {
   const activeProfile =
-    state.loadSettings(claudeDir, state.SettingsFile)?.['__clautcher_activated_settings'] || '<:No Active Profile:>';
+    state.loadSettings(claudeDir, state.SettingsFile)?.clautcher_activated_settings || '<:No Active Profile:>';
 
   return readdirSync(claudeDir, { withFileTypes: true })
     .filter(
