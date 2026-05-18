@@ -18,11 +18,11 @@ export interface ProfileSummary {
   isActive: boolean;
 }
 
-export function list(claudeDir: string): ProfileSummary[] {
+export function getList(claudeDir: string): ProfileSummary[] {
   const activeProfile =
     state.loadSettings(claudeDir, state.SettingsFile)?.__clautcher_activated_profile || '<:No Active Profile:>';
 
-  const arr = readdirSync(claudeDir, { withFileTypes: true })
+  return readdirSync(claudeDir, { withFileTypes: true })
     .filter(
       (entry) =>
         entry.isFile() &&
@@ -40,9 +40,13 @@ export function list(claudeDir: string): ProfileSummary[] {
       };
     })
     .sort((left, right) => left.name.localeCompare(right.name));
+}
+
+export function list(claudeDir: string): ProfileSummary[] {
+  const arr = getList(claudeDir);
 
   if (arr.length === 0) {
-    console.log('No available settings.<profileName>.json found.');
+    console.log('No available settings.<name>.json found.');
   } else {
     console.log('Available names:');
     const maxLen = Math.max(...arr.map((v) => v.name.length), 0);
