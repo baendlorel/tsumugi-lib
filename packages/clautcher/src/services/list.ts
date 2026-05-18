@@ -13,7 +13,7 @@ export function list(claudeDir: string): ProfileSummary[] {
   const activeProfile =
     state.loadSettings(claudeDir, state.SettingsFile)?.__clautcher_activated_profile || '<:No Active Profile:>';
 
-  return readdirSync(claudeDir, { withFileTypes: true })
+  const arr = readdirSync(claudeDir, { withFileTypes: true })
     .filter(
       (entry) =>
         entry.isFile() &&
@@ -31,6 +31,17 @@ export function list(claudeDir: string): ProfileSummary[] {
       };
     })
     .sort((left, right) => left.name.localeCompare(right.name));
+
+  if (arr.length === 0) {
+    console.log('No available settings.<profileName>.json found.');
+  } else {
+    console.log('Available names:');
+    const maxLen = Math.max(...arr.map((v) => v.name.length), 0);
+    arr.forEach((v) => {
+      console.log(`${v.isActive ? '  [Active] ' : '  '}${v.name.padEnd(maxLen)} - ${v.filePath}`);
+    });
+  }
+  return arr;
 }
 
 state.HelpList.push({
