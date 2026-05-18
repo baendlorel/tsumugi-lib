@@ -1,3 +1,4 @@
+import { cctl } from '../../../_shared/utils/color.js';
 import { state } from '../common.js';
 
 export function help() {
@@ -15,9 +16,9 @@ export function help() {
   const maxLen = Math.max(...rawCommands.map((v) => v.command.length));
 
   const HELP = [
-    'Clautcher __VERSION__ - A simple CLI tool to switch Claude settings.json.',
-    'Usage:',
-    ...rawCommands.map((v) => `  ${v.command.padEnd(maxLen)} : ${v.description}`),
+    `${cctl.claude + cctl.bold}Clautcher __VERSION__${cctl.reset} - A simple CLI tool to switch Claude settings.json.`,
+    `${cctl.underline + cctl.bold}Usage:${cctl.reset}`,
+    ...rawCommands.map((v) => `  ${cctl.bold}${v.command.padEnd(maxLen)}${cctl.reset} ${v.description}`),
   ].join('\n');
 
   console.log(HELP);

@@ -49,18 +49,24 @@ export function list(claudeDir: string): ProfileSummary[] {
   if (arr.length === 0) {
     console.log(cctl.red + 'No available settings.<name>.json found.' + cctl.reset);
   } else {
-    console.log(cctl.bold + 'Available names:' + cctl.reset);
-    const maxLen = Math.max(...arr.map((v) => v.name.length), 0);
+    // console.log(cctl.bold + 'Available names:' + cctl.reset);
+    const maxLen = Math.max(...arr.map((v) => (v.isActive ? v.name.length + 1 : v.name.length)), 0);
+    console.log(
+      `${cctl.underline}${cctl.bold}Name${cctl.reset}${' '.repeat(maxLen - 4)}  ${cctl.underline}${cctl.bold}File Path${cctl.reset}`,
+    );
     arr.forEach((v) => {
-      console.log(
-        `${v.isActive ? cctl.brightGreen + '  [Active] ' + cctl.reset : '  '}${v.name.padEnd(maxLen)} - ${v.filePath}`,
-      );
+      if (v.isActive) {
+        console.log(`${cctl.brightGreen}*${v.name}${cctl.reset}${' '.repeat(maxLen - v.name.length)} ${v.filePath}`);
+      } else {
+        console.log(`${v.name.padEnd(maxLen)}  ${v.filePath}`);
+      }
     });
   }
+  console.log();
   return arr;
 }
 
 state.HelpList.push({
   command: 'list',
-  description: 'List all available settings in the claude directory.',
+  description: 'List all available settings.<name>.json in the claude directory.',
 });

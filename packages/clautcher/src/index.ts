@@ -49,12 +49,10 @@ function main(argv: string[] = process.argv.slice(2)): number {
       return 1;
     }
 
+    console.error(cctl.red + error.message + cctl.reset);
     if (error.type === 'UnknownCommand' || error.type === 'NotEnoughArguments') {
-      console.error(cctl.red + error.message + cctl.reset);
-      console.error('');
       help();
     }
-
     return 1;
   }
 }

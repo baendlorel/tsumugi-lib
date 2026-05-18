@@ -45,4 +45,6 @@ export namespace cctl {
   export const bgBrightMagenta = '\x1b[105m';
   export const bgBrightCyan = '\x1b[106m';
   export const bgBrightWhite = '\x1b[107m';
+
+  export const claude = '\x1b[38;2;217;119;87m';
 }

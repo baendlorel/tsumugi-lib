@@ -5,18 +5,18 @@ import path from 'node:path';
 import { cctl } from '../../../_shared/utils/color.js';
 
 export function use(name: string, claudeDir: string, settingsFile: string) {
-  const profiles = getList(claudeDir);
-  const profile = profiles.find((p) => p.name === name);
+  const files = getList(claudeDir);
+  const file = files.find((p) => p.name === name);
 
-  if (!profile) {
-    throw new ClautcherError(`Profile not found: ${name}`, 'SettingsFileNotFound');
+  if (!file) {
+    throw new ClautcherError(`Settings File not found: settings.${name}.json`, 'SettingsFileNotFound');
   }
 
   mkdirSync(claudeDir, { recursive: true });
-  const content = state.loadSettings(claudeDir, profile.fileName);
+  const content = state.loadSettings(claudeDir, file.fileName);
   content['__clautcher_activated_settings'] = name;
   writeFileSync(path.join(claudeDir, settingsFile), JSON.stringify(content, null, 2));
-  console.log(`${cctl.brightGreen}Switched to settings: ${cctl.bold}${name}${cctl.reset}`);
+  console.log(`Switched to settings: ${cctl.brightGreen}${cctl.bold}${file.fileName}${cctl.reset}`);
 }
 
 state.HelpList.push({

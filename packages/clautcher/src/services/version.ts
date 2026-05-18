@@ -1,3 +1,5 @@
+import { cctl } from '../../../_shared/utils/color.js';
+
 export function version() {
-  console.log('__VERSION__');
+  console.log(cctl.claude + cctl.bold + 'Clautcher __VERSION__' + cctl.reset);
 }
