@@ -12,6 +12,10 @@ For more packages, see [my homepage](https://baendlorel.github.io/?repoType=npm)
 - Derive the changed hexagram for dynamic lines.
 - Access Six God ordering data for different heavenly stems.
 
+## Skill Pack
+This packages includes a 'liuyao-skill' directory that can parse a hexagram string and date into a structured JSON output. It is used for agents to divination and interpretation.  See the [SKILL.md](./src/SKILL.md) for details.
+> I tried it, very handy.
+
 ## Installation
 
 ```bash

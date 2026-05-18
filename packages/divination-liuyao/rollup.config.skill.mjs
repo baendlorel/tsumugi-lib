@@ -3,11 +3,12 @@ import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
 import terser from '@rollup/plugin-terser';
 import replace from '@rollup/plugin-replace';
+import copy from 'rollup-plugin-copy';
 
 export default {
   input: 'src/parser.skill.ts',
   output: {
-    file: 'dist/parser.skill.js',
+    file: 'liuyao-skill/parser.skill.js',
     format: 'esm',
     sourcemap: false,
   },
@@ -16,6 +17,10 @@ export default {
     resolve(),
     typescript({
       tsconfig: './tsconfig.json',
+    }),
+    copy({
+      targets: [{ src: 'src/SKILL.md', dest: 'liuyao-skill/' }],
+      verbose: true,
     }),
     replace({
       preventAssignment: true,
