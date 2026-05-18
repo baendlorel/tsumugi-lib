@@ -1,10 +1,10 @@
 import { help } from './services/help.js';
 import { list } from './services/list.js';
-import { switcher } from './services/switch.js';
+import { use } from './services/use.js';
 import { version } from './services/version.js';
 import { state } from './state.js';
 
-function main(argv: string[] = process.argv): number {
+function main(argv: string[] = process.argv.slice(2)): number {
   try {
     if (argv.length === 0) {
       help();
@@ -28,12 +28,12 @@ function main(argv: string[] = process.argv): number {
       return 0;
     }
 
-    if (command === 'switch') {
+    if (command === 'use') {
       if (rest.length === 0) {
-        throw new Error('The switch command requires a profile name.');
+        throw new Error('The use command requires a profile name.');
       }
 
-      switcher(rest[0], state.ClaudeDir, state.SettingsFile);
+      use(rest[0], state.ClaudeDir, state.SettingsFile);
       return 0;
     }
 
@@ -48,4 +48,4 @@ function main(argv: string[] = process.argv): number {
 
 process.exitCode = main();
 
-export { switcher };
+export { use };

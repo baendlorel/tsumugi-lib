@@ -32,3 +32,8 @@ export function list(claudeDir: string): ProfileSummary[] {
     })
     .sort((left, right) => left.name.localeCompare(right.name));
 }
+
+state.HelpList.push({
+  command: 'list',
+  description: 'List all available settings in the claude directory.',
+});

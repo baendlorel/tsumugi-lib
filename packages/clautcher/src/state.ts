@@ -15,4 +15,6 @@ export namespace state {
   export function loadSettings(claudeDir: string, settingsFile: string): ClaudeSettings {
     return JSON.parse(readFileSync(join(claudeDir, settingsFile), 'utf-8'));
   }
+
+  export const HelpList: Array<{ command: string; description: string }> = [];
 }

@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { list } from './list.js';
 import { state } from '../state.js';
 
-export function switcher(profileName: string, claudeDir: string, settingsFile: string) {
+export function use(profileName: string, claudeDir: string, settingsFile: string) {
   const profiles = list(claudeDir);
   const profile = profiles.find((p) => p.name === profileName);
 
@@ -16,3 +16,8 @@ export function switcher(profileName: string, claudeDir: string, settingsFile: s
   writeFileSync(settingsFile, JSON.stringify(content, null, 2));
   return profile;
 }
+
+state.HelpList.push({
+  command: 'use <name>',
+  description: 'Overwrite the content of settings.json with settings.<name>.json.',
+});

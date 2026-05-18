@@ -55,7 +55,7 @@ export default () => {
             comments: false, // remove comments
           },
           compress: {
-            drop_console: true,
+            drop_console: false,
             dead_code: true, // ✅ Safe: remove dead code
             evaluate: true, // ✅ Safe: evaluate constant expressions
           },
