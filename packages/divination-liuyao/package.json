@@ -1,6 +1,6 @@
 {
   "name": "liuyao",
-  "version": "0.2.3",
+  "version": "0.3.1",
   "author": {
     "name": "Kasukabe Tsumugi",
     "email": "futami16237@gmail.com"
@@ -20,7 +20,8 @@
     "skill": "rollup -c ./rollup.config.skill.mjs"
   },
   "files": [
-    "dist"
+    "dist",
+    "liuyao-skill"
   ],
   "repository": {
     "type": "git",
