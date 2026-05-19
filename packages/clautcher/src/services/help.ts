@@ -1,10 +1,10 @@
 import { cctl } from '../../../_shared/utils/color.js';
-import { state } from '../common.js';
+import { settings } from '../common.js';
 import { cmdTable } from './common.js';
 
 export function help() {
   const rawCommands = [
-    ...state.HelpList,
+    ...settings.HelpList,
     {
       command: `version`,
       description: 'Show version.',

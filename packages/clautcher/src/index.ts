@@ -7,7 +7,7 @@ import { list } from './services/list.js';
 import { use } from './services/use.js';
 import { version } from './services/version.js';
 
-import { ClautcherError, state } from './common.js';
+import { ClautcherError } from './common.js';
 import { current } from './services/common.js';
 
 function main(argv: string[] = process.argv.slice(2)): number {
@@ -15,7 +15,7 @@ function main(argv: string[] = process.argv.slice(2)): number {
     if (argv.length === 0) {
       help();
       console.log();
-      current(state.ClaudeDir, state.SettingsFile);
+      current();
       console.log();
       return 0;
     }
@@ -33,12 +33,12 @@ function main(argv: string[] = process.argv.slice(2)): number {
     }
 
     if (command === 'current' || command === 'cur') {
-      current(state.ClaudeDir, state.SettingsFile);
+      current();
       return 0;
     }
 
     if (command === 'list' || command === 'ls') {
-      list(state.ClaudeDir);
+      list();
       return 0;
     }
 
@@ -47,25 +47,26 @@ function main(argv: string[] = process.argv.slice(2)): number {
         throw new ClautcherError('The use command requires a profile name.', 'NotEnoughArguments');
       }
 
-      use({ name: rest[0], claudeDir: state.ClaudeDir, settingsFile: state.SettingsFile });
+      if (rest[0] === 'base') {
+        throw new ClautcherError('The name "base" is reserved. Please choose another name.', 'InvalidProfileName');
+      }
+
+      use(rest[0]);
       return 0;
     }
 
     throw new ClautcherError(`Unknown command: ${command}`, 'UnknownCommand');
   } catch (error) {
-    if (!(error instanceof ClautcherError)) {
+    if (error instanceof ClautcherError) {
+      console.error(cctl.red + error.message + cctl.reset);
+      if (error.type === 'UnknownCommand' || error.type === 'NotEnoughArguments') {
+        help();
+      }
+    } else {
       console.error(error);
-      return 1;
-    }
-
-    console.error(cctl.red + error.message + cctl.reset);
-    if (error.type === 'UnknownCommand' || error.type === 'NotEnoughArguments') {
-      help();
     }
     return 1;
   }
 }
 
 process.exitCode = main();
-
-export { use };

@@ -1,6 +1,5 @@
 import { readdirSync } from 'node:fs';
-import path from 'node:path';
-import { state } from '../common.js';
+import { settings } from '../common.js';
 import { cctl } from '../../../_shared/utils/color.js';
 
 export interface ProfileSummary {
@@ -19,15 +18,15 @@ export interface ProfileSummary {
   isActive: boolean;
 }
 
-export function getList(claudeDir: string): ProfileSummary[] {
-  const activeProfile =
-    state.loadSettings(claudeDir, state.SettingsFile)?.clautcher_activated_settings || '<:No Active Profile:>';
+export function getList(): ProfileSummary[] {
+  const activeProfile = settings.load(settings.FilePath)?.clautcher_activated_settings || '<:No Active Profile:>';
 
-  return readdirSync(claudeDir, { withFileTypes: true })
+  return readdirSync(settings.ClaudeDir, { withFileTypes: true })
     .filter(
       (entry) =>
         entry.isFile() &&
         entry.name !== 'settings.json' &&
+        entry.name !== 'settings.base.json' &&
         entry.name.startsWith('settings.') &&
         entry.name.endsWith('.json'),
     )
@@ -36,15 +35,15 @@ export function getList(claudeDir: string): ProfileSummary[] {
       return {
         name,
         fileName: entry.name,
-        filePath: path.join(claudeDir, entry.name),
+        filePath: settings.ClaudeDir.join(entry.name),
         isActive: name === activeProfile,
       };
     })
     .sort((left, right) => left.name.localeCompare(right.name));
 }
 
-export function list(claudeDir: string): ProfileSummary[] {
-  const arr = getList(claudeDir);
+export function list(): ProfileSummary[] {
+  const arr = getList();
 
   if (arr.length === 0) {
     console.log(cctl.red + 'No available settings.<name>.json found.' + cctl.reset);
@@ -66,7 +65,7 @@ export function list(claudeDir: string): ProfileSummary[] {
   return arr;
 }
 
-state.HelpList.push({
+settings.HelpList.push({
   command: 'list, ls',
   description: 'List all settings.<name>.json in the claude directory.',
 });

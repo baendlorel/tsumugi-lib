@@ -1,8 +1,8 @@
 import { cctl } from '../../../_shared/utils/color.js';
-import { state } from '../common.js';
+import { settings } from '../common.js';
 
-export function current(claudeDir: string, settingsFile: string): void {
-  const json = state.loadSettings(claudeDir, settingsFile);
+export function current(): void {
+  const json = settings.load();
   console.log(`${cctl.bold}${cctl.underline}Now Using:${cctl.reset}`);
   if (json.clautcher_activated_settings) {
     console.log(`  ${cctl.brightGreen}${json.clautcher_activated_settings}${cctl.reset}`);
