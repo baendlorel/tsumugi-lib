@@ -3,17 +3,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 interface ClaudeSettings {
-  clautcher_activated_settings?: Array<
-    | {
-        name: string;
-        type: 'base';
-      }
-    | {
-        name: string;
-        type: 'partial';
-        propertyPath: string[];
-      }
-  >;
+  clautcher_activated_settings?: string;
   [key: string]: unknown;
 }
 
