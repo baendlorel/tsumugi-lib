@@ -8,11 +8,13 @@ import { use } from './services/use.js';
 import { version } from './services/version.js';
 
 import { ClautcherError, state } from './common.js';
+import { current } from './services/common.js';
 
 function main(argv: string[] = process.argv.slice(2)): number {
   try {
     if (argv.length === 0) {
       help();
+      current(state.ClaudeDir, state.SettingsFile);
       return 0;
     }
 
@@ -38,7 +40,7 @@ function main(argv: string[] = process.argv.slice(2)): number {
         throw new ClautcherError('The use command requires a profile name.', 'NotEnoughArguments');
       }
 
-      use({ name: rest[0], property: rest[1], claudeDir: state.ClaudeDir, settingsFile: state.SettingsFile });
+      use({ name: rest[0], claudeDir: state.ClaudeDir, settingsFile: state.SettingsFile });
       return 0;
     }
 
