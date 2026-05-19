@@ -35,7 +35,7 @@ export function getList(): ProfileSummary[] {
       return {
         name,
         fileName: entry.name,
-        filePath: settings.ClaudeDir.join(entry.name),
+        filePath: entry.parentPath.join(entry.name),
         isActive: name === activeProfile,
       };
     })
