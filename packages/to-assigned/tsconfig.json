@@ -3,17 +3,9 @@
   "compilerOptions": {
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "baseUrl": ".",
     "paths": {
-      "@to-assigned/*": [
-        "src/*"
-      ],
-      "@shared": [
-        "../_shared/index.ts"
-      ]
+      "@shared": ["../_shared/index.ts"]
     }
   },
-  "include": [
-    "src/**/*.ts"
-  ]
+  "include": ["src/**/*.ts"]
 }
