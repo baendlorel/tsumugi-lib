@@ -1,15 +1,7 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 import { cctl } from '../../../_shared/utils/color.js';
-import { settings } from '../common.js';
-
-export function current(): void {
-  const json = settings.load();
-  console.log(`${cctl.bold}${cctl.underline}Now Using:${cctl.reset}`);
-  if (json.clautcher_activated_settings) {
-    console.log(`  ${cctl.brightGreen}${json.clautcher_activated_settings}${cctl.reset}`);
-  } else {
-    console.log(`  ${cctl.dim}None (Not managed by clautcher yet)${cctl.reset}`);
-  }
-}
 
 export function cmdTable(args: {
   cmds: Array<{ name: string; description: string }>;
@@ -91,4 +83,69 @@ export function cmdTable(args: {
       });
     })
     .join('\n');
+}
+
+interface ClaudeSettings {
+  clautcher_activated_settings?: string;
+  [key: string]: unknown;
+}
+
+declare global {
+  interface String {
+    join(...args: string[]): string;
+  }
+}
+
+String.prototype.join = function (...args: string[]): string {
+  return join(this.toString(), ...args);
+};
+
+export namespace settings {
+  export const ClaudeDir = process.env.CLAUTCHER_CLAUDE_DIR ?? join(homedir(), '.claude');
+
+  /**
+   * Full path of settings.json. For example, /home/user/.claude/settings.json
+   */
+  export const FilePath = ClaudeDir.join('settings.json');
+
+  /**
+   * Full path of settings.base.json.
+   *
+   * It will be merged with the setting file you choose.
+   */
+  export const BaseFilePath = ClaudeDir.join('settings.base.json');
+
+  export function load(filePath: string = FilePath): ClaudeSettings {
+    return JSON.parse(readFileSync(filePath, 'utf-8'));
+  }
+
+  export function tryLoad(filePath: string = FilePath): ClaudeSettings | undefined {
+    if (!existsSync(filePath)) {
+      return undefined;
+    }
+    return load(filePath);
+  }
+
+  export function loadBase(): ClaudeSettings {
+    if (!existsSync(BaseFilePath)) {
+      return {};
+    }
+    return load(BaseFilePath);
+  }
+
+  export function getActivatedProfileName(): string | undefined {
+    return tryLoad(FilePath)?.clautcher_activated_settings;
+  }
+
+  export const HelpList: Array<{ command: string; description: string }> = [];
+}
+
+type ClautcherErrorType = 'UnknownCommand' | 'InvalidProfileName' | 'NotEnoughArguments' | 'SettingsFileNotFound';
+
+export class ClautcherError extends Error {
+  public type: ClautcherErrorType;
+  constructor(message: string, type: ClautcherErrorType) {
+    super(message);
+    this.type = type;
+  }
 }

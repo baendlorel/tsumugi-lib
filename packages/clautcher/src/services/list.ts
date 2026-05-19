@@ -1,6 +1,6 @@
 import { readdirSync } from 'node:fs';
-import { settings } from '../common.js';
 import { cctl } from '../../../_shared/utils/color.js';
+import { settings } from '../common/index.js';
 
 export interface ProfileSummary {
   /**
@@ -19,7 +19,7 @@ export interface ProfileSummary {
 }
 
 export function getList(): ProfileSummary[] {
-  const activeProfile = settings.load(settings.FilePath)?.clautcher_activated_settings || '<:No Active Profile:>';
+  const activeProfile = settings.getActivatedProfileName() ?? '<:No Active Profile:>';
 
   return readdirSync(settings.ClaudeDir, { withFileTypes: true })
     .filter(

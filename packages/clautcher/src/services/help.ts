@@ -1,6 +1,5 @@
 import { cctl } from '../../../_shared/utils/color.js';
-import { settings } from '../common.js';
-import { cmdTable } from './common.js';
+import { cmdTable, settings } from '../common/index.js';
 
 export function help() {
   const rawCommands = [

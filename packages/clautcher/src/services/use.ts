@@ -1,8 +1,8 @@
 import { writeFileSync } from 'node:fs';
 import { cctl } from '../../../_shared/utils/color.js';
 
+import { ClautcherError, settings } from '../common/index.js';
 import { getList } from './list.js';
-import { ClautcherError, settings } from '../common.js';
 
 export function use(name: string) {
   const files = getList();

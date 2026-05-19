@@ -2,20 +2,19 @@
 
 import { cctl } from '../../_shared/utils/color.js';
 
+import { interactiveUse } from './common/interactive.js';
+import { current } from './services/current.js';
 import { help } from './services/help.js';
 import { list } from './services/list.js';
 import { use } from './services/use.js';
 import { version } from './services/version.js';
 
-import { ClautcherError } from './common.js';
-import { current } from './services/common.js';
+import { ClautcherError } from './common/index.js';
 
-function main(argv: string[] = process.argv.slice(2)): number {
+async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
   try {
     if (argv.length === 0) {
-      help();
-      console.log();
-      current();
+      await interactiveUse();
       return 0;
     }
 
@@ -68,4 +67,4 @@ function main(argv: string[] = process.argv.slice(2)): number {
   }
 }
 
-process.exitCode = main();
+process.exitCode = await main();
