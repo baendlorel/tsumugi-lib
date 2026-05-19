@@ -140,7 +140,12 @@ export namespace settings {
   export const HelpList: Array<{ command: string; description: string }> = [];
 }
 
-type ClautcherErrorType = 'UnknownCommand' | 'InvalidProfileName' | 'NotEnoughArguments' | 'SettingsFileNotFound';
+type ClautcherErrorType =
+  | 'NoSettingsFile'
+  | 'UnknownCommand'
+  | 'InvalidProfileName'
+  | 'NotEnoughArguments'
+  | 'SettingsFileNotFound';
 
 export class ClautcherError extends Error {
   public type: ClautcherErrorType;

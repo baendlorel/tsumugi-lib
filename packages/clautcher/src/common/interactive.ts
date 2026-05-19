@@ -4,7 +4,7 @@ import { cctl } from '../../../_shared/utils/color.js';
 
 import { getList } from '../services/list.js';
 import { use } from '../services/use.js';
-import { settings } from './index.js';
+import { ClautcherError, settings } from './index.js';
 
 interface InteractiveOption {
   name?: string;
@@ -17,6 +17,13 @@ export async function interactiveUse(): Promise<void> {
   }
 
   const profiles = getList();
+  if (profiles.length === 0) {
+    throw new ClautcherError(
+      'No available setting file to select. Please create a settings.<name>.json file in the Claude directory.',
+      'NoSettingsFile',
+    );
+  }
+
   const activeProfile = settings.getActivatedProfileName();
   const options: InteractiveOption[] = activeProfile
     ? profiles.map((profile) => ({
