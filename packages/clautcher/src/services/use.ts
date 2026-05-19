@@ -4,7 +4,9 @@ import { ClautcherError, state } from '../common.js';
 import path from 'node:path';
 import { cctl } from '../../../_shared/utils/color.js';
 
-export function use(name: string, claudeDir: string, settingsFile: string) {
+export function use(args: { name: string; claudeDir: string; settingsFile: string }) {
+  const { name, claudeDir, settingsFile } = args;
+
   const files = getList(claudeDir);
   const file = files.find((p) => p.name === name);
 
@@ -16,6 +18,7 @@ export function use(name: string, claudeDir: string, settingsFile: string) {
   const content = state.loadSettings(claudeDir, file.fileName);
   content.clautcher_activated_settings = name;
   writeFileSync(path.join(claudeDir, settingsFile), JSON.stringify(content, null, 2));
+
   console.log(`Switched to settings: ${cctl.brightGreen}${cctl.bold}${file.fileName}${cctl.reset}`);
 }
 

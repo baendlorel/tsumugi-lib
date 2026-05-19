@@ -28,7 +28,7 @@ function main(argv: string[] = process.argv.slice(2)): number {
       return 0;
     }
 
-    if (command === 'list') {
+    if (command === 'list' || command === 'ls') {
       list(state.ClaudeDir);
       return 0;
     }
@@ -38,7 +38,7 @@ function main(argv: string[] = process.argv.slice(2)): number {
         throw new ClautcherError('The use command requires a profile name.', 'NotEnoughArguments');
       }
 
-      use(rest[0], state.ClaudeDir, state.SettingsFile);
+      use({ name: rest[0], property: rest[1], claudeDir: state.ClaudeDir, settingsFile: state.SettingsFile });
       return 0;
     }
 
