@@ -14,7 +14,9 @@ function main(argv: string[] = process.argv.slice(2)): number {
   try {
     if (argv.length === 0) {
       help();
+      console.log();
       current(state.ClaudeDir, state.SettingsFile);
+      console.log();
       return 0;
     }
 
@@ -27,6 +29,11 @@ function main(argv: string[] = process.argv.slice(2)): number {
 
     if (command === 'version' || command === '--version' || command === '-v') {
       version();
+      return 0;
+    }
+
+    if (command === 'current' || command === 'cur') {
+      current(state.ClaudeDir, state.SettingsFile);
       return 0;
     }
 

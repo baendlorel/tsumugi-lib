@@ -24,5 +24,5 @@ export function use(args: { name: string; claudeDir: string; settingsFile: strin
 
 state.HelpList.push({
   command: 'use <name>',
-  description: 'Overwrite the content of settings.json with settings.<name>.json.',
+  description: `Overwrite settings.json with settings.<name>.json. If a settings.${cctl.bold}${cctl.yellow}base${cctl.reset}.json exists, it will be merged.`,
 });

@@ -10,6 +10,10 @@ export function help() {
       description: 'Show version.',
     },
     {
+      command: `cur`,
+      description: 'Show which settings.<name>.json is being used.',
+    },
+    {
       command: `help`,
       description: 'Show this help message.',
     },
@@ -25,7 +29,7 @@ export function help() {
         description: command.description,
       })),
       indent: 2,
-      maxWidth: 70,
+      maxWidth: 60,
     }),
   ].join('\n');
 

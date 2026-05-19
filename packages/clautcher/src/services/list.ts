@@ -67,6 +67,6 @@ export function list(claudeDir: string): ProfileSummary[] {
 }
 
 state.HelpList.push({
-  command: 'list',
-  description: 'List all available settings.<name>.json in the claude directory.',
+  command: 'list, ls',
+  description: 'List all settings.<name>.json in the claude directory.',
 });
