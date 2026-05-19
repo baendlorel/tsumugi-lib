@@ -84,7 +84,8 @@ export function cmdTable(args: {
 
       return wrapped.map((line, index) => {
         if (index === 0) {
-          return `${leftPad}${cctl.bold}${nameColumn}${cctl.reset}${gap}${line}`;
+          // return `${leftPad}${cctl.bold}${nameColumn}${cctl.reset}${gap}${line}`;
+          return `${leftPad}${nameColumn}${gap}${line}`;
         }
         return `${descriptionIndent}${line}`;
       });

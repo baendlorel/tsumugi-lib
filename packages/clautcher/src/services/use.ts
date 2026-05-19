@@ -23,5 +23,5 @@ export function use(name: string) {
 
 settings.HelpList.push({
   command: 'use <name>',
-  description: `Overwrite settings.json with settings.<name>.json. If a settings.${cctl.bold}${cctl.yellow}base${cctl.reset}.json exists, it will be merged.`,
+  description: `Overwrite settings.json with settings.<name>.json. If ${cctl.underline}settings.base.json${cctl.reset} exists, it will be merged.`,
 });

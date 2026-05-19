@@ -16,7 +16,6 @@ function main(argv: string[] = process.argv.slice(2)): number {
       help();
       console.log();
       current();
-      console.log();
       return 0;
     }
 

@@ -14,7 +14,7 @@ declare global {
 }
 
 String.prototype.join = function (...args: string[]): string {
-  return [this, ...args].join('');
+  return join(this.toString(), ...args);
 };
 
 export namespace settings {

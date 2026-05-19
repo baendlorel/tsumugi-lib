@@ -61,7 +61,6 @@ export function list(): ProfileSummary[] {
       }
     });
   }
-  console.log();
   return arr;
 }
 
