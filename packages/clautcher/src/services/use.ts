@@ -2,7 +2,7 @@ import { writeFileSync } from 'node:fs';
 import { emitKeypressEvents } from 'node:readline';
 
 import { cctl } from '@shared/utils/color.js';
-import { ClautcherError, settings } from '../common/index.js';
+import { beautifyLLMName, ClautcherError, settings } from '../common/index.js';
 import { getList } from '../services/list.js';
 import { help } from './help.js';
 
@@ -49,7 +49,7 @@ export async function interactiveUse(): Promise<void> {
     },
     ...profiles.map((profile) => ({
       name: profile.name,
-      label: profile.name,
+      label: beautifyLLMName(profile.name),
       isActive: profile.isActive,
     })),
   ];

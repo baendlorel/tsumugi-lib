@@ -38,6 +38,7 @@ Use Up/Down to choose, Enter to confirm, Esc or q to quit.
 
 - The name "Clautcher" is a portmanteau of "Claude" and "Switcher", indicating its purpose as a tool for switching between different Claude settings profiles. Since "claude-switcher", "claude-code-switcher", "claude-switch" ... are all taken, I had to come up with a more creative name.
 - It is designed to be simple.
+- Some names have their own color in the interactive menu.
 
 ## License
 MIT License

@@ -1,3 +1,4 @@
+import { cctl } from '@shared/utils/color.js';
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -157,3 +158,20 @@ export class ClautcherError extends Error {
     this.type = type;
   }
 }
+
+/**
+ * Beautify names of LLMs.
+ */
+export const beautifyLLMName = (name: string) => {
+  const lowered = name.toLowerCase();
+  if (lowered.includes('deepseek')) {
+    return `${cctl.deepseek}${name}${cctl.reset}`;
+  }
+  if (lowered.startsWith('gpt') || lowered.match(/\bgpt\b/)) {
+    return `${cctl.gpt}${name}${cctl.reset}`;
+  }
+  if (lowered.includes('claude')) {
+    return `${cctl.claude}${name}${cctl.reset}`;
+  }
+  return name;
+};
