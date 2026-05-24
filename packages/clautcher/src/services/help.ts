@@ -18,18 +18,23 @@ export function help() {
     },
   ];
 
+  const availableCommands = cmdTable({
+    cmds: rawCommands.map((command) => ({
+      name: command.command,
+      description: command.description,
+    })),
+    indent: 2,
+    maxWidth: 60,
+  });
+
   const HELP = [
     `${cctl.claude + cctl.bold}Clautcher __VERSION__${cctl.reset} - A simple CLI tool to switch Claude settings.json.`,
-    // `  ${cctl.dim}${cctl.italic}If ${cctl.yellow}settings.base.json${cctl.reset}${cctl.dim}${cctl.italic} exists, it will be merged.${cctl.reset}`,
-    `${cctl.underline + cctl.bold}Usage:${cctl.reset}`,
-    cmdTable({
-      cmds: rawCommands.map((command) => ({
-        name: command.command,
-        description: command.description,
-      })),
-      indent: 2,
-      maxWidth: 60,
-    }),
+    `${cctl.underline + cctl.bold}Steps:${cctl.reset}`,
+    `  ${cctl.bold}1. ${cctl.reset}Enter .claude directory, create a settings.<name>.json file for each profile you want to use.`,
+    `  ${cctl.bold}2. ${cctl.reset}Run \`${cctl.yellow}clautcher${cctl.reset}\` and select a profile to switch.`,
+    `  ${cctl.dim}${cctl.italic}If ${cctl.yellow}settings.base.json${cctl.reset}${cctl.dim}${cctl.italic} exists, it will be merged.${cctl.reset}`,
+    // `${cctl.underline + cctl.bold}Available Commands:${cctl.reset}`,
+    // availableCommands,
   ].join('\n');
 
   console.log(HELP);

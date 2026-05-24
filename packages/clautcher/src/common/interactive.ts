@@ -53,13 +53,14 @@ export async function interactiveUse(): Promise<void> {
 
   const render = () => {
     const lines = [
-      `${cctl.bold}${cctl.underline}Select a profile:${cctl.reset}`,
+      `${cctl.claude + cctl.bold}Clautcher __VERSION__${cctl.reset} - ${cctl.bold}${cctl.underline}Select a profile:${cctl.reset}`,
+      settings.baseExists() ? `${cctl.dim}settings.base.json detected! It will be merged.${cctl.reset}` : null,
       `${cctl.dim}Use Up/Down to choose, Enter to confirm, Esc or q to quit.${cctl.reset}`,
       ...options.map((option, index) => {
         const pointer = index === selectedIndex ? `${cctl.brightGreen}>${cctl.reset}` : ' ';
         return `${pointer} ${option.label}`;
       }),
-    ];
+    ].filter((line): line is string => line !== null);
 
     if (frameLineCount > 0) {
       process.stdout.write(`\x1b[${frameLineCount}F`);

@@ -126,8 +126,12 @@ export namespace settings {
     return load(filePath);
   }
 
+  export function baseExists(): boolean {
+    return existsSync(BaseFilePath);
+  }
+
   export function loadBase(): ClaudeSettings {
-    if (!existsSync(BaseFilePath)) {
+    if (!baseExists()) {
       return {};
     }
     return load(BaseFilePath);
