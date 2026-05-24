@@ -9,7 +9,7 @@ export const getAliases = () => {
   for (const dir of packageDirs) {
     alias[dir] = path.join(packagesDir, dir, 'src');
   }
-  alias[`@shared`] = path.join(packagesDir, '_shared', 'index.ts');
+  alias[`@shared`] = path.join(packagesDir, '_shared');
 
   return Object.entries(alias)
     .sort(([a], [b]) => b.length - a.length)
