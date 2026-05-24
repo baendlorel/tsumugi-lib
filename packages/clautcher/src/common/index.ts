@@ -1,7 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { cctl } from '../../../_shared/utils/color.js';
 
 export function cmdTable(args: {
   cmds: Array<{ name: string; description: string }>;

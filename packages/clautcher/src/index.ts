@@ -1,12 +1,9 @@
 #!/usr/bin/env node
 
-import { cctl } from '../../_shared/utils/color.js';
+import { cctl } from '@shared/utils/color.js';
 
-import { interactiveUse } from './common/interactive.js';
-import { current } from './services/current.js';
 import { help } from './services/help.js';
-import { list } from './services/list.js';
-import { use } from './services/use.js';
+import { interactiveUse } from './services/use.js';
 import { version } from './services/version.js';
 
 import { ClautcherError } from './common/index.js';
@@ -18,7 +15,7 @@ async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
       return 0;
     }
 
-    const [command, ...rest] = argv;
+    const [command] = argv;
 
     if (command === 'help' || command === '--help' || command === '-h') {
       help();
@@ -30,30 +27,8 @@ async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
       return 0;
     }
 
-    if (command === 'current' || command === 'cur') {
-      current();
-      return 0;
-    }
-
-    if (command === 'list' || command === 'ls') {
-      list();
-      return 0;
-    }
-
-    if (command === 'use') {
-      if (rest.length === 0) {
-        throw new ClautcherError('The use command requires a profile name.', 'NotEnoughArguments');
-      }
-
-      if (rest[0] === 'base') {
-        throw new ClautcherError('The name "base" is reserved. Please choose another name.', 'InvalidProfileName');
-      }
-
-      use(rest[0]);
-      return 0;
-    }
-
-    throw new ClautcherError(`Unknown command: ${command}`, 'UnknownCommand');
+    await interactiveUse();
+    return 0;
   } catch (error) {
     if (error instanceof ClautcherError) {
       console.error(cctl.red + error.message + cctl.reset);
@@ -67,4 +42,4 @@ async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
   }
 }
 
-process.exitCode = await main();
+main();

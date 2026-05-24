@@ -1,4 +1,4 @@
-import { cctl } from '../../../_shared/utils/color.js';
+import { cctl } from '@shared/utils/color.js';
 import { cmdTable, settings } from '../common/index.js';
 
 export function help() {
@@ -28,7 +28,7 @@ export function help() {
   });
 
   const HELP = [
-    `${cctl.claude + cctl.bold}Clautcher __VERSION__${cctl.reset} - A simple CLI tool to switch Claude settings.json.`,
+    `${cctl.claude + cctl.bold}Clautcher __VERSION__${cctl.reset} - A simple CLI tool to switch Claude's settings.json.`,
     `${cctl.underline + cctl.bold}Steps:${cctl.reset}`,
     `  ${cctl.bold}1. ${cctl.reset}Enter .claude directory, create a settings.<name>.json file for each profile you want to use.`,
     `  ${cctl.bold}2. ${cctl.reset}Run \`${cctl.yellow}clautcher${cctl.reset}\` and select a profile to switch.`,
