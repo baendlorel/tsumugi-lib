@@ -54,12 +54,6 @@ export async function interactiveUse(): Promise<void> {
     })),
   ];
 
-  if (!activeProfile) {
-    options.push({
-      label: `${cctl.dim}None${cctl.reset}`,
-    });
-  }
-
   if (options.length === 0) {
     return;
   }
