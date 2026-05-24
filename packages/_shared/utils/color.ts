@@ -48,4 +48,6 @@ export namespace cctl {
   export const bgBrightWhite = '\x1b[107m';
 
   export const claude = '\x1b[38;2;217;119;87m';
+  export const deepseek = '\x1b[38;57;100;254;87m';
+  export const gpt = '\x1b[38;2;217;119;87m';
 }

@@ -32,8 +32,8 @@ export function help() {
     `${cctl.underline + cctl.bold}Steps:${cctl.reset}`,
     `  ${cctl.bold}1. ${cctl.reset}Enter .claude directory, create a settings.<name>.json file for each profile you want to use.`,
     `  ${cctl.bold}2. ${cctl.reset}Run \`${cctl.yellow}clautcher${cctl.reset}\` and select a profile to switch.`,
-    `  ${cctl.dim}${cctl.italic}If ${cctl.yellow}settings.base.json${cctl.reset}${cctl.dim}${cctl.italic} exists, it will be merged.${cctl.reset}`,
-    // `${cctl.underline + cctl.bold}Available Commands:${cctl.reset}`,
+    `  ${cctl.dim}If ${cctl.yellow}settings.base.json${cctl.reset}${cctl.dim} exists, it will be merged.${cctl.reset}`,
+    // `${cctl.italic}${cctl.underline + cctl.bold}Available Commands:${cctl.reset}`,
     // availableCommands,
   ].join('\n');
 

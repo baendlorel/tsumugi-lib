@@ -4,6 +4,7 @@ import { emitKeypressEvents } from 'node:readline';
 import { cctl } from '@shared/utils/color.js';
 import { ClautcherError, settings } from '../common/index.js';
 import { getList } from '../services/list.js';
+import { help } from './help.js';
 
 export function use(name: string) {
   const files = getList();
@@ -25,6 +26,7 @@ export function use(name: string) {
 interface InteractiveOption {
   name?: string;
   label: string;
+  isHelp?: boolean;
 }
 
 export async function interactiveUse(): Promise<void> {
@@ -41,20 +43,22 @@ export async function interactiveUse(): Promise<void> {
   }
 
   const activeProfile = settings.getActivatedProfileName();
-  const options: InteractiveOption[] = activeProfile
-    ? profiles.map((profile) => ({
-        name: profile.name,
-        label: profile.name,
-      }))
-    : [
-        {
-          label: `${cctl.dim}None${cctl.reset}`,
-        },
-        ...profiles.map((profile) => ({
-          name: profile.name,
-          label: profile.name,
-        })),
-      ];
+  const options: InteractiveOption[] = [
+    {
+      label: `${cctl.brightBlue}Help${cctl.reset}`,
+      isHelp: true,
+    },
+    ...profiles.map((profile) => ({
+      name: profile.name,
+      label: profile.name,
+    })),
+  ];
+
+  if (!activeProfile) {
+    options.push({
+      label: `${cctl.dim}None${cctl.reset}`,
+    });
+  }
 
   if (options.length === 0) {
     return;
@@ -100,7 +104,9 @@ export async function interactiveUse(): Promise<void> {
 
   const finish = (selected?: InteractiveOption) => {
     cleanup();
-    if (selected?.name) {
+    if (selected?.isHelp) {
+      help();
+    } else if (selected?.name) {
       use(selected.name);
     }
     resolveSelection?.();
