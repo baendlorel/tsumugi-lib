@@ -1,7 +1,7 @@
 import { cctl } from '@shared/utils/color.js';
 import { cmdTable, settings } from '../common/index.js';
 
-export function help() {
+export function help(options?: { noProfilesYet: boolean }) {
   const rawCommands = [
     ...settings.HelpList,
     {
@@ -27,8 +27,12 @@ export function help() {
     maxWidth: 60,
   });
 
+  const ClautcherIntro = `${cctl.claude + cctl.bold}Clautcher __VERSION__${cctl.reset} - A simple CLI tool to switch Claude's settings.json.`;
+  const NoAvailableProfilesYet = `You don't have any settings.<name>.json file in your Claude directory yet. Please create one to continue.`;
+
+  const firstLine = options?.noProfilesYet ? ClautcherIntro : NoAvailableProfilesYet;
   const HELP = [
-    `${cctl.claude + cctl.bold}Clautcher __VERSION__${cctl.reset} - A simple CLI tool to switch Claude's settings.json.`,
+    firstLine,
     `${cctl.underline + cctl.bold}Steps:${cctl.reset}`,
     `  ${cctl.bold}1. ${cctl.reset}Enter .claude directory, create a settings.<name>.json file for each profile you want to use.`,
     `  ${cctl.bold}2. ${cctl.reset}Run \`${cctl.yellow}clautcher${cctl.reset}\` and select a profile to switch.`,

@@ -27,6 +27,7 @@ interface InteractiveOption {
   name?: string;
   label: string;
   isHelp?: boolean;
+  isActive?: boolean;
 }
 
 export async function interactiveUse(): Promise<void> {
@@ -36,21 +37,20 @@ export async function interactiveUse(): Promise<void> {
 
   const profiles = getList();
   if (profiles.length === 0) {
-    throw new ClautcherError(
-      'No available setting file to select. Please create a settings.<name>.json file in the Claude directory.',
-      'NoSettingsFile',
-    );
+    help({ noProfilesYet: true });
+    return;
   }
 
   const activeProfile = settings.getActivatedProfileName();
   const options: InteractiveOption[] = [
     {
-      label: `${cctl.brightBlue}Help${cctl.reset}`,
+      label: `${cctl.bold}How to use?${cctl.reset}`,
       isHelp: true,
     },
     ...profiles.map((profile) => ({
       name: profile.name,
       label: profile.name,
+      isActive: profile.isActive,
     })),
   ];
 
@@ -78,7 +78,7 @@ export async function interactiveUse(): Promise<void> {
       `${cctl.dim}Use Up/Down to choose, Enter to confirm, Esc or q to quit.${cctl.reset}`,
       ...options.map((option, index) => {
         const pointer = index === selectedIndex ? `${cctl.brightGreen}>${cctl.reset}` : ' ';
-        return `${pointer} ${option.label}`;
+        return `${pointer} ${option.isActive ? `${cctl.brightGreen}*${cctl.reset}` : ''}${option.label}`;
       }),
     ].filter((line): line is string => line !== null);
 
