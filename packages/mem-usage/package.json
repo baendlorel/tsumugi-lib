@@ -1,6 +1,6 @@
 {
   "name": "mem-usage-ts",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": {
     "name": "Kasukabe Tsumugi",
     "email": "futami16237@gmail.com"
@@ -23,7 +23,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/baendlorel/tsumugi-lib.git",
-    "directory": "packages/mem-usage"
+    "directory": "packages/mem-usage-ts"
   },
   "keywords": [
     "memory",
@@ -36,6 +36,6 @@
   "bugs": {
     "url": "https://github.com/baendlorel/tsumugi-lib/issues"
   },
-  "homepage": "https://github.com/baendlorel/tsumugi-lib/tree/main/packages/mem-usage#readme",
+  "homepage": "https://github.com/baendlorel/tsumugi-lib/tree/main/packages/mem-usage-ts#readme",
   "dependencies": {}
 }
