@@ -1,6 +1,6 @@
 {
   "name": "mem-use",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "author": {
     "name": "Kasukabe Tsumugi",
     "email": "futami16237@gmail.com"
@@ -9,9 +9,6 @@
   "description": "A cross-platform library for getting process names, ids, and memory usage.",
   "description_zh": "一个跨平台的获取进程名字、id、内存用量的函数库。",
   "type": "module",
-  "bin": {
-    "mem-use": "./dist/index.mjs"
-  },
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
@@ -23,18 +20,15 @@
   "files": [
     "dist"
   ],
-  "scripts": {
-    "try": "tsx src/index.ts"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/baendlorel/tsumugi-lib.git",
     "directory": "packages/mem-use"
   },
   "keywords": [
-    "claude",
-    "settings",
-    "cli",
+    "memory",
+    "mem",
+    "memory-usage",
     "typescript",
     "nodenext"
   ],
@@ -43,7 +37,5 @@
     "url": "https://github.com/baendlorel/tsumugi-lib/issues"
   },
   "homepage": "https://github.com/baendlorel/tsumugi-lib/tree/main/packages/mem-use#readme",
-  "dependencies": {
-    "smol-toml": "^1.6.1"
-  }
+  "dependencies": {}
 }

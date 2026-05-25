@@ -18,17 +18,20 @@ interface MemoryUsage {
 
   pid: number;
 
-  memory: number; // Physical/resident memory in bytes
+  /**
+   * Physical/resident memory in bytes
+   */
+  memory: number;
 
   /**
    * `null` when not available on this platform. On Windows, this is the "private working set" which matches Task Manager's "内存" column (private resident memory). On other platforms, this may be unavailable or may require elevated permissions, so it's optional.
    */
-  privateMemory: number | null; // null when not available on this platform
+  privateMemory: number | null;
 
   /**
    * `null` when not available on this platform. Virtual memory size in bytes. May be unavailable on some platforms or require elevated permissions.
    */
-  virtualMemory: number | null; // null when not available on this platform
+  virtualMemory: number | null;
 }
 
 // Convert Windows intermediate type to the standard output type
@@ -64,91 +67,129 @@ function parseStandardPs(cmd: string): MemoryUsage[] {
   return result;
 }
 
-type Handler = {
-  [key in NodeJS.Platform]: () => MemoryUsage[];
+/**
+ * Win32_PerfFormattedData_PerfProc_Process exposes WorkingSetPrivate which matches
+ * the Task Manager "内存" column (private working set, not total working set).
+ */
+const win32 = () => {
+  const result = execSync(
+    'powershell.exe -Command "Get-CimInstance Win32_PerfFormattedData_PerfProc_Process | Select-Object Name, IDProcess, WorkingSetPrivate, PrivateBytes, VirtualBytes | ConvertTo-Json"',
+  );
+  return (JSON.parse(result.toString()) as ProcessInfo[]).map(fromProcessInfo);
 };
 
-const handler: Handler = {
-  win32: () => {
-    // Win32_PerfFormattedData_PerfProc_Process exposes WorkingSetPrivate which matches
-    // the Task Manager "内存" column (private working set, not total working set).
-    const result = execSync(
-      'powershell.exe -Command "Get-CimInstance Win32_PerfFormattedData_PerfProc_Process | Select-Object Name, IDProcess, WorkingSetPrivate, PrivateBytes, VirtualBytes | ConvertTo-Json"',
-    );
-    return (JSON.parse(result.toString()) as ProcessInfo[]).map(fromProcessInfo);
-  },
-  cygwin: () => {
-    // Cygwin runs on Windows; delegate to the same perf-counter query
-    const result = execSync(
-      'powershell.exe -Command "Get-CimInstance Win32_PerfFormattedData_PerfProc_Process | Select-Object Name, IDProcess, WorkingSetPrivate, PrivateBytes, VirtualBytes | ConvertTo-Json"',
-    );
-    return (JSON.parse(result.toString()) as ProcessInfo[]).map(fromProcessInfo);
-  },
-  linux: () => {
-    // rss = resident set size (KB), vsz = virtual size (KB)
-    return parseStandardPs('ps -eo pid,comm,rss,vsz');
-  },
-  darwin: () => {
-    // -A = all processes, -o = custom columns
-    return parseStandardPs('ps -A -o pid,comm,rss,vsz');
-  },
-  freebsd: () => {
-    // -a = other users' processes, -x = no controlling terminal
-    return parseStandardPs('ps -ax -o pid,comm,rss,vsz');
-  },
-  openbsd: () => {
-    return parseStandardPs('ps -ax -o pid,comm,rss,vsz');
-  },
-  netbsd: () => {
-    return parseStandardPs('ps -ax -o pid,comm,rss,vsz');
-  },
-  aix: () => {
-    // AIX supports POSIX-style ps with -e (all processes) and -o (format)
-    return parseStandardPs('ps -eo pid,comm,rss,vsz');
-  },
-  sunos: () => {
-    // Solaris: fname is the 8-char process basename
-    return parseStandardPs('ps -eo pid,fname,rss,vsz');
-  },
-  android: () => {
-    // Android 7.0+ Bionic ps supports -A (all) and -o (format)
-    return parseStandardPs('ps -A -o PID,NAME,RSS,VSZ');
-  },
-  haiku: () => {
-    // Haiku's ps has no memory columns. `listarea <team_id>` is the only CLI source:
-    //   - column 3 (size):  total reserved virtual address space in bytes
-    //   - column 4 (alloc): actually committed/resident bytes
-    // Strategy: collect PIDs from ps, then call listarea per team and sum both columns.
-    const psOutput = execSync('ps').toString();
-    const result: MemoryUsage[] = [];
+/**
+ * Cygwin runs on Windows; delegate to the same perf-counter query
+ */
+const cygwin = () => {
+  const result = execSync(
+    'powershell.exe -Command "Get-CimInstance Win32_PerfFormattedData_PerfProc_Process | Select-Object Name, IDProcess, WorkingSetPrivate, PrivateBytes, VirtualBytes | ConvertTo-Json"',
+  );
+  return (JSON.parse(result.toString()) as ProcessInfo[]).map(fromProcessInfo);
+};
 
-    for (const line of psOutput.trim().split('\n')) {
-      const parts = line.trim().split(/\s+/);
-      if (parts.length < 2) continue;
-      const pid = parseInt(parts[0]);
-      if (isNaN(pid)) continue;
+/**
+ * rss = resident set size (KB), vsz = virtual size (KB)
+ */
+const linux = () => parseStandardPs('ps -eo pid,comm,rss,vsz');
+/**
+ * -A = all processes, -o = custom columns
+ */
+const darwin = () => parseStandardPs('ps -A -o pid,comm,rss,vsz');
 
-      let memory = 0;
-      let virtualMemory = 0;
-      try {
-        const areaOutput = execSync(`listarea ${pid}`).toString();
-        for (const areaLine of areaOutput.split('\n')) {
-          // Format: <id> '<name>' <size> <alloc> <pages> ...
-          const m = areaLine.match(/^\s*\d+\s+'[^']*'\s+(\d+)\s+(\d+)/);
-          if (m) {
-            virtualMemory += parseInt(m[1]); // size  = virtual
-            memory += parseInt(m[2]); // alloc = resident
-          }
+/**
+ * -a = other users' processes, -x = no controlling terminal
+ */
+const freebsd = () => parseStandardPs('ps -ax -o pid,comm,rss,vsz');
+
+const openbsd = () => parseStandardPs('ps -ax -o pid,comm,rss,vsz');
+
+const netbsd = () => parseStandardPs('ps -ax -o pid,comm,rss,vsz');
+
+/**
+ * AIX supports POSIX-style ps with -e (all processes) and -o (format)
+ */
+const aix = () => parseStandardPs('ps -eo pid,comm,rss,vsz');
+
+/**
+ * Solaris: fname is the 8-char process basename
+ */
+const sunos = () => parseStandardPs('ps -eo pid,fname,rss,vsz');
+
+/**
+ * Android 7.0+ Bionic ps supports -A (all) and -o (format)
+ */
+const android = () => parseStandardPs('ps -A -o PID,NAME,RSS,VSZ');
+
+/**
+ * Haiku's ps has no memory columns. `listarea <team_id>` is the only CLI source:
+ *   - column 3 (size):  total reserved virtual address space in bytes
+ *   - column 4 (alloc): actually committed/resident bytes
+ * Strategy: collect PIDs from ps, then call listarea per team and sum both columns.
+ */
+const haiku = () => {
+  const psOutput = execSync('ps').toString();
+  const result: MemoryUsage[] = [];
+
+  for (const line of psOutput.trim().split('\n')) {
+    const parts = line.trim().split(/\s+/);
+    if (parts.length < 2) continue;
+    const pid = parseInt(parts[0]);
+    if (isNaN(pid)) continue;
+
+    let memory = 0;
+    let virtualMemory = 0;
+    try {
+      const areaOutput = execSync(`listarea ${pid}`).toString();
+      for (const areaLine of areaOutput.split('\n')) {
+        // Format: <id> '<name>' <size> <alloc> <pages> ...
+        const m = areaLine.match(/^\s*\d+\s+'[^']*'\s+(\d+)\s+(\d+)/);
+        if (m) {
+          virtualMemory += parseInt(m[1]); // size  = virtual
+          memory += parseInt(m[2]); // alloc = resident
         }
-      } catch {
-        // Some system teams may be inaccessible
       }
-
-      result.push({ processName: parts[1], pid, memory, privateMemory: null, virtualMemory });
+    } catch {
+      // Some system teams may be inaccessible
     }
 
-    return result;
-  },
+    result.push({ processName: parts[1], pid, memory, privateMemory: null, virtualMemory });
+  }
+
+  return result;
 };
 
-export const getMemoryUsage = handler[platform()];
+/**
+ * Returns an array of memory usage info for all processes on the current system.
+ * @param platform Defaults to current platform. _hard to find a reason for_
+ */
+let getMemoryUsage: () => MemoryUsage[];
+switch (platform()) {
+  case 'win32':
+    getMemoryUsage = win32;
+  case 'cygwin':
+    getMemoryUsage = cygwin;
+  case 'linux':
+    getMemoryUsage = linux;
+  case 'darwin':
+    getMemoryUsage = darwin;
+  case 'freebsd':
+    getMemoryUsage = freebsd;
+  case 'openbsd':
+    getMemoryUsage = openbsd;
+  case 'netbsd':
+    getMemoryUsage = netbsd;
+  case 'aix':
+    getMemoryUsage = aix;
+  case 'sunos':
+    getMemoryUsage = sunos;
+  case 'android':
+    getMemoryUsage = android;
+  case 'haiku':
+    getMemoryUsage = haiku;
+  default:
+    console.error(`Unsupported platform: ${platform()}, returning linux version as fallback.`);
+    getMemoryUsage = linux;
+}
+
+export { getMemoryUsage };
