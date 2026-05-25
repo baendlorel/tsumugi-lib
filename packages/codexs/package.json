@@ -1,0 +1,49 @@
+{
+  "name": "codexs",
+  "version": "0.0.1",
+  "author": {
+    "name": "Kasukabe Tsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "purpose": "npm",
+  "description": "Switch Claude settings.json profiles from the command line.",
+  "description_zh": "通过命令行切换 Claude 的 settings.json 配置。",
+  "type": "module",
+  "bin": {
+    "codexs": "./dist/index.mjs"
+  },
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "try": "tsx src/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/tsumugi-lib.git",
+    "directory": "packages/codexs"
+  },
+  "keywords": [
+    "claude",
+    "settings",
+    "cli",
+    "typescript",
+    "nodenext"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/baendlorel/tsumugi-lib/issues"
+  },
+  "homepage": "https://github.com/baendlorel/tsumugi-lib/tree/main/packages/codexs#readme",
+  "dependencies": {
+    "smol-toml": "^1.6.1"
+  }
+}

@@ -70,6 +70,12 @@ importers:
 
   packages/clautcher: {}
 
+  packages/codexs:
+    dependencies:
+      smol-toml:
+        specifier: ^1.6.1
+        version: 1.6.1
+
   packages/composition-ts: {}
 
   packages/concat-arr: {}
@@ -1603,6 +1609,10 @@ packages:
     resolution: {integrity: sha512-KAkBqZl3c2GvNgNhcoyJae1aKldDW0LO279wF9bk1PnluRTETKBq0WyzRXxEhoQLk56yHaOY4JCBEKDuJIET5g==}
     engines: {node: '>=20.0.0'}
 
+  smol-toml@1.6.1:
+    resolution: {integrity: sha512-dWUG8F5sIIARXih1DTaQAX4SsiTXhInKf1buxdY9DIg4ZYPZK5nGM1VRIYmEbDbsHt7USo99xSLFu5Q1IqTmsg==}
+    engines: {node: '>= 18'}
+
   solarlunar@3.1.0:
     resolution: {integrity: sha512-PCJsIeSaMyQVK6TZk+tlPNaoAlk02+2UxhI/DS+K0zdLkwTihMp4px6S+Jv6HPPC0p7QsUM18WSs2/HEC1o0wQ==}
 
@@ -2975,6 +2985,8 @@ snapshots:
   slash@3.0.0: {}
 
   smob@1.6.1: {}
+
+  smol-toml@1.6.1: {}
 
   solarlunar@3.1.0: {}
 
