@@ -10,7 +10,7 @@ interface ProcessInfo {
   VirtualBytes: number; // virtual address space
 }
 
-interface MemoryUsage {
+export interface MemoryUsage {
   /**
    * Name of the process, e.g. "node", "python", "chrome".
    */
