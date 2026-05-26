@@ -167,26 +167,37 @@ let getMemoryUsage: () => MemoryUsage[];
 switch (platform()) {
   case 'win32':
     getMemoryUsage = win32;
+    break;
   case 'cygwin':
     getMemoryUsage = cygwin;
+    break;
   case 'linux':
     getMemoryUsage = linux;
+    break;
   case 'darwin':
     getMemoryUsage = darwin;
+    break;
   case 'freebsd':
     getMemoryUsage = freebsd;
+    break;
   case 'openbsd':
     getMemoryUsage = openbsd;
+    break;
   case 'netbsd':
     getMemoryUsage = netbsd;
+    break;
   case 'aix':
     getMemoryUsage = aix;
+    break;
   case 'sunos':
     getMemoryUsage = sunos;
+    break;
   case 'android':
     getMemoryUsage = android;
+    break;
   case 'haiku':
     getMemoryUsage = haiku;
+    break;
   default:
     console.error(`Unsupported platform: ${platform()}, returning linux version as fallback.`);
     getMemoryUsage = linux;

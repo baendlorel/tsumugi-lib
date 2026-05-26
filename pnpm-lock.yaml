@@ -102,6 +102,8 @@ importers:
         specifier: ^25.2.3
         version: 25.2.3
 
+  packages/mem-usage: {}
+
   packages/minimal-event-bus: {}
 
   packages/n-base-integer: {}
