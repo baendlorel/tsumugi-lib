@@ -1,48 +1,64 @@
-# Clautcher 1.0.x Release! 🎉🎉
+# total-lines
 
-[![npm version](https://img.shields.io/npm/v/clautcher.svg)](https://www.npmjs.com/package/clautcher) [![npm downloads](http://img.shields.io/npm/dm/clautcher.svg)](https://npmcharts.com/compare/clautcher,token-types?start=1200&interval=30)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/59dd6795e61949fb97066ca52e6097ef)](https://www.codacy.com/app/Borewit/clautcher?utm_source=github.com&utm_medium=referral&utm_content=Borewit/clautcher&utm_campaign=Badge_Grade)
+A lightweight CLI tool to count lines of code in your project.
 
-Switch Claude settings profiles by copying a named `settings.<name>.json` onto `settings.json`.
+## Installation
 
-## Install
-
-```sh
-npm i -g clautcher
+```bash
+npm i -g total-lines
 ```
 
-## Steps ✨
+## Usage
 
-1. Enter .claude directory and create a settings file named `settings.<name>.json` for each profile you want to have. For example:
+```bash
+# Count lines in current directory
+lines .
 
-```sh
-cd ~/.claude
-cp settings.json settings.deepseek.json
-cp settings.json settings.claude.json
+# Count lines in a specific path
+lines /path/to/project
+
+# Count with verbose output (shows individual files)
+lines -v /path/to/project
+
+# Show version
+lines -V
+
+# Show help
+lines -h
 ```
 
-2. Just run `clautcher` to enter the interactive settings file picker.
-```sh
-clautcher
+## Configuration
+
+Create `~/.how-many-lines.json` to customize:
+
+```json
+{
+  "suffix": [".ts", ".js", ".py", "go"],
+  "exclude": ["**/node_modules", "**/dist", "**/*.md"]
+}
 ```
-Then you will see this:
 
-```sh
-Select a profile:
-Use Up/Down to choose, Enter to confirm, Esc or q to quit.
-  deepseek
-> claude
-  other
+### View Current Config
+
+```bash
+# Show supported file suffixes
+lines config suffix
+
+# Show exclusion patterns
+lines config exclude
+
+# Show config file format
+lines config
 ```
-## Need Common Settings?
 
-You can create `settings.base.json` as a common base profile. It will be merged with the selected profile before copying to `settings.json`. This is useful when you want to share some common settings across different profiles.
+## Features
 
-## Trivia
-
-- The name "Clautcher" is a portmanteau of "Claude" and "Switcher", indicating its purpose as a tool for switching between different Claude settings profiles. Since "claude-switcher", "claude-code-switcher", "claude-switch" ... are all taken, I had to come up with a more creative name.
-- It is designed to be simple.
-- Some names have their own color in the interactive menu.
+- **Multi-language support**: 40+ file extensions supported by default
+- **Smart exclusion**: Automatically excludes node_modules, dist, .git, etc.
+- **Configurable**: Customize via config file
+- **Verbose mode**: See per-file breakdown
+- **Detailed output**: Lines grouped by file extension
 
 ## License
-MIT License
+
+MIT
