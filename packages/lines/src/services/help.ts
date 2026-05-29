@@ -1,4 +1,4 @@
-import { cctl } from '@shared/utils/color.js';
+import { cctl } from '../../../_shared/utils/color.js';
 
 const VERSION = '0.1.0';
 

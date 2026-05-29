@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { cctl } from '@shared/utils/color.js';
+import { cctl } from '../../../_shared/utils/color.js';
 
 export interface Config {
   suffix: string[];
@@ -20,6 +20,8 @@ const DEFAULT_EXCLUDE = [
   '.idea',
   '.DS_Store',
   '.claude',
+  'pnpm-lock.yaml',
+  'package-lock.json',
 ];
 
 const DEFAULT_SUFFIX = [
@@ -111,13 +113,8 @@ const DEFAULT_CONFIG: Config = {
   exclude: DEFAULT_EXCLUDE,
 };
 
-export function getConfigPath(): string {
-  return CONFIG_PATH;
-}
-
 export function loadConfig(): Config {
   if (!fs.existsSync(CONFIG_PATH)) {
-    createDefaultConfig();
     return DEFAULT_CONFIG;
   }
 
@@ -142,11 +139,7 @@ export function loadConfig(): Config {
 
 export function createDefaultConfig(): void {
   try {
-    fs.writeFileSync(
-      CONFIG_PATH,
-      JSON.stringify(DEFAULT_CONFIG, null, 2),
-      'utf-8'
-    );
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(DEFAULT_CONFIG, null, 2), 'utf-8');
   } catch (error) {
     console.error(cctl.red + `Failed to create config file at ${CONFIG_PATH}` + cctl.reset);
   }

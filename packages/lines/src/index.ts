@@ -2,8 +2,8 @@
 
 import path from 'node:path';
 import fs from 'node:fs';
-import { cctl } from '@shared/utils/color.js';
-import { loadConfig, getConfigPath } from './services/config.js';
+import { cctl } from '../../_shared/utils/color.js';
+import { loadConfig } from './services/config.js';
 import { countLinesInDirectory, formatOutput } from './services/counter.js';
 import { help, version } from './services/help.js';
 
