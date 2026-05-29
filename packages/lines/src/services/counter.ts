@@ -104,13 +104,15 @@ export function formatOutput(summary: CountSummary): string {
   // Find the maximum extension length for alignment
   const maxExtLen = Math.max(...entries.map(([ext]) => ext.length));
 
-  const lines = entries.map(([ext, count]) => {
-    const paddedExt = ext.padEnd(maxExtLen + 2);
-    return `.${ext}${paddedExt.slice(ext.length)}${count}`;
-  });
+  const lines = entries
+    .map(([ext, count]) => {
+      const paddedExt = ext.padEnd(maxExtLen + 2);
+      return `.${ext}${paddedExt.slice(ext.length)}${count}`;
+    })
+    .sort();
 
   lines.push('');
-  lines.push(`Total${' '.repeat(Math.max(0, maxExtLen - 2))}${summary.total}`);
+  lines.push(`Sum${' '.repeat(Math.max(0, maxExtLen))}${summary.total}`);
 
   return lines.join('\n');
 }

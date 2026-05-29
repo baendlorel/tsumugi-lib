@@ -9,22 +9,137 @@ export interface Config {
 }
 
 const DEFAULT_EXCLUDE = [
+  // Version control
   '**/.git/**',
+  '**/.svn/**',
+  '**/.hg/**',
+  '**/CVS/**',
+
+  // Dependencies
   '**/node_modules/**',
+  '**/jspm_packages/**',
+  '**/vendor/**',
+  '**/vendors/**',
+  '**/bower_components/**',
+
+  // Build outputs
   '**/dist/**',
   '**/build/**',
-  '**/coverage/**',
   '**/out/**',
+  '**/output/**',
+  '**/target/**',  // Java/Scala
+  '**/bin/**',
+  '**/obj/**',     // .NET
+
+  // Testing & coverage
+  '**/coverage/**',
+  '**/.nyc_output/**',
+  '**/.coverage/**',
+
+  // Logs & temp
   '**/logs/**',
+  '**/log/**',
+  '**/tmp/**',
+  '**/temp/**',
+  '**/.tmp/**',
+
+  // IDE/Editor configs
   '**/.vscode/**',
   '**/.idea/**',
+  '**/.vs/**',
+  '**/*.suo',
+  '**/*.user',
+  '**/*.userosscache',
+  '**/*.sln.docstates',
+  '**/.project',
+  '**/.settings/**',
+  '**/.classpath',
+  '**/.factorypath',
+
+  // OS files
   '**/.DS_Store',
+  '**/Thumbs.db',
+  '**/.DS_Store?',
+  '**/*~',
+  '**/*.swp',
+  '**/*.swo',
+
+  // Tool configs
   '**/.claude/**',
+  '**/.cursor/**',
+  '**/.continue/**',
+  '**/.aider/**',
+  '**/.copilot/**',
+
+  // Lock files
+  '**/*.lock',
+  '**/package-lock.json',
+  '**/pnpm-lock.yaml',
+  '**/yarn.lock',
+  '**/bun.lockb',
+  '**/poetry.lock',
+  '**/Cargo.lock',
+  '**/Gemfile.lock',
+  '**/composer.lock',
+  '**/go.sum',
+  '**/gradle.lockfile',
+
+  // Config & data files (common exclusions)
   '**/*.toml',
   '**/*.yaml',
+  '**/*.yml',
   '**/*.json',
-  '**/*.lock',
-  '**/yarn.lock',
+  '**/*.xml',
+  '**/*.ini',
+  '**/*.cfg',
+  '**/*.conf',
+  '**/*.config',
+  '**/*.env',
+  '**/*.env.*',
+  '**/!.env.example',
+
+  // Documentation
+  '**/docs/**',
+  '**/*.md',
+  '**/*.rst',
+  '**/*.txt',
+  '**/LICENSE',
+  '**/LICENSE.*',
+  '**/README',
+  '**/README.*',
+  '**/CHANGELOG*',
+  '**/AUTHORS',
+  '**/CONTRIBUTORS',
+
+  // Assets & static files
+  '**/assets/**',
+  '**/static/**',
+  '**/public/**',
+  '**/*.png',
+  '**/*.jpg',
+  '**/*.jpeg',
+  '**/*.gif',
+  '**/*.svg',
+  '**/*.ico',
+  '**/*.webp',
+  '**/*.woff',
+  '**/*.woff2',
+  '**/*.ttf',
+  '**/*.eot',
+
+  // Database & cache
+  '**/*.db',
+  '**/*.sqlite',
+  '**/*.sqlite3',
+  '**/*.cache',
+
+  // Archives
+  '**/*.zip',
+  '**/*.tar',
+  '**/*.tar.gz',
+  '**/*.tgz',
+  '**/*.rar',
+  '**/*.7z',
 ];
 
 const DEFAULT_SUFFIX = [

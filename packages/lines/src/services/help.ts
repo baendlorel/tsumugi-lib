@@ -4,33 +4,21 @@ const VERSION = '0.1.0';
 
 export function help(): void {
   const helpText = `
-${cctl.bold}${cctl.cyan}How Many Lines${cctl.reset} - Count lines of code in your project
+${cctl.bold}${cctl.cyan}How Many Lines __VERSION__${cctl.reset} - Count lines of code in your project
 
 ${cctl.bold}Usage:${cctl.reset}
   lines [options] [path]
-
-${cctl.bold}Options:${cctl.reset}
-  ${cctl.yellow}-v${cctl.reset}           Show version number
-  ${cctl.yellow}-h${cctl.reset}           Show this help message
-  ${cctl.yellow}-p${cctl.reset} <path>    Count lines in the specified path (recursive)
-
-${cctl.bold}Examples:${cctl.reset}
-  ${cctl.green}lines .${cctl.reset}              Count lines in current directory
-  ${cctl.green}lines -p /path/to/project${cctl.reset}  Count lines in specified path
-  ${cctl.green}lines -v${cctl.reset}             Show version
+    ${cctl.yellow}-v${cctl.reset}           Show version number
+    ${cctl.yellow}-h${cctl.reset}           Show this help message
+    ${cctl.yellow}-p${cctl.reset} <path>    Count lines in the specified path (recursive)
 
 ${cctl.bold}Configuration:${cctl.reset}
   Config file: ~/.how-many-lines.json
-  Will be created automatically if it doesn't exist
-
-${cctl.bold}Config Format:${cctl.reset}
-  {
-    "suffix": [".ts", ".js", ...],
-    "exclude": ["node_modules", ".git", ...]
-  }
-
-${cctl.bold}Report bugs:${cctl.reset}
-  https://github.com/baendlorel/tsumugi-lib/issues
+  Config Format:
+    {
+      "suffix": [".ts", ".js", ...],
+      "exclude": ["**/node_modules", ".git", ...]
+    }
 `;
   console.log(helpText);
 }
