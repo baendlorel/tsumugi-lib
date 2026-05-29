@@ -23,6 +23,25 @@ async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
       return 0;
     }
 
+    // Handle "lines config suffix" command
+    if (arg1 === 'config') {
+      if (arg2 === 'suffix') {
+        const config = loadConfig();
+        console.log(config.suffix.join(', '));
+        return 0;
+      }
+
+      // Handle "lines config exclude" command
+      if (arg2 === 'exclude') {
+        const config = loadConfig();
+        console.log(config.exclude.join('\n'));
+        return 0;
+      }
+
+      console.log(cctl.red + `Should use 'config suffix/exclude' to show config` + cctl.reset);
+      return 0;
+    }
+
     // Handle -p flag (path)
     if (arg1 === '-p') {
       if (!arg2) {

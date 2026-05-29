@@ -12,6 +12,10 @@ ${cctl.bold}Usage:${cctl.reset}
     ${cctl.yellow}-h${cctl.reset}           Show this help message
     ${cctl.yellow}-p${cctl.reset} <path>    Count lines in the specified path (recursive)
 
+${cctl.bold}Configuration Commands:${cctl.reset}
+  lines config suffix    Show current supported file suffixes (comma-separated)
+  lines config exclude   Show current exclusion patterns (line-separated)
+
 ${cctl.bold}Configuration:${cctl.reset}
   Config file: ~/.how-many-lines.json
   Config Format:
