@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { minimatch } from 'minimatch';
 import { Config } from './config.js';
 
 export interface CountResult {
@@ -9,26 +10,6 @@ export interface CountResult {
 export interface CountSummary {
   byExtension: CountResult;
   total: number;
-}
-
-export function shouldExclude(filePath: string, excludePatterns: string[]): boolean {
-  const parts = filePath.split(path.sep);
-
-  for (const pattern of excludePatterns) {
-    // Check if any part of the path matches the pattern
-    for (const part of parts) {
-      if (part === pattern || part.startsWith(pattern)) {
-        return true;
-      }
-    }
-
-    // Also check the full path
-    if (parts.includes(pattern)) {
-      return true;
-    }
-  }
-
-  return false;
 }
 
 export function getExtension(filePath: string): string | null {
@@ -50,6 +31,9 @@ export function getExtension(filePath: string): string | null {
 }
 
 export function countLines(filePath: string): number {
+  if (filePath.endsWith('.yaml')) {
+    console.log('file path', filePath);
+  }
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
     return content.split('\n').length;
@@ -58,10 +42,7 @@ export function countLines(filePath: string): number {
   }
 }
 
-export function countLinesInDirectory(
-  dirPath: string,
-  config: Config
-): CountSummary {
+export function countLinesInDirectory(dirPath: string, config: Config): CountSummary {
   const result: CountResult = {};
   let total = 0;
 
@@ -81,8 +62,7 @@ export function countLinesInDirectory(
         total += lines;
       }
     } else if (stat.isDirectory()) {
-      // Check if directory should be excluded
-      if (shouldExclude(currentPath, config.exclude)) {
+      if (config.exclude.some((pattern) => minimatch(currentPath, pattern))) {
         return;
       }
 

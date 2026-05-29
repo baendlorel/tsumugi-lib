@@ -102,6 +102,15 @@ importers:
         specifier: ^25.2.3
         version: 25.2.3
 
+  packages/lines:
+    dependencies:
+      glob:
+        specifier: ^13.0.6
+        version: 13.0.6
+      minimatch:
+        specifier: ^10.2.5
+        version: 10.2.5
+
   packages/mem-usage: {}
 
   packages/minimal-event-bus: {}

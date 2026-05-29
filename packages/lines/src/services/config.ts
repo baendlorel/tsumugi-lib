@@ -9,19 +9,22 @@ export interface Config {
 }
 
 const DEFAULT_EXCLUDE = [
-  '.git',
-  'node_modules',
-  'dist',
-  'build',
-  'coverage',
-  'out',
-  'logs',
-  '.vscode',
-  '.idea',
-  '.DS_Store',
-  '.claude',
-  'pnpm-lock.yaml',
-  'package-lock.json',
+  '**/.git/**',
+  '**/node_modules/**',
+  '**/dist/**',
+  '**/build/**',
+  '**/coverage/**',
+  '**/out/**',
+  '**/logs/**',
+  '**/.vscode/**',
+  '**/.idea/**',
+  '**/.DS_Store',
+  '**/.claude/**',
+  '**/*.toml',
+  '**/*.yaml',
+  '**/*.json',
+  '**/*.lock',
+  '**/yarn.lock',
 ];
 
 const DEFAULT_SUFFIX = [
