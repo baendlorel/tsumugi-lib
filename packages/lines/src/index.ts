@@ -50,7 +50,7 @@ async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
         [
           `You can use 'config suffix/exclude' to show config`,
           `${cctl.bold}Configuration:${cctl.reset}`,
-          `  Config file: ~/.how-many-lines.json`,
+          `  Config file: ~/.total-lines.json`,
           `  Config Format:`,
           `    {`,
           `      "suffix": [".ts", ".js", ...],`,

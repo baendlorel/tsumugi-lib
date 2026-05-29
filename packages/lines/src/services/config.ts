@@ -224,7 +224,7 @@ const DEFAULT_SUFFIX = [
   'hcl',
 ];
 
-const CONFIG_PATH = path.join(os.homedir(), '.how-many-lines.json');
+const CONFIG_PATH = path.join(os.homedir(), '.total-lines.json');
 
 const DEFAULT_CONFIG: Config = {
   suffix: DEFAULT_SUFFIX,

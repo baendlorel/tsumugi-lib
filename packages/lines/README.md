@@ -29,7 +29,7 @@ lines -h
 
 ## Configuration
 
-Create `~/.how-many-lines.json` to customize:
+Create `~/.total-lines.json` to customize:
 
 ```json
 {
