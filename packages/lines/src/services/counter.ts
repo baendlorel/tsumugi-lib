@@ -31,9 +31,6 @@ export function getExtension(filePath: string): string | null {
 }
 
 export function countLines(filePath: string): number {
-  if (filePath.endsWith('.yaml')) {
-    console.log('file path', filePath);
-  }
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
     return content.split('\n').length;
@@ -52,6 +49,20 @@ export function countLinesInDirectory(dirPath: string, config: Config): CountSum
     }
 
     const stat = fs.statSync(currentPath);
+    // Normalize path for glob matching:
+    // - Remove leading ./ for relative paths
+    // - Remove leading / for absolute paths (minimatch ** doesn't cross root boundary)
+    let normalizedPath = currentPath;
+    if (normalizedPath.startsWith('./')) {
+      normalizedPath = normalizedPath.slice(2);
+    } else if (path.isAbsolute(normalizedPath)) {
+      normalizedPath = normalizedPath.slice(1); // Remove leading /
+    }
+
+    // Check if path matches any exclude pattern (with dot option to match hidden dirs)
+    if (config.exclude.some((pattern) => minimatch(normalizedPath, pattern, { dot: true }))) {
+      return;
+    }
 
     if (stat.isFile()) {
       const ext = getExtension(currentPath);
@@ -62,10 +73,6 @@ export function countLinesInDirectory(dirPath: string, config: Config): CountSum
         total += lines;
       }
     } else if (stat.isDirectory()) {
-      if (config.exclude.some((pattern) => minimatch(currentPath, pattern))) {
-        return;
-      }
-
       const entries = fs.readdirSync(currentPath);
 
       for (const entry of entries) {
