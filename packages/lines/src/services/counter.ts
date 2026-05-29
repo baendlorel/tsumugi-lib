@@ -3,13 +3,22 @@ import path from 'node:path';
 import { minimatch } from 'minimatch';
 import { Config } from './config.js';
 
+export interface FileCount {
+  filePath: string;
+  lines: number;
+}
+
 export interface CountResult {
-  [extension: string]: number;
+  [extension: string]: {
+    total: number;
+    files: FileCount[];
+  };
 }
 
 export interface CountSummary {
   byExtension: CountResult;
   total: number;
+  basePath: string;
 }
 
 export function getExtension(filePath: string): string | null {
@@ -69,7 +78,19 @@ export function countLinesInDirectory(dirPath: string, config: Config): CountSum
 
       if (ext && config.suffix.includes(ext)) {
         const lines = countLines(currentPath);
-        result[ext] = (result[ext] || 0) + lines;
+
+        if (!result[ext]) {
+          result[ext] = { total: 0, files: [] };
+        }
+
+        result[ext].total += lines;
+        // Store relative path
+        const relativePath = path.relative(dirPath, currentPath);
+        result[ext].files.push({
+          filePath: relativePath,
+          lines
+        });
+
         total += lines;
       }
     } else if (stat.isDirectory()) {
@@ -84,10 +105,10 @@ export function countLinesInDirectory(dirPath: string, config: Config): CountSum
 
   walk(dirPath);
 
-  return { byExtension: result, total };
+  return { byExtension: result, total, basePath: dirPath };
 }
 
-export function formatOutput(summary: CountSummary): string {
+export function formatOutput(summary: CountSummary, verbose: boolean = false): string {
   const entries = Object.entries(summary.byExtension);
 
   // Sort by extension length first, then alphabetically
@@ -104,12 +125,24 @@ export function formatOutput(summary: CountSummary): string {
   // Find the maximum extension length for alignment
   const maxExtLen = Math.max(...entries.map(([ext]) => ext.length));
 
-  const lines = entries
-    .map(([ext, count]) => {
-      const paddedExt = ext.padEnd(maxExtLen + 2);
-      return `.${ext}${paddedExt.slice(ext.length)}${count}`;
-    })
-    .sort();
+  const lines: string[] = [];
+
+  for (const [ext, data] of entries) {
+    const paddedExt = ext.padEnd(maxExtLen + 2);
+    lines.push(`.${ext}${paddedExt.slice(ext.length)}${data.total}`);
+
+    // Verbose mode: show individual files
+    if (verbose && data.files.length > 0) {
+      // Find max line count width for alignment
+      const maxLineWidth = Math.max(...data.files.map(f => String(f.lines).length));
+
+      for (const file of data.files) {
+        const lineStr = String(file.lines);
+        const paddedLines = lineStr.padStart(maxLineWidth);
+        lines.push(`  - ${paddedLines} ${file.filePath}`);
+      }
+    }
+  }
 
   lines.push('');
   lines.push(`Sum${' '.repeat(Math.max(0, maxExtLen))}${summary.total}`);

@@ -9,22 +9,30 @@ import { help, version } from './services/help.js';
 
 async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
   try {
-    const [arg1, arg2] = argv;
+    let verbose = false;
+    let pathIndex = 0;
 
-    // Handle -v flag (version)
-    if (arg1 === '-v') {
+    // Check for -v flag (verbose)
+    if (argv[0] === '-v') {
+      verbose = true;
+      pathIndex = 1;
+    }
+
+    // Check for -V flag (version)
+    if (argv[pathIndex] === '-V') {
       version();
       return 0;
     }
 
     // Handle -h flag (help)
-    if (arg1 === '-h') {
+    if (argv[pathIndex] === '-h') {
       help();
       return 0;
     }
 
     // Handle "lines config suffix" command
-    if (arg1 === 'config') {
+    if (argv[pathIndex] === 'config') {
+      const arg2 = argv[pathIndex + 1];
       if (arg2 === 'suffix') {
         const config = loadConfig();
         console.log(config.suffix.join(', '));
@@ -38,12 +46,24 @@ async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
         return 0;
       }
 
-      console.log(cctl.red + `Should use 'config suffix/exclude' to show config` + cctl.reset);
+      console.log(
+        [
+          `You can use 'config suffix/exclude' to show config`,
+          `${cctl.bold}Configuration:${cctl.reset}`,
+          `  Config file: ~/.how-many-lines.json`,
+          `  Config Format:`,
+          `    {`,
+          `      "suffix": [".ts", ".js", ...],`,
+          `      "exclude": ["**/node_modules", ".git", ...]`,
+          `    }`,
+        ].join('\n'),
+      );
       return 0;
     }
 
     // Handle -p flag (path)
-    if (arg1 === '-p') {
+    if (argv[pathIndex] === '-p') {
+      const arg2 = argv[pathIndex + 1];
       if (!arg2) {
         console.error(cctl.red + 'Error: Path required after -p' + cctl.reset);
         console.log('Use "lines -h" for help');
@@ -59,33 +79,33 @@ async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
 
       const config = loadConfig();
       const summary = countLinesInDirectory(targetPath, config);
-      console.log(formatOutput(summary));
+      console.log(formatOutput(summary, verbose));
       return 0;
     }
 
     // Handle "lines ." command (current directory) - highest priority
-    if (arg1 === '.') {
+    if (argv[pathIndex] === '.') {
       const currentDir = process.cwd();
       const config = loadConfig();
       const summary = countLinesInDirectory(currentDir, config);
-      console.log(formatOutput(summary));
+      console.log(formatOutput(summary, verbose));
       return 0;
     }
 
     // If no argument or unrecognized argument
-    if (!arg1 || arg1.startsWith('-')) {
+    if (!argv[pathIndex] || argv[pathIndex].startsWith('-')) {
       console.error(cctl.red + 'Error: Invalid or missing argument' + cctl.reset);
       console.log('Use "lines -h" for help');
       return 1;
     }
 
     // Try to treat the argument as a path
-    const targetPath = path.resolve(arg1);
+    const targetPath = path.resolve(argv[pathIndex]);
 
     if (fs.existsSync(targetPath)) {
       const config = loadConfig();
       const summary = countLinesInDirectory(targetPath, config);
-      console.log(formatOutput(summary));
+      console.log(formatOutput(summary, verbose));
       return 0;
     } else {
       console.error(cctl.red + `Error: Path does not exist: ${targetPath}` + cctl.reset);

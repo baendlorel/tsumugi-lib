@@ -8,21 +8,14 @@ ${cctl.bold}${cctl.cyan}How Many Lines __VERSION__${cctl.reset} - Count lines of
 
 ${cctl.bold}Usage:${cctl.reset}
   lines [options] [path]
-    ${cctl.yellow}-v${cctl.reset}           Show version number
+    ${cctl.yellow}-v${cctl.reset}           Verbose mode (show file details)
+    ${cctl.yellow}-V${cctl.reset}           Show version number
     ${cctl.yellow}-h${cctl.reset}           Show this help message
     ${cctl.yellow}-p${cctl.reset} <path>    Count lines in the specified path (recursive)
-
-${cctl.bold}Configuration Commands:${cctl.reset}
-  lines config suffix    Show current supported file suffixes (comma-separated)
-  lines config exclude   Show current exclusion patterns (line-separated)
-
-${cctl.bold}Configuration:${cctl.reset}
-  Config file: ~/.how-many-lines.json
-  Config Format:
-    {
-      "suffix": [".ts", ".js", ...],
-      "exclude": ["**/node_modules", ".git", ...]
-    }
+  
+  lines config           Show config file format
+  lines config suffix    Show current supported file suffixes
+  lines config exclude   Show current exclusion patterns
 `;
   console.log(helpText);
 }
