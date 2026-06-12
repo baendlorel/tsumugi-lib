@@ -22,6 +22,7 @@ export interface CountSummary {
   byExtension: CountResult;
   total: number;
   basePath: string;
+  elapsedMs: number;
 }
 
 export interface CountOptions {
@@ -260,6 +261,7 @@ export async function countLinesInDirectory(
   config: Config,
   options: CountOptions = {},
 ): Promise<CountSummary> {
+  const startedAt = performance.now();
   const verbose = options.verbose ?? false;
   const requestedThreads = options.threads ?? 1;
   const threads = Math.max(1, Math.min(requestedThreads, os.availableParallelism?.() ?? os.cpus().length));
@@ -269,7 +271,12 @@ export async function countLinesInDirectory(
       ? await countLinesParallel(files, threads, verbose)
       : countLinesSequential(files, verbose);
 
-  return { byExtension: counted.byExtension, total: counted.total, basePath: dirPath };
+  return {
+    byExtension: counted.byExtension,
+    total: counted.total,
+    basePath: dirPath,
+    elapsedMs: performance.now() - startedAt,
+  };
 }
 
 export function formatOutput(summary: CountSummary, verbose: boolean = false): string {
@@ -309,7 +316,7 @@ export function formatOutput(summary: CountSummary, verbose: boolean = false): s
   }
 
   lines.push('');
-  lines.push(`Sum${' '.repeat(Math.max(0, maxExtLen))}${summary.total}`);
+  lines.push(`Sum${' '.repeat(Math.max(0, maxExtLen))}${summary.total} (${summary.elapsedMs.toFixed(2)} ms)`);
 
   return lines.join('\n');
 }
