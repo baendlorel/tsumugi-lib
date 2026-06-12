@@ -20,6 +20,9 @@ lines /path/to/project
 # Count with verbose output (shows individual files)
 lines -v /path/to/project
 
+# Count with worker threads
+lines --threads 4 /path/to/project
+
 # Show version
 lines -V
 
@@ -57,6 +60,7 @@ lines config
 - **Smart exclusion**: Automatically excludes node_modules, dist, .git, etc.
 - **Configurable**: Customize via config file
 - **Verbose mode**: See per-file breakdown
+- **Optional threading**: Enable worker threads when scanning many files
 - **Detailed output**: Lines grouped by file extension
 
 ## License

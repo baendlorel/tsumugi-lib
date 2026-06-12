@@ -7,32 +7,64 @@ import { loadConfig } from './services/config.js';
 import { countLinesInDirectory, formatOutput } from './services/counter.js';
 import { help, version } from './services/help.js';
 
+function parseThreadCount(value: string | undefined): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return null;
+  }
+
+  return parsed;
+}
+
 async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
   try {
     let verbose = false;
-    let pathIndex = 0;
+    let threads = 1;
+    const args: string[] = [];
 
-    // Check for -v flag (verbose)
-    if (argv[0] === '-v') {
-      verbose = true;
-      pathIndex = 1;
+    for (let i = 0; i < argv.length; i++) {
+      const arg = argv[i];
+
+      if (arg === '-v') {
+        verbose = true;
+        continue;
+      }
+
+      if (arg === '--threads') {
+        const parsed = parseThreadCount(argv[i + 1]);
+        if (parsed === null) {
+          console.error(cctl.red + 'Error: --threads requires a positive integer' + cctl.reset);
+          return 1;
+        }
+        threads = parsed;
+        i++;
+        continue;
+      }
+
+      args.push(arg);
     }
 
+    const pathIndex = 0;
+
     // Check for -V flag (version)
-    if (argv[pathIndex] === '-V') {
+    if (args[pathIndex] === '-V') {
       version();
       return 0;
     }
 
     // Handle -h flag (help)
-    if (argv[pathIndex] === '-h') {
+    if (args[pathIndex] === '-h') {
       help();
       return 0;
     }
 
     // Handle "lines config suffix" command
-    if (argv[pathIndex] === 'config') {
-      const arg2 = argv[pathIndex + 1];
+    if (args[pathIndex] === 'config') {
+      const arg2 = args[pathIndex + 1];
       if (arg2 === 'suffix') {
         const config = loadConfig();
         console.log(config.suffix.join(', '));
@@ -62,8 +94,8 @@ async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
     }
 
     // Handle -p flag (path)
-    if (argv[pathIndex] === '-p') {
-      const arg2 = argv[pathIndex + 1];
+    if (args[pathIndex] === '-p') {
+      const arg2 = args[pathIndex + 1];
       if (!arg2) {
         console.error(cctl.red + 'Error: Path required after -p' + cctl.reset);
         console.log('Use "lines -h" for help');
@@ -78,33 +110,33 @@ async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
       }
 
       const config = loadConfig();
-      const summary = countLinesInDirectory(targetPath, config);
+      const summary = await countLinesInDirectory(targetPath, config, { verbose, threads });
       console.log(formatOutput(summary, verbose));
       return 0;
     }
 
     // Handle "lines ." command (current directory) - highest priority
-    if (argv[pathIndex] === '.') {
+    if (args[pathIndex] === '.') {
       const currentDir = process.cwd();
       const config = loadConfig();
-      const summary = countLinesInDirectory(currentDir, config);
+      const summary = await countLinesInDirectory(currentDir, config, { verbose, threads });
       console.log(formatOutput(summary, verbose));
       return 0;
     }
 
     // If no argument or unrecognized argument
-    if (!argv[pathIndex] || argv[pathIndex].startsWith('-')) {
+    if (!args[pathIndex] || args[pathIndex].startsWith('-')) {
       console.error(cctl.red + 'Error: Invalid or missing argument' + cctl.reset);
       console.log('Use "lines -h" for help');
       return 1;
     }
 
     // Try to treat the argument as a path
-    const targetPath = path.resolve(argv[pathIndex]);
+    const targetPath = path.resolve(args[pathIndex]);
 
     if (fs.existsSync(targetPath)) {
       const config = loadConfig();
-      const summary = countLinesInDirectory(targetPath, config);
+      const summary = await countLinesInDirectory(targetPath, config, { verbose, threads });
       console.log(formatOutput(summary, verbose));
       return 0;
     } else {
