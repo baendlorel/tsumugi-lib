@@ -1,7 +1,5 @@
 import { cctl } from '../../../_shared/utils/color.js';
 
-const VERSION = '0.2.0';
-
 export function help(): void {
   const helpText = `
 ${cctl.bold}${cctl.cyan}Total Lines __VERSION__${cctl.reset} - Count lines of code in your project
@@ -22,5 +20,5 @@ ${cctl.bold}Usage:${cctl.reset}
 }
 
 export function version(): void {
-  console.log(cctl.yellow + cctl.bold + `Total Lines v${VERSION}` + cctl.reset);
+  console.log(cctl.yellow + cctl.bold + `Total Lines __VERSION__` + cctl.reset);
 }
