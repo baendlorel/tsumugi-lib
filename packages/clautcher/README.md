@@ -5,6 +5,15 @@
 
 Switch Claude settings profiles by copying a named `settings.<name>.json` onto `settings.json`.
 
+
+<p align="center">
+  <a href="https://github.com/baendlorel/tsumugi-lib">
+    <img src="assets/icon.png" width="120px">
+  </a>
+</p>
+
+**VS Code Extension of Clautcher is now available too! 🎉🎉**
+
 ## Install
 
 ```sh
