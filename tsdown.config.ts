@@ -2,6 +2,7 @@ import { defineConfig } from 'tsdown';
 import replace from '@rollup/plugin-replace';
 
 const isDev = process.env.NODE_ENV === 'development';
+const lib = process.env.LIB_DIR;
 
 export default defineConfig({
   entry: ['src/index.ts'],
@@ -19,9 +20,9 @@ export default defineConfig({
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
 
       // global $throw
-      "$throw('": `throw new Error('[fluxion error] `,
-      '$throw(`': 'throw new Error(`[fluxion error] ',
-      '$throw("': `throw new Error("[fluxion error] `,
+      // "$throw('": `throw new Error('[fluxion error] `,
+      // '$throw(`': 'throw new Error(`[fluxion error] ',
+      // '$throw("': `throw new Error("[fluxion error] `,
     }),
   ],
   deps: {
