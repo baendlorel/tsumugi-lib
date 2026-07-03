@@ -1,6 +1,6 @@
 import { cctl } from '@shared/utils/color.js';
 import { cmdTable, settings } from '../common/index.js';
-
+// TODO help要更新新东西。直接运行的时候如果是sync过的也要有提示。
 export function help(options?: { noProfilesYet: boolean }) {
   const rawCommands = [
     ...settings.HelpList,
