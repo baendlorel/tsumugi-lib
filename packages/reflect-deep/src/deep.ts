@@ -1,4 +1,14 @@
-import { $getPrototypeOf, $ownKeys, $has, $get, $set, $delete, $arrayFrom, $reflectDefine } from '@shared';
+import {
+  $getPrototypeOf,
+  $ownKeys,
+  $has,
+  $get,
+  $set,
+  $delete,
+  $arrayFrom,
+  $reflectDefine,
+  $isPrimitive,
+} from '@shared';
 import { expectTargetAndKeys, expectTarget } from './common.js';
 
 export interface ReachResult {
@@ -60,12 +70,12 @@ export namespace ReflectDeep {
       }
 
       current = $get(current, propertyKeys[i]);
-      if (current === undefined || current === null) {
+      if ($isPrimitive(current)) {
         return false;
       }
     }
     return $has(current, propertyKeys[lastIndex]);
-  };
+  }
 
   /**
    * Gets the value of a nested property.
@@ -90,7 +100,7 @@ export namespace ReflectDeep {
       }
 
       current = $get(current, propertyKeys[i]);
-      if (current === undefined || current === null) {
+      if ($isPrimitive(current)) {
         return undefined;
       }
     }
@@ -101,7 +111,7 @@ export namespace ReflectDeep {
         : $get(current, propertyKeys[lastIndex], receiver);
 
     return result as T | undefined;
-  };
+  }
 
   /**
    * Sets a nested property value, creating intermediate objects as needed.
@@ -131,7 +141,7 @@ export namespace ReflectDeep {
 
       // Check if current can be set
       current = $get(current, propertyKeys[i]);
-      if (current === undefined || current === null) {
+      if ($isPrimitive(current)) {
         return false;
       }
     }
@@ -139,7 +149,7 @@ export namespace ReflectDeep {
     return receiver === undefined
       ? $set(current, propertyKeys[lastIndex], value)
       : $set(current, propertyKeys[lastIndex], value, receiver);
-  };
+  }
 
   /**
    * Traverses a property path and returns the furthest reachable value with its index.
@@ -174,14 +184,14 @@ export namespace ReflectDeep {
       }
 
       current = $get(current, propertyKeys[i]);
-      if (current === undefined || current === null) {
+      if ($isPrimitive(current)) {
         return { value: current, index: i, reached: false };
       }
     }
 
     // Should not reach here, but just in case
     return { value: current, index: -1, reached: false };
-  };
+  }
 
   /**
    * Deletes a nested property at the given path.
@@ -211,13 +221,13 @@ export namespace ReflectDeep {
       }
 
       current = $get(current, propertyKeys[i]);
-      if (current === undefined || current === null) {
+      if ($isPrimitive(current)) {
         return false;
       }
     }
 
     return $delete(current, propertyKeys[lastIndex]);
-  };
+  }
 
   /**
    * Defines a nested property with the given descriptor, creating intermediate objects as needed.
@@ -239,11 +249,7 @@ export namespace ReflectDeep {
    *   set(v) { this._value = v; }
    * });
    */
-  export function defineProperty(
-    target: object,
-    propertyKeys: PropertyKey[],
-    descriptor: PropertyDescriptor,
-  ): boolean {
+  export function defineProperty(target: object, propertyKeys: PropertyKey[], descriptor: PropertyDescriptor): boolean {
     expectTargetAndKeys('defineProperty', target, propertyKeys);
     const lastIndex = propertyKeys.length - 1;
 
@@ -256,13 +262,13 @@ export namespace ReflectDeep {
       }
 
       current = $get(current, propertyKeys[i]);
-      if (current === undefined || current === null) {
+      if ($isPrimitive(current)) {
         return false;
       }
     }
 
     return $reflectDefine(current, propertyKeys[lastIndex], descriptor);
-  };
+  }
 
   /**
    * Gets all property keys (including symbols) from the target object and its prototype chain.
@@ -300,7 +306,7 @@ export namespace ReflectDeep {
         return $arrayFrom(keySet);
       }
     }
-  };
+  }
 
   /**
    * Gets property keys grouped by prototype layer, preserving the prototype chain structure.
@@ -343,5 +349,5 @@ export namespace ReflectDeep {
       });
       proto = $getPrototypeOf(proto);
     }
-  };
+  }
 }

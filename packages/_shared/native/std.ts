@@ -52,3 +52,6 @@ export const $MAX_INT = Number.MAX_SAFE_INTEGER;
 export const $MIN_INT = Number.MIN_SAFE_INTEGER;
 
 export const $isThenable = (o: any): o is Promise<any> => typeof o?.then === 'function';
+
+export const $isPrimitive: (o: unknown) => boolean | null | undefined | symbol | number | bigint = (o) =>
+  o === null || (typeof o !== 'object' && typeof o !== 'function');

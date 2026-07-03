@@ -1,4 +1,5 @@
 import type { ReachResult, GroupedKey } from './deep.js';
+import { $isPrimitive } from '@shared';
 
 /**
  * This is the `ReflectDeep` namespace without runtime strict type checks.
@@ -25,7 +26,7 @@ export namespace ReflectDeep {
       }
 
       current = Reflect.get(current, propertyKeys[i]);
-      if (current === undefined || current === null) {
+      if ($isPrimitive(current)) {
         return false;
       }
     }
@@ -52,7 +53,7 @@ export namespace ReflectDeep {
       }
 
       current = Reflect.get(current, propertyKeys[i]);
-      if (current === undefined || current === null) {
+      if ($isPrimitive(current)) {
         return undefined;
       }
     }
@@ -90,7 +91,7 @@ export namespace ReflectDeep {
 
       // Check if current can be set
       current = Reflect.get(current, propertyKeys[i]);
-      if (current === undefined || current === null) {
+      if ($isPrimitive(current)) {
         return false;
       }
     }
@@ -132,7 +133,7 @@ export namespace ReflectDeep {
       }
 
       current = Reflect.get(current, propertyKeys[i]);
-      if (current === undefined || current === null) {
+      if ($isPrimitive(current)) {
         return { value: current, index: i, reached: false };
       }
     }
@@ -167,7 +168,7 @@ export namespace ReflectDeep {
       }
 
       current = Reflect.get(current, propertyKeys[i]);
-      if (current === undefined || current === null) {
+      if ($isPrimitive(current)) {
         return false;
       }
     }
@@ -206,7 +207,7 @@ export namespace ReflectDeep {
       }
 
       current = Reflect.get(current, propertyKeys[i]);
-      if (current === undefined || current === null) {
+      if ($isPrimitive(current)) {
         return false;
       }
     }

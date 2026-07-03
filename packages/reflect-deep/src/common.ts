@@ -1,4 +1,5 @@
 // # utils
+
 export function expectTarget(fnName: string, o: unknown) {
   if (o === null || o === undefined) {
     throw new TypeError(`[__NAME__] ${fnName} called with non-object target: ${o}`);
