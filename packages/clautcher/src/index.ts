@@ -3,6 +3,8 @@
 import { cctl } from '@shared/utils/color.js';
 
 import { help } from './services/help.js';
+import { current } from './services/current.js';
+import { list } from './services/list.js';
 import { interactiveUse } from './services/use.js';
 import { version } from './services/version.js';
 
@@ -35,6 +37,16 @@ async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
 
     if (command === 'syncwsl') {
       syncWsl();
+      return 0;
+    }
+
+    if (command === 'cur' || command === 'current') {
+      current();
+      return 0;
+    }
+
+    if (command === 'list' || command === 'ls') {
+      list();
       return 0;
     }
 

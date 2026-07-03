@@ -1,4 +1,4 @@
-import { cctl } from '../../../_shared/utils/color.js';
+import { cctl } from '@shared/utils/color.js';
 import { settings } from '../common/index.js';
 
 export function current(): void {

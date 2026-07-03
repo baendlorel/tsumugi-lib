@@ -88,10 +88,6 @@ export async function interactiveUse(): Promise<void> {
     }),
   );
 
-  if (options.length === 0) {
-    return;
-  }
-
   let selectedIndex = Math.max(
     0,
     options.findIndex((option) => option.name === activeProfile),
@@ -185,8 +181,3 @@ export async function interactiveUse(): Promise<void> {
     resolveSelection = resolve;
   });
 }
-
-settings.HelpList.push({
-  command: 'use <name>',
-  description: `Overwrite settings.json with settings.<name>.json. If ${cctl.underline}settings.base.json${cctl.reset} exists, it will be merged.`,
-});

@@ -1,5 +1,6 @@
 import { readdirSync } from 'node:fs';
-import { cctl } from '../../../_shared/utils/color.js';
+import { join } from 'node:path';
+import { cctl } from '@shared/utils/color.js';
 import { settings } from '../common/index.js';
 
 export interface ProfileSummary {
@@ -35,7 +36,7 @@ export function getList(): ProfileSummary[] {
       return {
         name,
         fileName: entry.name,
-        filePath: entry.parentPath.join(entry.name),
+        filePath: join(entry.parentPath, entry.name),
         isActive: name === activeProfile,
       };
     })
@@ -48,7 +49,6 @@ export function list(): ProfileSummary[] {
   if (arr.length === 0) {
     console.log(cctl.red + 'No available settings.<name>.json found.' + cctl.reset);
   } else {
-    // console.log(cctl.bold + 'Available names:' + cctl.reset);
     const maxLen = Math.max(...arr.map((v) => (v.isActive ? v.name.length + 1 : v.name.length)), 0);
     console.log(
       `${cctl.underline}${cctl.bold}Name${cctl.reset}${' '.repeat(maxLen - 4)}  ${cctl.underline}${cctl.bold}File Path${cctl.reset}`,
@@ -63,8 +63,3 @@ export function list(): ProfileSummary[] {
   }
   return arr;
 }
-
-settings.HelpList.push({
-  command: 'list, ls',
-  description: 'List all settings.<name>.json in the claude directory.',
-});
