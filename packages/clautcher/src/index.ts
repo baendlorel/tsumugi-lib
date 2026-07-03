@@ -7,6 +7,7 @@ import { interactiveUse } from './services/use.js';
 import { version } from './services/version.js';
 
 import { ClautcherError } from './common/index.js';
+import { syncWin } from './services/sync.js';
 
 async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
   try {
@@ -24,6 +25,11 @@ async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
 
     if (command === 'version' || command === '--version' || command === '-v') {
       version();
+      return 0;
+    }
+
+    if (command === 'syncwin') {
+      syncWin();
       return 0;
     }
 

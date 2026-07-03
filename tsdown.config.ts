@@ -19,6 +19,6 @@ export default defineConfig({
   treeshake: !isDev,
   plugins: [replace(replaceOpts(lib)), funcMacro()],
   deps: {
-    onlyBundle: ['type-narrow', 'fast-json-stable-stringify'],
+    onlyBundle: ['type-narrow', 'fast-json-stable-stringify', 'is-docker', 'is-inside-container', 'is-wsl'],
   },
 });
