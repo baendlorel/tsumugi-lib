@@ -6,7 +6,13 @@ A powerful TypeScript library for deep reflection operations on JavaScript objec
 
 Utilities for deep cloning, nested property access, and manipulation with support for circular references and various JavaScript types.
 
-> Recommended: set "type": "module" in your package.json to use this module with ES6 imports.
+## ✨ What's New in 2.0
+
+- **🎯 Zero External Dependencies**: Complete rewrite with no external dependencies - lighter and more reliable
+- **🔒 Cleaner API**: Internal utility functions are no longer exported, providing a cleaner public API surface
+- **⚡ Dual Mode**: Choose between Strict (with runtime type validation) and Non-Strict (without runtime checks) versions
+
+> Recommended: set `"type": "module"` in your package.json to use this module with ES6 imports.
 
 For more awesome packages, check out [my homepage💛](https://baendlorel.github.io/?repoType=npm)
 
@@ -14,7 +20,7 @@ For more awesome packages, check out [my homepage💛](https://baendlorel.github
 
 - 🔍 **Deep Property Access**: Provides functions with classic names like `get`, `set`, `has`, `deleteProperty`, and `defineProperty`. With original function `reach`, you can check nested object properties safely
 - 🔄 **Deep Cloning**: Clone complex objects with circular reference handling
-- 🔑 **Prototype Chain Inspection**: Extract all keys from prototype chain with `keys()` or grouped by layer with `groupedKeys()`
+- 🔑 **Prototype Chain Inspection**: Extract all keys from prototype chain with `ownKeys()` or grouped by layer with `groupedKeys()`
 - 🛡️ **Type Safety**: Full TypeScript support with proper type inference
 - 🌐 **Comprehensive Type Support**: Handles Arrays, Maps, Sets, Dates, RegExp, TypedArrays, and more
 - 🔗 **Circular Reference Safe**: Prevents infinite recursion in circular structures
@@ -27,40 +33,49 @@ npm install reflect-deep
 
 ## Quick Start
 
+### Using Non-Strict Mode (Default)
+
 ```typescript
 import { ReflectDeep } from 'reflect-deep';
 
 const obj = { a: { e: null, b: [1, 2, { c: 3 }] } };
 
-// Nested property access
+// Nested property access (no runtime type checks)
 ReflectDeep.get(obj, ['a', 'b', 2, 'c']); // 3
 ReflectDeep.set(obj, ['a', 'b', 2, 'd'], 'new value');
 ReflectDeep.has(obj, ['a', 'b', 2, 'd']); // true
+```
 
-// Property deletion
-ReflectDeep.deleteProperty(obj, ['a', 'b', 2, 'd']); // true
+### Using Strict Mode (With Runtime Type Validation)
 
-// Property definition with descriptor
-ReflectDeep.defineProperty(obj, ['a', 'readonly'], {
-  value: 'immutable',
-  writable: false,
-  enumerable: true,
-  configurable: true,
-});
+```typescript
+import { ReflectDeepStrict } from 'reflect-deep';
 
-// Property reach
-ReflectDeep.reach(obj, ['a', 'e']); // { value: null, index: 1, reached: true }
-ReflectDeep.reach(obj, ['a', 'b', 2, 'x']); // { value: { c: 3 }, index: 2, reached: false }
+const obj = { a: { e: null, b: [1, 2, { c: 3 }] } };
 
-// Deep cloning
-const cloned = ReflectDeep.clone(obj);
+// Same API, but with runtime type checks for added safety
+ReflectDeepStrict.get(obj, ['a', 'b', 2, 'c']); // 3
+ReflectDeepStrict.set(obj, ['a', 'b', 2, 'd'], 'new value');
+ReflectDeepStrict.has(obj, ['a', 'b', 2, 'd']); // true
 
-// Property key extraction
-const allKeys = ReflectDeep.ownKeys(obj); // All keys from prototype chain
-const grouped = ReflectDeep.groupedKeys(obj); // Keys grouped by prototype layer
+// Will throw TypeError for invalid inputs
+try {
+  ReflectDeepStrict.get(null, ['key']); // Throws: target must be an object
+} catch (error) {
+  console.error(error.message);
+}
 ```
 
 ## API Reference
+
+### Strict vs Non-Strict Mode
+
+**2.0 introduces two modes:**
+
+- **`ReflectDeep` (Non-Strict)**: Faster, no runtime type validation. Use when you're confident in your inputs.
+- **`ReflectDeepStrict` (Strict)**: Includes runtime type checks that throw `TypeError` for invalid inputs. Use for extra safety.
+
+The API is identical between both modes - choose based on your performance vs safety needs.
 
 ### get<T>(target, propertyKeys[, receiver])
 
@@ -307,20 +322,62 @@ ReflectDeep.set(complex, ['users', 0, 'profile', 'settings', 'notifications'], t
 const hasNotifications = ReflectDeep.has(complex, ['users', 0, 'profile', 'settings', 'notifications']);
 ```
 
+## Migration from 1.x
+
+### Breaking Changes
+
+- **Internal utilities removed**: Internal helper functions like `$get`, `$set`, etc. are no longer exported. Use the public `ReflectDeep` API instead.
+- **Strict mode opt-in**: Runtime type checking is now opt-in via `ReflectDeepStrict`. The default `ReflectDeep` no longer includes runtime checks for better performance.
+
+### Migration Guide
+
+```typescript
+// Before (1.x)
+import { $get, $set } from 'reflect-deep';
+
+// After (2.0)
+import { ReflectDeep } from 'reflect-deep';
+// Use public API methods instead
+
+// Before (1.x) - always had runtime checks
+import { ReflectDeep } from 'reflect-deep';
+ReflectDeep.get(obj, ['key']); // with runtime checks
+
+// After (2.0) - choose your mode
+import { ReflectDeep } from 'reflect-deep';
+ReflectDeep.get(obj, ['key']); // no runtime checks (faster)
+
+import { ReflectDeepStrict } from 'reflect-deep';
+ReflectDeepStrict.get(obj, ['key']); // with runtime checks (safer)
+```
+
 ## Performance Considerations
 
+- ⚡ **Zero Dependencies**: No external dependencies means faster load times and smaller bundle size
+- 🎯 **Mode Selection**: Use `ReflectDeep` for performance-critical paths, `ReflectDeepStrict` for safety-critical areas
 - ⚠️ **No Depth Limiting**: Be careful with very deep object structures to avoid stack overflow
 - 🔄 **Circular Reference Cache**: Uses WeakMap for efficient circular reference detection
 - 🎯 **Type-Specific Optimization**: Different cloning strategies for optimal performance per type
 
 ## Error Handling
 
-The library throws `TypeError` for invalid inputs:
+### Non-Strict Mode (ReflectDeep)
+
+Returns `undefined` for invalid paths without throwing:
+
+```typescript
+ReflectDeep.get({ a: 1 }, ['x', 'y', 'z']); // undefined (no error)
+```
+
+### Strict Mode (ReflectDeepStrict)
+
+Throws `TypeError` for invalid inputs:
 
 ```typescript
 // These will throw TypeError:
-ReflectDeep.get(null, ['key']); // non-object target
-ReflectDeep.set({}, []); // empty keys array
+ReflectDeepStrict.get(null, ['key']); // non-object target
+ReflectDeepStrict.set({}, []); // empty keys array
+ReflectDeepStrict.get(123, ['prop']); // primitive target
 ```
 
 ## License

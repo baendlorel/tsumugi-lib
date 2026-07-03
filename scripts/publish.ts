@@ -4,6 +4,7 @@ import { join } from 'node:path';
 
 import { askYesNo } from './common/ask.js';
 import { getPackageInfo } from './common/package-info.js';
+import { build } from './build.js';
 
 export async function publish(who: string | undefined) {
   const info = getPackageInfo(who);
@@ -21,11 +22,7 @@ export async function publish(who: string | undefined) {
     return;
   }
 
-  if (existsSync(join(info.path, 'build.ts'))) {
-    execSync('pnpm exec tsx build.ts', { stdio: 'inherit', cwd: info.path, env: info.env });
-  } else {
-    execSync(`rollup -c rollup.config.ts --configPlugin typescript`, { stdio: 'inherit', env: info.env });
-  }
+  build(who);
   execSync(`npm publish ${info.path} --access public`, { stdio: 'inherit', cwd: info.path });
 
   console.log(`Published ${info.name}@${currentVersionStr}`);

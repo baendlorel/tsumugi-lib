@@ -6,13 +6,21 @@
 
 提供深度克隆、嵌套属性访问和操作的实用工具，支持循环引用和各种 JavaScript 类型。
 
-> 推荐设置: 将package.json里的type设为module，享受ES6风格的import语句
+## ✨ 2.0 版本新特性
+
+- **🎯 零外部依赖**：完全重写，无任何外部依赖——更轻量、更可靠
+- **🔒 更清晰的 API**：内部工具函数不再导出，提供更清晰的公共 API
+- **⚡ 双模式选择**：在严格模式（带运行时类型验证）和非严格模式（无运行时检查）之间自由选择
+
+> 推荐设置: 将 package.json 里的 type 设为 module，享受 ES6 风格的 import 语句
+
+查看更多精彩包，请访问[我的主页💛](https://baendlorel.github.io/?repoType=npm)
 
 ## 特性
 
 - 🔍 **深度属性访问**：提供经典命名的函数，如 `get`、`set`、`has`、`deleteProperty` 和 `defineProperty`。原创函数 `reach` 可以安全地检查嵌套对象属性
 - 🔄 **深度克隆**：克隆复杂对象，支持循环引用处理
-- 🔑 **原型链检查**：使用 `keys()` 从原型链提取所有键，或使用 `groupedKeys()` 按层分组
+- 🔑 **原型链检查**：使用 `ownKeys()` 从原型链提取所有键，或使用 `groupedKeys()` 按层分组
 - 🛡️ **类型安全**：完整的 TypeScript 支持，具有适当的类型推断
 - 🌐 **全面的类型支持**：处理 Arrays、Maps、Sets、Dates、RegExp、TypedArrays 等
 - 🔗 **循环引用安全**：防止循环结构中的无限递归
@@ -25,40 +33,49 @@ npm install reflect-deep
 
 ## 快速开始
 
+### 使用非严格模式（默认）
+
 ```typescript
 import { ReflectDeep } from 'reflect-deep';
 
 const obj = { a: { e: null, b: [1, 2, { c: 3 }] } };
 
-// 嵌套属性访问
+// 嵌套属性访问（无运行时类型检查）
 ReflectDeep.get(obj, ['a', 'b', 2, 'c']); // 3
 ReflectDeep.set(obj, ['a', 'b', 2, 'd'], 'new value');
 ReflectDeep.has(obj, ['a', 'b', 2, 'd']); // true
+```
 
-// 属性删除
-ReflectDeep.deleteProperty(obj, ['a', 'b', 2, 'd']); // true
+### 使用严格模式（带运行时类型验证）
 
-// 使用描述符定义属性
-ReflectDeep.defineProperty(obj, ['a', 'readonly'], {
-  value: 'immutable',
-  writable: false,
-  enumerable: true,
-  configurable: true,
-});
+```typescript
+import { ReflectDeepStrict } from 'reflect-deep';
 
-// 属性到达
-ReflectDeep.reach(obj, ['a', 'e']); // { value: null, index: 1, reached: true }
-ReflectDeep.reach(obj, ['a', 'b', 2, 'x']); // { value: { c: 3 }, index: 2, reached: false }
+const obj = { a: { e: null, b: [1, 2, { c: 3 }] } };
 
-// 深度克隆
-const cloned = ReflectDeep.clone(obj);
+// 相同的 API，但带有运行时类型检查，更加安全
+ReflectDeepStrict.get(obj, ['a', 'b', 2, 'c']); // 3
+ReflectDeepStrict.set(obj, ['a', 'b', 2, 'd'], 'new value');
+ReflectDeepStrict.has(obj, ['a', 'b', 2, 'd']); // true
 
-// 属性键提取
-const allKeys = ReflectDeep.keys(obj); // 原型链中的所有键
-const grouped = ReflectDeep.groupedKeys(obj); // 按原型层分组的键
+// 对无效输入会抛出 TypeError
+try {
+  ReflectDeepStrict.get(null, ['key']); // 抛出错误：target 必须是对象
+} catch (error) {
+  console.error(error.message);
+}
 ```
 
 ## API 参考
+
+### 严格模式 vs 非严格模式
+
+**2.0 版本引入两种模式：**
+
+- **`ReflectDeep`（非严格模式）**：性能更好，无运行时类型验证。当你确信输入数据有效时使用。
+- **`ReflectDeepStrict`（严格模式）**：包含运行时类型检查，对无效输入会抛出 `TypeError`。需要额外安全保障时使用。
+
+两种模式的 API 完全相同——根据你的性能与安全需求进行选择。
 
 ### get<T>(target, propertyKeys[, receiver])
 
@@ -186,7 +203,7 @@ ReflectDeep.defineProperty(obj, ['x', 'y'], {
 });
 ```
 
-### keys(target)
+### ownKeys(target)
 
 从目标对象及其原型链中获取所有属性键（包括符号），作为扁平数组返回。
 
@@ -194,7 +211,7 @@ ReflectDeep.defineProperty(obj, ['x', 'y'], {
 
 ```typescript
 const obj = { own: 'property', [Symbol('sym')]: 'symbol' };
-const allKeys = ReflectDeep.keys(obj);
+const allKeys = ReflectDeep.ownKeys(obj);
 // 返回：['own', Symbol(sym), 'toString', 'valueOf', ...]
 
 // 适用于自定义原型
@@ -202,7 +219,7 @@ function Parent() {}
 Parent.prototype.parentProp = 'parent';
 const child = Object.create(Parent.prototype);
 child.childProp = 'child';
-const keys = ReflectDeep.keys(child);
+const keys = ReflectDeep.ownKeys(child);
 // ['childProp', 'parentProp', 'toString', ...]
 ```
 
@@ -272,7 +289,7 @@ Dog.prototype.bark = function () {
 const myDog = new Dog('Rex', 'German Shepherd');
 
 // 从整个原型链获取所有键
-const allKeys = ReflectDeep.keys(myDog);
+const allKeys = ReflectDeep.ownKeys(myDog);
 // ['name', 'breed', 'bark', 'speak', 'constructor', 'toString', ...]
 
 // 按原型层分组获取键
@@ -309,33 +326,64 @@ const hasNotifications = ReflectDeep.has(complex, [
   'settings',
   'notifications',
 ]);
+```
 
-// 删除嵌套属性
-ReflectDeep.deleteProperty(complex, ['users', 0, 'profile', 'settings', 'theme']);
+## 从 1.x 版本迁移
 
-// 定义嵌套的只读属性
-ReflectDeep.defineProperty(complex, ['users', 0, 'profile', 'readonly'], {
-  value: 'cannot be changed',
-  writable: false,
-  enumerable: true,
-  configurable: false,
-});
+### 破坏性变更
+
+- **移除内部工具函数**：内部辅助函数如 `$get`、`$set` 等不再导出。请使用公共的 `ReflectDeep` API。
+- **严格模式可选**：运行时类型检查现在通过 `ReflectDeepStrict` 可选启用。默认的 `ReflectDeep` 不再包含运行时检查以提升性能。
+
+### 迁移指南
+
+```typescript
+// 之前（1.x 版本）
+import { $get, $set } from 'reflect-deep';
+
+// 之后（2.0 版本）
+import { ReflectDeep } from 'reflect-deep';
+// 改用公共 API 方法
+
+// 之前（1.x 版本）- 总是有运行时检查
+import { ReflectDeep } from 'reflect-deep';
+ReflectDeep.get(obj, ['key']); // 带运行时检查
+
+// 之后（2.0 版本）- 选择你的模式
+import { ReflectDeep } from 'reflect-deep';
+ReflectDeep.get(obj, ['key']); // 无运行时检查（更快）
+
+import { ReflectDeepStrict } from 'reflect-deep';
+ReflectDeepStrict.get(obj, ['key']); // 带运行时检查（更安全）
 ```
 
 ## 性能考虑
 
+- ⚡ **零依赖**：无外部依赖意味着更快的加载时间和更小的打包体积
+- 🎯 **模式选择**：在性能关键路径使用 `ReflectDeep`，在安全关键区域使用 `ReflectDeepStrict`
 - ⚠️ **无深度限制**：小心非常深的对象结构，以避免堆栈溢出
 - 🔄 **循环引用缓存**：使用 WeakMap 进行高效的循环引用检测
 - 🎯 **类型特定优化**：针对每种类型的最佳性能使用不同的克隆策略
 
 ## 错误处理
 
-库会对无效输入抛出 `TypeError`：
+### 非严格模式（ReflectDeep）
+
+对无效路径返回 `undefined` 而不抛出错误：
+
+```typescript
+ReflectDeep.get({ a: 1 }, ['x', 'y', 'z']); // undefined（无错误）
+```
+
+### 严格模式（ReflectDeepStrict）
+
+对无效输入抛出 `TypeError`：
 
 ```typescript
 // 这些会抛出 TypeError：
-ReflectDeep.get(null, ['key']); // 非对象目标
-ReflectDeep.set({}, []); // 空键数组
+ReflectDeepStrict.get(null, ['key']); // 非对象目标
+ReflectDeepStrict.set({}, []); // 空键数组
+ReflectDeepStrict.get(123, ['prop']); // 基本类型目标
 ```
 
 ## 许可证
