@@ -16,10 +16,19 @@ Switch Claude settings profiles by copying a named `settings.<name>.json` onto `
 
 ## 1.1.x New Feature
 
-If you are using WSL and want to synchronize your settings file from `.claude` of Windows, you can use:
+If you are using WSL and want to synchronize your settings file between Windows and WSL, you can use:
+
+**From Windows to WSL:**
 ```sh
-clautcher syncwin # Use it in WSL
+clautcher syncwin  # Use it in WSL to sync Windows settings to WSL
 ```
+
+**From WSL to Windows:**
+```sh
+clautcher syncwsl  # Use it in Windows to sync WSL settings to Windows
+```
+
+These commands allow you to keep your Claude settings synchronized between your Windows environment and your WSL environment.
 
 ## Install
 
