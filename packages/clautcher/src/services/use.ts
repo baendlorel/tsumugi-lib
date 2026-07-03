@@ -5,6 +5,9 @@ import { cctl } from '@shared/utils/color.js';
 import { beautifyLLMName, ClautcherError, settings } from '../common/index.js';
 import { getList } from '../services/list.js';
 import { help } from './help.js';
+import { platform } from 'node:os';
+import isWsl from 'is-wsl';
+import { syncWin, syncWsl } from './sync.js';
 
 export function use(name: string) {
   const files = getList();
@@ -23,10 +26,25 @@ export function use(name: string) {
   console.log(`Switched to settings: ${cctl.brightGreen}${cctl.bold}${file.fileName}${cctl.reset}`);
 }
 
+const enum InteractiveRole {
+  /**
+   * Other settings.<name>.json
+   */
+  File,
+
+  /**
+   * Help informations
+   */
+  Help,
+
+  SyncWin,
+  SyncWsl,
+}
+
 interface InteractiveOption {
   name?: string;
   label: string;
-  isHelp?: boolean;
+  role: InteractiveRole;
   isActive?: boolean;
 }
 
@@ -45,14 +63,30 @@ export async function interactiveUse(): Promise<void> {
   const options: InteractiveOption[] = [
     {
       label: `${cctl.bold}How to use?${cctl.reset}`,
-      isHelp: true,
+      role: InteractiveRole.Help,
     },
-    ...profiles.map((profile) => ({
-      name: profile.name,
-      label: beautifyLLMName(profile.name),
-      isActive: profile.isActive,
-    })),
   ];
+
+  if (platform() === 'win32') {
+    options.push({
+      label: `${cctl.bold}Synchronize to WSL${cctl.reset}`,
+      role: InteractiveRole.SyncWsl,
+    });
+  } else if (isWsl) {
+    options.push({
+      label: `${cctl.bold}Synchronize to Windows${cctl.reset}`,
+      role: InteractiveRole.SyncWin,
+    });
+  }
+
+  profiles.forEach((v) =>
+    options.push({
+      name: v.name,
+      label: beautifyLLMName(v.name),
+      isActive: v.isActive,
+      role: InteractiveRole.File,
+    }),
+  );
 
   if (options.length === 0) {
     return;
@@ -98,8 +132,12 @@ export async function interactiveUse(): Promise<void> {
 
   const finish = (selected?: InteractiveOption) => {
     cleanup();
-    if (selected?.isHelp) {
+    if (selected?.role === InteractiveRole.Help) {
       help();
+    } else if (selected?.role === InteractiveRole.SyncWin) {
+      syncWin();
+    } else if (selected?.role === InteractiveRole.SyncWsl) {
+      syncWsl();
     } else if (selected?.name) {
       use(selected.name);
     }
