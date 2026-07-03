@@ -1,11 +1,13 @@
 import { defineConfig } from 'tsdown';
 import replace from '@rollup/plugin-replace';
+import { join } from 'node:path';
 
 const isDev = process.env.NODE_ENV === 'development';
-const lib = process.env.LIB_DIR;
+const lib = process.env.LIB_DIR!;
 
 export default defineConfig({
-  entry: ['src/index.ts'],
+  cwd: lib,
+  entry: [join(lib, 'src', 'index.ts')],
   format: ['esm', 'cjs'],
   dts: true,
   clean: true,

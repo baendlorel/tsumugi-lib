@@ -9,5 +9,6 @@ export async function build(who: string | undefined) {
     execSync('pnpm exec tsx build.ts', { stdio: 'inherit', cwd: info.path, env: info.env });
     return;
   }
-  execSync(`rollup -c rollup.config.ts --configPlugin typescript`, { stdio: 'inherit', env: info.env });
+  const dir = join(import.meta.dirname, '..', 'tsdown.config.ts');
+  execSync(`tsdown  --config-loader tsx -c ${dir}`, { cwd: info.path, stdio: 'inherit', env: info.env });
 }

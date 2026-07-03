@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 
 import { build } from './build.js';
+import { lint } from './lint.js';
 import { publish } from './publish.js';
 import { skill } from './skill.js';
 import { test } from './test.js';
@@ -15,6 +16,8 @@ if (task === '--publish') {
   test(who);
 } else if (task === '--skill') {
   skill(who);
+} else if (task === '--lint') {
+  lint(who);
 } else {
   console.error(`Unknown task: ${task}`);
 }
