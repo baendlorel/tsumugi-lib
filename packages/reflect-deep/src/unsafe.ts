@@ -1,71 +1,36 @@
-import { $getPrototypeOf, $ownKeys, $has, $get, $set, $delete, $arrayFrom, $reflectDefine } from '@shared';
-import { expectTargetAndKeys, expectTarget } from './common.js';
-
-export interface ReachResult {
-  /**
-   * The furthest reachable value in the object at the given property path.
-   */
-  value: any;
-
-  /**
-   * The index in `propertyKeys` of the last successfully accessed property.
-   * - Will be -1 if the first property failed.
-   */
-  index: number;
-
-  /**
-   * Whether the path was fully traversed and the final value was successfully reached.
-   */
-  reached: boolean;
-}
-
-export interface GroupedKey {
-  /**
-   * Keys (includes symbols)
-   */
-  keys: (string | symbol)[];
-
-  /**
-   * Target itself or its prototype.
-   */
-  object: any;
-}
+import type { ReachResult, GroupedKey } from './deep.js';
 
 /**
- * `ReflectDeep` namespace with strict runtime type checks.
+ * This is the `ReflectDeep` namespace without runtime strict type checks.
  *
  * __PKG_INFO__
  */
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export namespace ReflectDeep {
   /**
    * Checks if a nested property exists at the given path.
    * @param target - Target object to check.
    * @param propertyKeys - Property path to check.
    * @returns `true` if the property exists, `false` otherwise.
-   * @throws If target is not an object or propertyKeys is invalid.
-   * @throws If target is not an object or propertyKeys is not a valid non-empty array.
    * @example
    * const obj = { a: { b: { c: 'hello' } } };
    * ReflectDeep.has(obj, ['a', 'b', 'c']); // true
    */
   export function has(target: object, propertyKeys: PropertyKey[]): boolean {
-    expectTargetAndKeys('has', target, propertyKeys);
     const lastIndex = propertyKeys.length - 1;
 
     let current = target;
     for (let i = 0; i < lastIndex; i++) {
-      if (!$has(current, propertyKeys[i])) {
+      if (!Reflect.has(current, propertyKeys[i])) {
         return false;
       }
 
-      current = $get(current, propertyKeys[i]);
+      current = Reflect.get(current, propertyKeys[i]);
       if (current === undefined || current === null) {
         return false;
       }
     }
-    return $has(current, propertyKeys[lastIndex]);
-  };
+    return Reflect.has(current, propertyKeys[lastIndex]);
+  }
 
   /**
    * Gets the value of a nested property.
@@ -73,23 +38,20 @@ export namespace ReflectDeep {
    * @param propertyKeys - Property path.
    * @param receiver - The `this` value for getter calls.
    * @returns The property value, or `undefined` if not found.
-   * @throws If target is not an object or propertyKeys is invalid.
-   * @throws If target is not an object or propertyKeys is not a valid non-empty array.
    * @example
    * const obj = { a: { b: { c: 'hello' } } };
    * ReflectDeep.get(obj, ['a', 'b', 'c']); // 'hello'
    */
   export function get<T = any>(target: any, propertyKeys: PropertyKey[], receiver?: any): T | undefined {
-    expectTargetAndKeys('get', target, propertyKeys);
     const lastIndex = propertyKeys.length - 1;
 
     let current = target;
     for (let i = 0; i < lastIndex; i++) {
-      if (!$has(current, propertyKeys[i])) {
+      if (!Reflect.has(current, propertyKeys[i])) {
         return undefined;
       }
 
-      current = $get(current, propertyKeys[i]);
+      current = Reflect.get(current, propertyKeys[i]);
       if (current === undefined || current === null) {
         return undefined;
       }
@@ -97,11 +59,11 @@ export namespace ReflectDeep {
 
     const result =
       receiver === undefined
-        ? $get(current, propertyKeys[lastIndex])
-        : $get(current, propertyKeys[lastIndex], receiver);
+        ? Reflect.get(current, propertyKeys[lastIndex])
+        : Reflect.get(current, propertyKeys[lastIndex], receiver);
 
     return result as T | undefined;
-  };
+  }
 
   /**
    * Sets a nested property value, creating intermediate objects as needed.
@@ -110,36 +72,33 @@ export namespace ReflectDeep {
    * @param value - Value to set.
    * @param receiver - The `this` value for setter calls.
    * @returns `true` if successful, `false` otherwise.
-   * @throws If target is not an object or propertyKeys is invalid.
-   * @throws If target is not an object or propertyKeys is not a valid non-empty array.
    * @example
    * const obj = { };
    * ReflectDeep.set(obj, ['a', 'b', 'c'], 'hello'); // Creates nested structure
    * obj.a.b.c; // 'hello'
    */
   export function set<T = any>(target: any, propertyKeys: PropertyKey[], value: T, receiver?: any): boolean {
-    expectTargetAndKeys('set', target, propertyKeys);
     const lastIndex = propertyKeys.length - 1;
 
     let current = target;
     for (let i = 0; i < lastIndex; i++) {
-      if (!$has(current, propertyKeys[i])) {
-        if (!$set(current, propertyKeys[i], {})) {
+      if (!Reflect.has(current, propertyKeys[i])) {
+        if (!Reflect.set(current, propertyKeys[i], {})) {
           return false;
         }
       }
 
       // Check if current can be set
-      current = $get(current, propertyKeys[i]);
+      current = Reflect.get(current, propertyKeys[i]);
       if (current === undefined || current === null) {
         return false;
       }
     }
 
     return receiver === undefined
-      ? $set(current, propertyKeys[lastIndex], value)
-      : $set(current, propertyKeys[lastIndex], value, receiver);
-  };
+      ? Reflect.set(current, propertyKeys[lastIndex], value)
+      : Reflect.set(current, propertyKeys[lastIndex], value, receiver);
+  }
 
   /**
    * Traverses a property path and returns the furthest reachable value with its index.
@@ -147,8 +106,6 @@ export namespace ReflectDeep {
    * @param propertyKeys - Property path to traverse.
    * @param receiver - The `this` value for getter calls.
    * @returns Object with `value` (furthest reachable value), `index` (position reached), and `reached` (whether the full path was traversed).
-   * @throws If target is not an object or propertyKeys is invalid.
-   * @throws If target is not an object or propertyKeys is not a valid non-empty array.
    * @example
    * const obj = { a: { b: { c: 'hello' } } };
    * ReflectDeep.reach(obj, ['a', 'b', 'c']); // { value: 'hello', index: 2, reached: true }
@@ -157,23 +114,24 @@ export namespace ReflectDeep {
    * ReflectDeep.reach(obj, ['d', 'x']);     // { value: { a: { b: { c: 'hello' } } }, index: -1, reached: false }
    */
   export function reach(target: object, propertyKeys: PropertyKey[], receiver?: any): ReachResult {
-    expectTargetAndKeys('reach', target, propertyKeys);
     const lastIndex = propertyKeys.length - 1;
 
     let current = target;
     for (let i = 0; i <= lastIndex; i++) {
-      if (!$has(current, propertyKeys[i])) {
+      if (!Reflect.has(current, propertyKeys[i])) {
         return { value: current, index: i - 1, reached: false };
       }
 
       if (i === lastIndex) {
         const value =
-          receiver === undefined ? $get(current, propertyKeys[i]) : $get(current, propertyKeys[i], receiver);
+          receiver === undefined
+            ? Reflect.get(current, propertyKeys[i])
+            : Reflect.get(current, propertyKeys[i], receiver);
 
         return { value, index: i, reached: true };
       }
 
-      current = $get(current, propertyKeys[i]);
+      current = Reflect.get(current, propertyKeys[i]);
       if (current === undefined || current === null) {
         return { value: current, index: i, reached: false };
       }
@@ -181,7 +139,7 @@ export namespace ReflectDeep {
 
     // Should not reach here, but just in case
     return { value: current, index: -1, reached: false };
-  };
+  }
 
   /**
    * Deletes a nested property at the given path.
@@ -194,30 +152,28 @@ export namespace ReflectDeep {
    * @param target Target object.
    * @param propertyKeys Property path to delete.
    * @returns `true` if successful, `false` otherwise.
-   * @throws If target is not an object or propertyKeys is not a valid non-empty array.
    * @example
    * const obj = { a: { b: { c: 'hello', d: 'world' } } };
    * ReflectDeep.deleteProperty(obj, ['a', 'b', 'c']); // true
    * obj.a.b; // { d: 'world' }
    */
   export function deleteProperty(target: object, propertyKeys: PropertyKey[]): boolean {
-    expectTargetAndKeys('deleteProperty', target, propertyKeys);
     const lastIndex = propertyKeys.length - 1;
 
     let current = target;
     for (let i = 0; i < lastIndex; i++) {
-      if (!$has(current, propertyKeys[i])) {
+      if (!Reflect.has(current, propertyKeys[i])) {
         return true;
       }
 
-      current = $get(current, propertyKeys[i]);
+      current = Reflect.get(current, propertyKeys[i]);
       if (current === undefined || current === null) {
         return false;
       }
     }
 
-    return $delete(current, propertyKeys[lastIndex]);
-  };
+    return Reflect.deleteProperty(current, propertyKeys[lastIndex]);
+  }
 
   /**
    * Defines a nested property with the given descriptor, creating intermediate objects as needed.
@@ -227,7 +183,6 @@ export namespace ReflectDeep {
    * @param propertyKeys Property path to define.
    * @param descriptor Property descriptor to apply.
    * @returns `true` if successful, `false` otherwise.
-   * @throws If target is not an object or propertyKeys is not a valid non-empty array.
    * @example
    * const obj = {};
    * ReflectDeep.defineProperty(obj, ['a', 'b', 'c'], { value: 'hello', writable: true });
@@ -239,37 +194,31 @@ export namespace ReflectDeep {
    *   set(v) { this._value = v; }
    * });
    */
-  export function defineProperty(
-    target: object,
-    propertyKeys: PropertyKey[],
-    descriptor: PropertyDescriptor,
-  ): boolean {
-    expectTargetAndKeys('defineProperty', target, propertyKeys);
+  export function defineProperty(target: object, propertyKeys: PropertyKey[], descriptor: PropertyDescriptor): boolean {
     const lastIndex = propertyKeys.length - 1;
 
     let current = target;
     for (let i = 0; i < lastIndex; i++) {
-      if (!$has(current, propertyKeys[i])) {
-        if (!$set(current, propertyKeys[i], {})) {
+      if (!Reflect.has(current, propertyKeys[i])) {
+        if (!Reflect.set(current, propertyKeys[i], {})) {
           return false;
         }
       }
 
-      current = $get(current, propertyKeys[i]);
+      current = Reflect.get(current, propertyKeys[i]);
       if (current === undefined || current === null) {
         return false;
       }
     }
 
-    return $reflectDefine(current, propertyKeys[lastIndex], descriptor);
-  };
+    return Reflect.defineProperty(current, propertyKeys[lastIndex], descriptor);
+  }
 
   /**
    * Gets all property keys (including symbols) from the target object and its prototype chain.
    * Returns a flattened array of unique keys from all prototype layers.
    * @param target - Target object to extract keys from.
    * @returns Array of all unique property keys from the object and its prototype chain.
-   * @throws If target is not an object.
    * @example
    * const obj = { own: 'property', [Symbol('sym')]: 'symbol' };
    * const keys = ReflectDeep.keys(obj);
@@ -283,30 +232,29 @@ export namespace ReflectDeep {
    * ReflectDeep.keys(child); // ['childProp', 'parentProp', 'toString', ...]
    */
   export function ownKeys<T extends object>(target: T): (string | symbol)[] {
-    expectTarget('ownKeys', target);
-
-    const keySet = new Set($ownKeys(target));
+    const keySet = new Set(Reflect.ownKeys(target));
     let proto: object | null = target;
     while (true) {
-      proto = $getPrototypeOf(proto);
+      proto = Reflect.getPrototypeOf(proto);
 
       // * Proto chain will not contain any loop
       if (proto) {
-        const keys = $ownKeys(proto);
+        const keys = Reflect.ownKeys(proto);
         for (let i = 0; i < keys.length; i++) {
           keySet.add(keys[i]);
         }
       } else {
-        return $arrayFrom(keySet);
+        return Array.from(keySet);
       }
     }
-  };
+  }
 
   /**
    * Gets property keys grouped by prototype layer, preserving the prototype chain structure.
    * Returns an array where each element represents a layer in the prototype chain with its keys and object reference.
    * @param target - Target object to extract grouped keys from.
    * @returns Array of objects, each containing `keys` and `object` for each prototype layer.
+   * @throws If target is not an object.
    * @throws If target is not an object.
    * @example
    * const obj = { own: 'property', [Symbol('sym')]: 'symbol' };
@@ -328,10 +276,8 @@ export namespace ReflectDeep {
    * // layers[2] = { keys: ['toString', ...], object: Object.prototype }
    */
   export function groupedKeys<T extends object>(target: T): GroupedKey[] {
-    expectTarget('groupedKeys', target);
-
-    const keys: GroupedKey[] = [{ keys: $ownKeys(target), object: target }];
-    let proto = $getPrototypeOf(target);
+    const keys: GroupedKey[] = [{ keys: Reflect.ownKeys(target), object: target }];
+    let proto = Reflect.getPrototypeOf(target);
     while (true) {
       // * Proto chain will not contain any loop
       if (!proto) {
@@ -339,9 +285,9 @@ export namespace ReflectDeep {
       }
       keys.push({
         object: proto,
-        keys: $ownKeys(proto),
+        keys: Reflect.ownKeys(proto),
       });
-      proto = $getPrototypeOf(proto);
+      proto = Reflect.getPrototypeOf(proto);
     }
-  };
+  }
 }

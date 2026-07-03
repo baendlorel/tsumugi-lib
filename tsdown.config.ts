@@ -1,6 +1,8 @@
+import { join } from 'node:path';
 import { defineConfig } from 'tsdown';
 import replace from '@rollup/plugin-replace';
-import { join } from 'node:path';
+import funcMacro from 'rollup-plugin-func-macro';
+import { replaceOpts } from './scripts/replace-options.js';
 
 const isDev = process.env.NODE_ENV === 'development';
 const lib = process.env.LIB_DIR!;
@@ -15,18 +17,7 @@ export default defineConfig({
   minify: !isDev,
   target: 'node24',
   treeshake: !isDev,
-  plugins: [
-    replace({
-      preventAssignment: true,
-      delimiters: ['', ''],
-      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
-
-      // global $throw
-      // "$throw('": `throw new Error('[fluxion error] `,
-      // '$throw(`': 'throw new Error(`[fluxion error] ',
-      // '$throw("': `throw new Error("[fluxion error] `,
-    }),
-  ],
+  plugins: [replace(replaceOpts(lib)), funcMacro()],
   deps: {
     onlyBundle: ['type-narrow', 'fast-json-stable-stringify'],
   },
