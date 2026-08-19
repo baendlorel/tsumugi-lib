@@ -3,11 +3,10 @@
   "compilerOptions": {
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "baseUrl": ".",
     "paths": {
-      "@composition-ts/*": ["src/*"],
+      "@composition-ts/*": ["./src/*"],
       "@shared": ["../_shared/index.ts"]
     }
   },
-  "include": ["src/**/*.ts"]
+  "include": ["./src/**/*.ts"]
 }

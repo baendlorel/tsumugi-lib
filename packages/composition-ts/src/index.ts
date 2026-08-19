@@ -1,4 +1,4 @@
-import type { Compose, Constructor, Mutable } from './global.js';
+import type { Compose, Constructor, Mutable } from './types.js';
 import { $define, $defines, $getOwnPropertyDescriptors } from '@shared';
 
 function notNewable(value: unknown): value is new (...args: unknown[]) => unknown {
@@ -6,12 +6,12 @@ function notNewable(value: unknown): value is new (...args: unknown[]) => unknow
     return true;
   }
   try {
-    const Proxied = new Proxy(value as Constructor, {
+    const a = new Proxy(value as Constructor, {
       construct() {
         return {};
       },
     });
-    new Proxied();
+    new a();
     return false;
   } catch {
     return true;
