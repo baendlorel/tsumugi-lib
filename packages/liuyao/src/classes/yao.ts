@@ -141,6 +141,10 @@ export class Yao {
     this.isChanged = isChanged;
   }
 
+  eq(other: Yao): boolean {
+    return this.yangCount === other.yangCount;
+  }
+
   /**
    * Change `this.yangCount`
    */

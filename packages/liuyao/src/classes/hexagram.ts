@@ -209,7 +209,7 @@ export class Hexagram {
   /**
    * This output is meant for AI skills.
    */
-  toAIReadable(): { 本卦: HexagramAIReadable; 变卦: HexagramAIReadable | '无'; 世应变化: string } {
+  toAIReadable(): AIReadableInfo {
     const si = this.info.setupInfo;
     const changed = this.toChanged();
     const csi = changed?.info.setupInfo;
@@ -232,7 +232,7 @@ export class Hexagram {
     }
 
     const createYaoInfo = (yaos: Yao[], si: SetupGramInfo[], index: number): YaoInfo => {
-      const o = { 爻: this.yaos[index].name, 六亲: si[index].kin, 类型: si[index].hostGuest };
+      const o = { 爻: yaos[index].name, 六亲: si[index].kin, 类型: si[index].hostGuest };
       if (!o.类型) {
         delete o.类型;
       }
@@ -269,7 +269,7 @@ export class Hexagram {
             六冲六合: changed.isSixScattering ? '六冲卦' : changed.isSixGathering ? '六合卦' : '不是',
           }
         : '无',
-      世应变化: hostGuestChange.join('，'),
+      // 世应变化: hostGuestChange.join('，'),
     };
   }
 
@@ -295,7 +295,13 @@ interface YaoInfo {
   六亲: string; // 例如：父金、兄弟水、妻财木等
 }
 
-interface HexagramAIReadable {
+export interface AIReadableInfo {
+  本卦: HexagramAIReadable;
+  变卦: HexagramAIReadable | '无';
+  世应变化?: string;
+}
+
+export interface HexagramAIReadable {
   初爻: YaoInfo;
   二爻: YaoInfo;
   三爻: YaoInfo;

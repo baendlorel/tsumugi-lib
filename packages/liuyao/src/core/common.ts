@@ -42,6 +42,7 @@ export const PalaceOrderTable: PalaceOrderName[] = [
   { name: '归魂卦', nameEn: 'Returning Soul' },
 ];
 
+// EPIC 我真服了，原来还有浑天甲子装挂法
 export interface HexagramInfo {
   /**
    * Binary representation of the hexagram, where 0 represents a yin line and 1 represents a yang line. The lines are ordered from the bottom (first line) to the top (sixth line).
