@@ -19,7 +19,10 @@ export default {
       tsconfig: './tsconfig.json',
     }),
     copy({
-      targets: [{ src: 'src/SKILL.md', dest: 'liuyao-skill/' }],
+      targets: [
+        { src: 'src/SKILL.md', dest: 'liuyao-skill/' },
+        { src: 'src/books/*.txt', dest: 'liuyao-skill/books/' }
+      ],
       verbose: true,
     }),
     replace({
