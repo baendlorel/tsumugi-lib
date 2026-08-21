@@ -53,4 +53,4 @@ function getLunarInfo() {
   };
 }
 
-console.dir({ version: '__VERSION__', 卦象: getInfo()?.toAIReadable(), 时辰: getLunarInfo() }, { depth: 6 });
+console.log(JSON.stringify({ version: '__VERSION__', 卦象: getInfo()?.toAIReadable(), 时辰: getLunarInfo() }, null, 2));
