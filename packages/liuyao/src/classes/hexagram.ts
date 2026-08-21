@@ -254,7 +254,7 @@ export class Hexagram {
               .map((y, i) => (y.isDynamic ? HexagramYaoOrder[i] : null))
               .filter((s): s is '初爻' | '二爻' | '三爻' | '四爻' | '五爻' | '上爻' => s !== null)
           : undefined,
-        六冲六合: this.isSixScattering ? '六合卦' : this.isSixGathering ? '六冲卦' : undefined,
+        六冲六合: this.isSixScattering ? '六冲卦' : this.isSixGathering ? '六合卦' : '不是',
       },
       变卦: csi
         ? {
@@ -266,7 +266,7 @@ export class Hexagram {
             初爻: createYaoInfo(changed.yaos, csi, 0),
             卦名: changed.info.id,
             宫: changed.palace,
-            六冲六合: changed.isSixScattering ? '六合卦' : changed.isSixGathering ? '六冲卦' : undefined,
+            六冲六合: changed.isSixScattering ? '六冲卦' : changed.isSixGathering ? '六合卦' : '不是',
           }
         : '无',
       世应变化: hostGuestChange.join('，'),
@@ -305,6 +305,6 @@ interface HexagramAIReadable {
   卦名: string;
   宫: string;
   变爻?: string[];
-  六冲六合?: '六合卦' | '六冲卦';
+  六冲六合: '六合卦' | '六冲卦' | '不是';
 }
 // #endregion
