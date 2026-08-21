@@ -29,9 +29,11 @@ export default defineConfig([
     minify: true,
     target: 'node24',
     treeshake: true,
-    bundle: true,
     outDir: 'liuyao-skill',
     copy: ['src/SKILL.md', 'src/books'],
+    deps: {
+      alwaysBundle: ['solarlunar'],
+    },
     plugins: [replace(replacer), funcMacro()],
     hooks: {
       'build:done': () => {
