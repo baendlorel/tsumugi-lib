@@ -110,6 +110,31 @@ export class Hexagram {
   }
 
   /**
+   * Whether this hexagram is one of ‘六冲卦’
+   */
+  get isSixScattering(): boolean {
+    return [
+      '乾为天',
+      '坤为地',
+      '震为雷',
+      '巽为风',
+      '坎为水',
+      '离为火',
+      '艮为山',
+      '兑为泽',
+      '天雷无妄',
+      '雷天大壮',
+    ].includes(this.info.id);
+  }
+
+  /**
+   * Whether this hexagram is one of ‘六合卦’
+   */
+  get isSixGathering(): boolean {
+    return ['天地否', '地天泰', '地雷复', '雷地豫', '山火贲', '火山旅', '泽水困', '水泽节'].includes(this.info.id);
+  }
+
+  /**
    * Create a Hexagram from an array of Yao with length 6.
    */
   constructor(yaos: Yao[]) {
@@ -229,6 +254,7 @@ export class Hexagram {
               .map((y, i) => (y.isDynamic ? HexagramYaoOrder[i] : null))
               .filter((s): s is '初爻' | '二爻' | '三爻' | '四爻' | '五爻' | '上爻' => s !== null)
           : undefined,
+        六冲六合: this.isSixScattering ? '六合卦' : this.isSixGathering ? '六冲卦' : undefined,
       },
       变卦: csi
         ? {
@@ -240,6 +266,7 @@ export class Hexagram {
             初爻: createYaoInfo(changed.yaos, csi, 0),
             卦名: changed.info.id,
             宫: changed.palace,
+            六冲六合: changed.isSixScattering ? '六合卦' : changed.isSixGathering ? '六冲卦' : undefined,
           }
         : '无',
       世应变化: hostGuestChange.join('，'),
@@ -278,5 +305,6 @@ interface HexagramAIReadable {
   卦名: string;
   宫: string;
   变爻?: string[];
+  六冲六合?: '六合卦' | '六冲卦';
 }
 // #endregion
