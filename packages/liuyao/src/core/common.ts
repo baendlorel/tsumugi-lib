@@ -1,5 +1,57 @@
 export const PalaceOrderTable = ['本宫卦', '一世卦', '二世卦', '三世卦', '四世卦', '五世卦', '游魂卦', '归魂卦'];
 
+export type StemPhase =
+  | '子水'
+  | '寅木'
+  | '辰土'
+  | '午火'
+  | '申金'
+  | '戌土'
+  | '寅木'
+  | '辰土'
+  | '午火'
+  | '申金'
+  | '戌土'
+  | '子水'
+  | '辰土'
+  | '午火'
+  | '申金'
+  | '戌土'
+  | '子水'
+  | '寅木'
+  | '子水'
+  | '寅木'
+  | '辰土'
+  | '午火'
+  | '申金'
+  | '戌土'
+  | '丑土'
+  | '亥水'
+  | '酉金'
+  | '未土'
+  | '巳火'
+  | '卯木'
+  | '卯木'
+  | '丑土'
+  | '亥水'
+  | '酉金'
+  | '未土'
+  | '巳火'
+  | '未土'
+  | '巳火'
+  | '卯木'
+  | '丑土'
+  | '亥水'
+  | '酉金'
+  | '巳火'
+  | '卯木'
+  | '丑土'
+  | '亥水'
+  | '酉金'
+  | '未土';
+
+export type Phase = '金' | '木' | '水' | '火' | '土';
+
 export interface HexagramInfo {
   /**
    * Binary representation of the hexagram, where 0 image a yin line and 1 image a yang line. The lines are ordered from the bottom (first line) to the top (sixth line).
@@ -36,7 +88,7 @@ export interface HexagramInfo {
    * Five Phases (五行) associated with the hexagram, which can be one of "金" (Metal), "木" (Wood), "水" (Water), "火" (Fire), or "土" (Earth).
    * It indicates the development and state of things.
    */
-  phase: '金' | '木' | '水' | '火' | '土';
+  phase: Phase;
 
   /**
    * Eight Palaces (八宫) to which the hexagram belongs.
@@ -734,13 +786,13 @@ export interface TrigramInfo {
    * Earth Stem and Five Phases when this gram performs a inner gram of a hexagram.
    * @see 《增删卜易·浑天甲子章》
    */
-  inner: string[];
+  inner: StemPhase[];
 
   /**
    * Earth Stem and Five Phases when this gram performs a outer gram of a hexagram.
    * @see 《增删卜易·浑天甲子章》
    */
-  outer: string[];
+  outer: StemPhase[];
 }
 
 /**
