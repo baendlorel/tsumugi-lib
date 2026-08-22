@@ -1,9 +1,43 @@
-import { HexagramInfoTable, PalaceOrderTable, type HexagramInfo } from '../core/common.js';
-import { SetupGramInfo } from '../core/setup-gram.js';
+import {
+  HexagramInfoTable,
+  PalaceOrderTable,
+  type TrigramInfo,
+  type HexagramInfo,
+  TrigramInfoTable,
+} from '../core/common.js';
 import { Yao } from './yao.js';
 
 type LiuYao = [Yao, Yao, Yao, Yao, Yao, Yao];
 export const HexagramYaoOrder = ['初爻', '二爻', '三爻', '四爻', '五爻', '上爻'] as const;
+
+export const enum Status {
+  /**
+   * 动卦
+   */
+  Dynamic,
+  /**
+   * 静卦
+   */
+  Static,
+  /**
+   * 变卦, no need to classify "动静“
+   */
+  None,
+}
+
+export const enum Stage {
+  /**
+   * 本卦
+   */
+  Primary,
+  /**
+   * 变卦
+   */
+  Changed,
+}
+
+const _scattering = ['乾', '坤', '震', '巽', '坎', '离', '艮', '兑', '无妄', '大壮'];
+const _gathering = ['否', '泰', '复', '豫', '贲', '旅', '困', '节'];
 
 /**
  * Hexagram class represents a hexagram, which consists of 6 Yao.
@@ -12,6 +46,7 @@ export const HexagramYaoOrder = ['初爻', '二爻', '三爻', '四爻', '五爻
  * - Creates “乾为天” by default.
  */
 export class Hexagram {
+  // #region Static
   /**
    * Use tokens like `'012132'` to create a Hexagram, where each digit represents the count of Yang in the corresponding Yao (0 for 老阴, 1 for 少阳, 2 for 少阴, 3 for 老阳). The first digit represents the first Yao (初爻) and the last digit represents the sixth Yao (上爻).
    */
@@ -60,6 +95,7 @@ export class Hexagram {
     const exist = HexagramInfoTable.find((h) => h.id[2] === palace);
     return exist ? Hexagram.fromYangCounts(exist.yangs) : null;
   }
+  // #endregion
 
   /**
    * 6 Yao positions, indexed from bottom to top.
@@ -68,85 +104,83 @@ export class Hexagram {
   readonly yaos: LiuYao;
 
   /**
+   * Binary version of the gram, like `001001`.
+   * - Does not describe dynamic yaos, that is to say, 0 means 阴 not 老阴
+   */
+  readonly binary: string;
+
+  /**
    * HexagramInfo of this hexagram, which can be used to get more information about this hexagram, such as its name, sign, phase, palace, etc.
    */
-  get info(): HexagramInfo {
-    return HexagramInfoTable.find((h) => h.binary === this.yaos.map((y) => y.polar).join(''))!;
-  }
+  readonly info: HexagramInfo;
 
-  get palace(): string {
-    const i = this.info;
-    return `${i.palace}宫（${i.phase}）${PalaceOrderTable[i.generation]}`;
+  readonly palace: string;
+
+  /**
+   * There are 3 states of a hexagram, "动卦" "静卦" "变卦无所谓动静"
+   */
+  readonly status: Status;
+
+  readonly stage: Stage;
+
+  readonly inner: TrigramInfo;
+  readonly outer: TrigramInfo;
+  /**
+   * Create a Hexagram from an array of Yao with length 6.
+   */
+  constructor(yaos: Yao[], stage: Stage = Stage.Primary) {
+    if (yaos.length !== 6) {
+      throw new Error('Array length mismatch, A Hexagram must be constructed with exactly 6 Yaos or 6 counts of yang');
+    }
+
+    if (yaos.some((a) => !(a instanceof Yao))) {
+      throw new Error('Invalid Arguments, Hexagram must be constructed with exactly 6 Yaos or 6 counts of yang');
+    }
+
+    this.yaos = yaos.map((a) => a.clone()) as LiuYao;
+    this.binary = this.yaos.map((y) => y.polar).join('');
+    this.info = HexagramInfoTable.find((h) => h.binary === this.binary)!; // This is guaranteed
+    this.palace = `${this.info.palace}宫（${this.info.phase}）${PalaceOrderTable[this.info.generation]}`;
+    this.stage = stage;
+    this.status =
+      stage === Stage.Changed
+        ? Status.None
+        : this.yaos.some((y) => y.isDynamic || y.isChanged)
+          ? Status.Dynamic
+          : Status.Static;
+
+    const ub = this.binary.slice(0, 3);
+    const lb = this.binary.slice(3);
+    this.inner = TrigramInfoTable.find((t) => t.binary === ub)!;
+    this.outer = TrigramInfoTable.find((t) => t.binary === lb)!;
   }
 
   /**
    * Whether the 6 Yaos of this hexagram contain any dynamic Yao.
    */
   get isDynamic(): boolean {
-    return this.yaos.some((y) => y.isDynamic || y.isChanged);
+    return this.status === Status.Dynamic;
   }
 
   /**
    * Whether this hexagram has already changed to another hexagram. Once a hexagram is changed, it cannot change again.
    */
   get isChanged(): boolean {
-    return this.yaos.some((y) => y.isChanged);
-  }
-
-  /**
-   * Outer trigram of this hexagram, which consists of the last three yao (四爻、五爻、上爻).
-   * @returns A trigram if the outer trigram is dynamic.
-   */
-  get dynamicOuter(): boolean {
-    return this.yaos.slice(3).some((y) => y.isDynamic || y.isChanged);
-  }
-
-  /**
-   * Inner trigram of this hexagram, which consists of the first three yao (初爻、二爻、三爻).
-   * @returns A trigram if the inner trigram is dynamic.
-   */
-  get dynamicInner(): boolean {
-    return this.yaos.slice(0, 3).some((y) => y.isDynamic || y.isChanged);
+    return this.stage === Stage.Changed;
   }
 
   /**
    * Whether this hexagram is one of ‘六冲卦’
    */
   get isSixScattering(): boolean {
-    return [
-      '乾为天',
-      '坤为地',
-      '震为雷',
-      '巽为风',
-      '坎为水',
-      '离为火',
-      '艮为山',
-      '兑为泽',
-      '天雷无妄',
-      '雷天大壮',
-    ].includes(this.info.id);
+    return _scattering.includes(this.info.name);
   }
 
   /**
    * Whether this hexagram is one of ‘六合卦’
    */
   get isSixGathering(): boolean {
-    return ['天地否', '地天泰', '地雷复', '雷地豫', '山火贲', '火山旅', '泽水困', '水泽节'].includes(this.info.id);
-  }
-
-  /**
-   * Create a Hexagram from an array of Yao with length 6.
-   */
-  constructor(yaos: Yao[]) {
-    if (yaos.length !== 6) {
-      throw new Error('Array length mismatch, A Hexagram must be constructed with exactly 6 Yaos or 6 counts of yang');
-    }
-
-    if (yaos.every((a) => a instanceof Yao)) {
-      this.yaos = yaos.map((a) => a.clone()) as LiuYao;
-    } else {
-      throw new Error('Invalid Arguments, Hexagram must be constructed with exactly 6 Yaos or 6 counts of yang');
-    }
+    return _gathering.includes(this.info.name);
   }
 
   setYao(index: number, yangs: number): void {
