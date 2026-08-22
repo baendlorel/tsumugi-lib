@@ -5,6 +5,7 @@ import {
   type HexagramInfo,
   TrigramInfoTable,
 } from '../core/common.js';
+import { setupHostGuest } from '../core/host-guest.js';
 import { setupSixKins } from '../core/six-kins.js';
 import { Yao } from './yao.js';
 
@@ -172,6 +173,12 @@ export class Hexagram implements HexagramInfo {
       ...this.inner.inner.map((v, i) => sixKins[i] + v),
       ...this.outer.outer.map((v, i) => sixKins[i + 3] + v),
     ];
+
+    const hg = setupHostGuest(this);
+    this.host = hg.host;
+    this.guest = hg.guest;
+
+    // special types
 
     if (_scattering.includes(info.name)) {
       this.specialType = '六冲';

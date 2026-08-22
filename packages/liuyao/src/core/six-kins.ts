@@ -60,6 +60,9 @@ const _mappers: Record<string, (sp: BranchPhase) => Kin> = {
   巽: (v: BranchPhase) => map(v, '木', '兄弟', '水', '父母', '金', '官鬼', '火', '子孙', '土', '妻财'),
 };
 
+/**
+ * @see 《增删卜易·六亲歌章》
+ */
 export function setupSixKins(hexagram: Hexagram): Kin[] {
   const mapper = _mappers[hexagram.palace];
   return [...hexagram.inner.inner.map(mapper), ...hexagram.outer.outer.map(mapper)];
