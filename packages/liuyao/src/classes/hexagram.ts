@@ -132,9 +132,14 @@ export class Hexagram implements HexagramInfo {
   readonly guest: number;
 
   /**
+   * if it is a changed gram, this points to the primary one.
+   */
+  readonly primary: Hexagram | null;
+
+  /**
    * Create a Hexagram from an array of Yao with length 6.
    */
-  constructor(yaos: Yao[], isChanged = false) {
+  constructor(yaos: Yao[], primary: Hexagram | null = null) {
     if (yaos.length !== 6) {
       throw new Error('Array length mismatch, A Hexagram must be constructed with exactly 6 Yaos or 6 counts of yang');
     }
@@ -161,7 +166,8 @@ export class Hexagram implements HexagramInfo {
     this.palaceInfo = `${info.palace}宫（${info.phase}）${PalaceOrderTable[info.generation]}`;
 
     this.isDynamic = this.yaos.some((y) => y.dynamic || y.isChanged);
-    this.isChanged = isChanged;
+    this.isChanged = !!primary;
+    this.primary = primary;
 
     const ub = this.binary.slice(0, 3);
     const lb = this.binary.slice(3);
@@ -201,12 +207,12 @@ export class Hexagram implements HexagramInfo {
 
     return new Hexagram(
       this.yaos.map((y) => y.toChanged()),
-      true,
+      this,
     );
   }
 
   clone(): Hexagram {
-    return new Hexagram(this.yaos, this.isChanged);
+    return new Hexagram(this.yaos, this.primary);
   }
 
   toString(): string {

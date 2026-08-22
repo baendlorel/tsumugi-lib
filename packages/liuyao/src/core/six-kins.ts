@@ -61,9 +61,11 @@ const _mappers: Record<string, (sp: BranchPhase) => Kin> = {
 };
 
 /**
+ * Changed gram's kins is borrowed from the primary gram.
  * @see 《增删卜易·六亲歌章》
+ * @param hexagram the gram wait to be setup.
  */
 export function setupSixKins(hexagram: Hexagram): Kin[] {
-  const mapper = _mappers[hexagram.palace];
+  const mapper = _mappers[hexagram.primary ? hexagram.primary.palace : hexagram.palace];
   return [...hexagram.inner.inner.map(mapper), ...hexagram.outer.outer.map(mapper)];
 }
