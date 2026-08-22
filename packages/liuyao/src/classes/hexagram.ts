@@ -10,21 +10,6 @@ import { Yao } from './yao.js';
 type LiuYao = [Yao, Yao, Yao, Yao, Yao, Yao];
 export const HexagramYaoOrder = ['初爻', '二爻', '三爻', '四爻', '五爻', '上爻'] as const;
 
-export const enum Status {
-  /**
-   * 动卦
-   */
-  Dynamic,
-  /**
-   * 静卦
-   */
-  Static,
-  /**
-   * 变卦, no need to classify "动静“
-   */
-  None,
-}
-
 const _scattering = ['乾', '坤', '震', '巽', '坎', '离', '艮', '兑', '无妄', '大壮'];
 const _gathering = ['否', '泰', '复', '豫', '贲', '旅', '困', '节'];
 const _pure = ['乾', '坤', '震', '巽', '坎', '离', '艮', '兑'];
@@ -107,11 +92,6 @@ export class Hexagram implements HexagramInfo {
   readonly palaceInfo;
 
   /**
-   * There are 3 states of a hexagram, "动卦" "静卦" "变卦无所谓动静"
-   */
-  readonly status: Status;
-
-  /**
    * Whether the 6 Yaos of this hexagram contain any dynamic Yao.
    */
   readonly isDynamic: boolean;
@@ -162,13 +142,8 @@ export class Hexagram implements HexagramInfo {
     // details
 
     this.palaceInfo = `${info.palace}宫（${info.phase}）${PalaceOrderTable[info.generation]}`;
-    this.status = isChanged
-      ? Status.None
-      : this.yaos.some((y) => y.dynamic || y.isChanged)
-        ? Status.Dynamic
-        : Status.Static;
 
-    this.isDynamic = this.status === Status.Dynamic;
+    this.isDynamic = this.yaos.some((y) => y.dynamic || y.isChanged);
     this.isChanged = isChanged;
 
     const ub = this.binary.slice(0, 3);
