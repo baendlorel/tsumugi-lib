@@ -20,15 +20,15 @@ export function resolveHexagram(ben: string, bian: string): AIReadableInfo {
 
   // Yaos here can only be 0 and 1
   const yaos = h1.yaos.map((y, i) => {
-    if (y.yangCount === h2.yaos[i].yangCount) {
-      return new Yao(y.yangCount);
+    if (y.yangs === h2.yaos[i].yangs) {
+      return new Yao(y.yangs);
     }
 
-    if (y.yangCount === 2) {
+    if (y.yangs === 2) {
       return new Yao(0);
     }
 
-    if (y.yangCount === 1) {
+    if (y.yangs === 1) {
       return new Yao(3);
     }
 

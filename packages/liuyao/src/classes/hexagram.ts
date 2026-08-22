@@ -50,7 +50,7 @@ export class Hexagram {
     const exist = HexagramInfoTable.find(
       (h) => h.id === id || h.id.slice(2) === id || (h.id.startsWith(id) && id.length > 1),
     );
-    return exist ? Hexagram.fromYangCounts(exist.yangCounts) : null;
+    return exist ? Hexagram.fromYangCounts(exist.yangs) : null;
   }
 
   /**
@@ -58,7 +58,7 @@ export class Hexagram {
    */
   static fromPalace(palace: string): Hexagram | null {
     const exist = HexagramInfoTable.find((h) => h.id[2] === palace);
-    return exist ? Hexagram.fromYangCounts(exist.yangCounts) : null;
+    return exist ? Hexagram.fromYangCounts(exist.yangs) : null;
   }
 
   /**
@@ -149,8 +149,8 @@ export class Hexagram {
     }
   }
 
-  setYao(index: number, yangCount: number): void {
-    this.yaos[index].set(yangCount);
+  setYao(index: number, yangs: number): void {
+    this.yaos[index].set(yangs);
   }
 
   toChanged(): Hexagram | null {

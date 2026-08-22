@@ -45,26 +45,33 @@ export const PalaceOrderTable: PalaceOrderName[] = [
 // EPIC 我真服了，原来还有浑天甲子装挂法
 export interface HexagramInfo {
   /**
-   * Binary representation of the hexagram, where 0 represents a yin line and 1 represents a yang line. The lines are ordered from the bottom (first line) to the top (sixth line).
+   * Binary representation of the hexagram, where 0 image a yin line and 1 image a yang line. The lines are ordered from the bottom (first line) to the top (sixth line).
    */
   binary: `${0 | 1}${0 | 1}${0 | 1}${0 | 1}${0 | 1}${0 | 1}`;
 
   /**
-   * Binary to YangCounts.
+   * Binary to yangs.
    * e.g. `'000000'` 坤为地 -> `[2, 2, 2, 2, 2, 2]`, 2 means Shao Yin.
    */
-  yangCounts: number[];
+  yangs: number[];
 
   /**
-   * Name of the hexagram, which includes the names of the upper and lower trigrams.
+   * Full name of the hexagram, which includes the names of the upper and lower trigrams.
    *
    * For example, "坤为地", "地雷复", "地水师", etc.
    */
   id: string;
 
   /**
+   * Name of the hexagram.
+   *
+   * For example, "地", "复", "师", etc.
+   */
+  name: string;
+
+  /**
    * 64 hexagrams correspond to Unicode characters.
-   * For example, "䷁" (U+4DC1) represents the hexagram "坤为地".
+   * For example, "䷁" (U+4DC1) image the hexagram "坤为地".
    */
   sign: string;
 
@@ -103,7 +110,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '土',
     palace: '坤',
     generation: 0,
-    yangCounts: [2, 2, 2, 2, 2, 2],
+    yangs: [2, 2, 2, 2, 2, 2],
+    name: '地',
   },
   {
     binary: '100000',
@@ -112,7 +120,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '土',
     palace: '坤',
     generation: 1,
-    yangCounts: [1, 2, 2, 2, 2, 2],
+    yangs: [1, 2, 2, 2, 2, 2],
+    name: '复',
   },
   {
     binary: '010000',
@@ -121,7 +130,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '水',
     palace: '坎',
     generation: 7,
-    yangCounts: [2, 1, 2, 2, 2, 2],
+    yangs: [2, 1, 2, 2, 2, 2],
+    name: '师',
   },
   {
     binary: '110000',
@@ -130,7 +140,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '土',
     palace: '坤',
     generation: 2,
-    yangCounts: [1, 1, 2, 2, 2, 2],
+    yangs: [1, 1, 2, 2, 2, 2],
+    name: '临',
   },
   {
     binary: '001000',
@@ -139,7 +150,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '土',
     palace: '兑',
     generation: 5,
-    yangCounts: [2, 2, 1, 2, 2, 2],
+    yangs: [2, 2, 1, 2, 2, 2],
+    name: '谦',
   },
   {
     binary: '101000',
@@ -148,7 +160,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '水',
     palace: '坎',
     generation: 6,
-    yangCounts: [1, 2, 1, 2, 2, 2],
+    yangs: [1, 2, 1, 2, 2, 2],
+    name: '明夷',
   },
   {
     binary: '011000',
@@ -157,7 +170,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '木',
     palace: '震',
     generation: 4,
-    yangCounts: [2, 1, 1, 2, 2, 2],
+    yangs: [2, 1, 1, 2, 2, 2],
+    name: '升',
   },
   {
     binary: '111000',
@@ -166,7 +180,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '土',
     palace: '坤',
     generation: 3,
-    yangCounts: [1, 1, 1, 2, 2, 2],
+    yangs: [1, 1, 1, 2, 2, 2],
+    name: '泰',
   },
   {
     binary: '000100',
@@ -175,7 +190,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '木',
     palace: '震',
     generation: 1,
-    yangCounts: [2, 2, 2, 1, 2, 2],
+    yangs: [2, 2, 2, 1, 2, 2],
+    name: '豫',
   },
   {
     binary: '100100',
@@ -184,7 +200,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '木',
     palace: '震',
     generation: 0,
-    yangCounts: [1, 2, 2, 1, 2, 2],
+    yangs: [1, 2, 2, 1, 2, 2],
+    name: '雷',
   },
   {
     binary: '010100',
@@ -193,7 +210,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '木',
     palace: '震',
     generation: 2,
-    yangCounts: [2, 1, 2, 1, 2, 2],
+    yangs: [2, 1, 2, 1, 2, 2],
+    name: '解',
   },
   {
     binary: '110100',
@@ -202,7 +220,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '金',
     palace: '兑',
     generation: 7,
-    yangCounts: [1, 1, 2, 1, 2, 2],
+    yangs: [1, 1, 2, 1, 2, 2],
+    name: '归妹',
   },
   {
     binary: '001100',
@@ -211,7 +230,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '金',
     palace: '兑',
     generation: 6,
-    yangCounts: [2, 2, 1, 1, 2, 2],
+    yangs: [2, 2, 1, 1, 2, 2],
+    name: '小过',
   },
   {
     binary: '101100',
@@ -220,7 +240,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '水',
     palace: '坎',
     generation: 5,
-    yangCounts: [1, 2, 1, 1, 2, 2],
+    yangs: [1, 2, 1, 1, 2, 2],
+    name: '丰',
   },
   {
     binary: '011100',
@@ -229,7 +250,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '木',
     palace: '震',
     generation: 3,
-    yangCounts: [2, 1, 1, 1, 2, 2],
+    yangs: [2, 1, 1, 1, 2, 2],
+    name: '恒',
   },
   {
     binary: '111100',
@@ -238,7 +260,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '土',
     palace: '坤',
     generation: 4,
-    yangCounts: [1, 1, 1, 1, 2, 2],
+    yangs: [1, 1, 1, 1, 2, 2],
+    name: '大壮',
   },
   {
     binary: '000010',
@@ -247,7 +270,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '土',
     palace: '坤',
     generation: 7,
-    yangCounts: [2, 2, 2, 2, 1, 2],
+    yangs: [2, 2, 2, 2, 1, 2],
+    name: '比',
   },
   {
     binary: '100010',
@@ -256,7 +280,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '水',
     palace: '坎',
     generation: 2,
-    yangCounts: [1, 2, 2, 2, 1, 2],
+    yangs: [1, 2, 2, 2, 1, 2],
+    name: '屯',
   },
   {
     binary: '010010',
@@ -265,7 +290,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '水',
     palace: '坎',
     generation: 0,
-    yangCounts: [2, 1, 2, 2, 1, 2],
+    yangs: [2, 1, 2, 2, 1, 2],
+    name: '水',
   },
   {
     binary: '110010',
@@ -274,7 +300,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '水',
     palace: '坎',
     generation: 1,
-    yangCounts: [1, 1, 2, 2, 1, 2],
+    yangs: [1, 1, 2, 2, 1, 2],
+    name: '节',
   },
   {
     binary: '001010',
@@ -283,7 +310,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '金',
     palace: '兑',
     generation: 4,
-    yangCounts: [2, 2, 1, 2, 1, 2],
+    yangs: [2, 2, 1, 2, 1, 2],
+    name: '蹇',
   },
   {
     binary: '101010',
@@ -292,7 +320,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '水',
     palace: '坎',
     generation: 3,
-    yangCounts: [1, 2, 1, 2, 1, 2],
+    yangs: [1, 2, 1, 2, 1, 2],
+    name: '既济',
   },
   {
     binary: '011010',
@@ -301,7 +330,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '木',
     palace: '震',
     generation: 5,
-    yangCounts: [2, 1, 1, 2, 1, 2],
+    yangs: [2, 1, 1, 2, 1, 2],
+    name: '井',
   },
   {
     binary: '111010',
@@ -310,7 +340,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '土',
     palace: '坤',
     generation: 6,
-    yangCounts: [1, 1, 1, 2, 1, 2],
+    yangs: [1, 1, 1, 2, 1, 2],
+    name: '需',
   },
   {
     binary: '000110',
@@ -319,7 +350,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '金',
     palace: '兑',
     generation: 2,
-    yangCounts: [2, 2, 2, 1, 1, 2],
+    yangs: [2, 2, 2, 1, 1, 2],
+    name: '萃',
   },
   {
     binary: '100110',
@@ -328,7 +360,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '木',
     palace: '震',
     generation: 7,
-    yangCounts: [1, 2, 2, 1, 1, 2],
+    yangs: [1, 2, 2, 1, 1, 2],
+    name: '随',
   },
   {
     binary: '010110',
@@ -337,7 +370,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '金',
     palace: '兑',
     generation: 1,
-    yangCounts: [2, 1, 2, 1, 1, 2],
+    yangs: [2, 1, 2, 1, 1, 2],
+    name: '困',
   },
   {
     binary: '110110',
@@ -346,7 +380,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '金',
     palace: '兑',
     generation: 0,
-    yangCounts: [1, 1, 2, 1, 1, 2],
+    yangs: [1, 1, 2, 1, 1, 2],
+    name: '泽',
   },
   {
     binary: '001110',
@@ -355,7 +390,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '金',
     palace: '兑',
     generation: 3,
-    yangCounts: [2, 2, 1, 1, 1, 2],
+    yangs: [2, 2, 1, 1, 1, 2],
+    name: '咸',
   },
   {
     binary: '101110',
@@ -364,7 +400,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '水',
     palace: '坎',
     generation: 4,
-    yangCounts: [1, 2, 1, 1, 1, 2],
+    yangs: [1, 2, 1, 1, 1, 2],
+    name: '革',
   },
   {
     binary: '011110',
@@ -373,7 +410,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '木',
     palace: '震',
     generation: 6,
-    yangCounts: [2, 1, 1, 1, 1, 2],
+    yangs: [2, 1, 1, 1, 1, 2],
+    name: '大过',
   },
   {
     binary: '111110',
@@ -382,7 +420,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '土',
     palace: '坤',
     generation: 5,
-    yangCounts: [1, 1, 1, 1, 1, 2],
+    yangs: [1, 1, 1, 1, 1, 2],
+    name: '夬',
   },
   {
     binary: '000001',
@@ -391,7 +430,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '金',
     palace: '乾',
     generation: 5,
-    yangCounts: [2, 2, 2, 2, 2, 1],
+    yangs: [2, 2, 2, 2, 2, 1],
+    name: '剥',
   },
   {
     binary: '100001',
@@ -400,7 +440,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '木',
     palace: '巽',
     generation: 6,
-    yangCounts: [1, 2, 2, 2, 2, 1],
+    yangs: [1, 2, 2, 2, 2, 1],
+    name: '颐',
   },
   {
     binary: '010001',
@@ -409,7 +450,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '火',
     palace: '离',
     generation: 4,
-    yangCounts: [2, 1, 2, 2, 2, 1],
+    yangs: [2, 1, 2, 2, 2, 1],
+    name: '蒙',
   },
   {
     binary: '110001',
@@ -418,7 +460,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '土',
     palace: '艮',
     generation: 3,
-    yangCounts: [1, 1, 2, 2, 2, 1],
+    yangs: [1, 1, 2, 2, 2, 1],
+    name: '损',
   },
   {
     binary: '001001',
@@ -427,7 +470,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '土',
     palace: '艮',
     generation: 0,
-    yangCounts: [2, 2, 1, 2, 2, 1],
+    yangs: [2, 2, 1, 2, 2, 1],
+    name: '山',
   },
   {
     binary: '101001',
@@ -436,7 +480,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '土',
     palace: '艮',
     generation: 1,
-    yangCounts: [1, 2, 1, 2, 2, 1],
+    yangs: [1, 2, 1, 2, 2, 1],
+    name: '贲',
   },
   {
     binary: '011001',
@@ -445,7 +490,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '木',
     palace: '巽',
     generation: 7,
-    yangCounts: [2, 1, 1, 2, 2, 1],
+    yangs: [2, 1, 1, 2, 2, 1],
+    name: '蛊',
   },
   {
     binary: '111001',
@@ -454,7 +500,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '土',
     palace: '艮',
     generation: 2,
-    yangCounts: [1, 1, 1, 2, 2, 1],
+    yangs: [1, 1, 1, 2, 2, 1],
+    name: '大畜',
   },
   {
     binary: '000101',
@@ -463,7 +510,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '金',
     palace: '乾',
     generation: 6,
-    yangCounts: [2, 2, 2, 1, 2, 1],
+    yangs: [2, 2, 2, 1, 2, 1],
+    name: '晋',
   },
   {
     binary: '100101',
@@ -472,7 +520,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '木',
     palace: '巽',
     generation: 5,
-    yangCounts: [1, 2, 2, 1, 2, 1],
+    yangs: [1, 2, 2, 1, 2, 1],
+    name: '噬嗑',
   },
   {
     binary: '010101',
@@ -481,7 +530,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '火',
     palace: '离',
     generation: 3,
-    yangCounts: [2, 1, 2, 1, 2, 1],
+    yangs: [2, 1, 2, 1, 2, 1],
+    name: '未济',
   },
   {
     binary: '110101',
@@ -490,7 +540,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '土',
     palace: '艮',
     generation: 4,
-    yangCounts: [1, 1, 2, 1, 2, 1],
+    yangs: [1, 1, 2, 1, 2, 1],
+    name: '睽',
   },
   {
     binary: '001101',
@@ -499,7 +550,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '火',
     palace: '离',
     generation: 1,
-    yangCounts: [2, 2, 1, 1, 2, 1],
+    yangs: [2, 2, 1, 1, 2, 1],
+    name: '旅',
   },
   {
     binary: '101101',
@@ -508,7 +560,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '火',
     palace: '离',
     generation: 0,
-    yangCounts: [1, 2, 1, 1, 2, 1],
+    yangs: [1, 2, 1, 1, 2, 1],
+    name: '火',
   },
   {
     binary: '011101',
@@ -517,7 +570,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '火',
     palace: '离',
     generation: 2,
-    yangCounts: [2, 1, 1, 1, 2, 1],
+    yangs: [2, 1, 1, 1, 2, 1],
+    name: '鼎',
   },
   {
     binary: '111101',
@@ -526,7 +580,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '金',
     palace: '乾',
     generation: 7,
-    yangCounts: [1, 1, 1, 1, 2, 1],
+    yangs: [1, 1, 1, 1, 2, 1],
+    name: '大有',
   },
   {
     binary: '000011',
@@ -535,7 +590,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '金',
     palace: '乾',
     generation: 4,
-    yangCounts: [2, 2, 2, 2, 1, 1],
+    yangs: [2, 2, 2, 2, 1, 1],
+    name: '观',
   },
   {
     binary: '100011',
@@ -544,7 +600,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '木',
     palace: '巽',
     generation: 3,
-    yangCounts: [1, 2, 2, 2, 1, 1],
+    yangs: [1, 2, 2, 2, 1, 1],
+    name: '益',
   },
   {
     binary: '010011',
@@ -553,7 +610,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '火',
     palace: '离',
     generation: 5,
-    yangCounts: [2, 1, 2, 2, 1, 1],
+    yangs: [2, 1, 2, 2, 1, 1],
+    name: '涣',
   },
   {
     binary: '110011',
@@ -562,7 +620,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '土',
     palace: '艮',
     generation: 6,
-    yangCounts: [1, 1, 2, 2, 1, 1],
+    yangs: [1, 1, 2, 2, 1, 1],
+    name: '中孚',
   },
   {
     binary: '001011',
@@ -571,7 +630,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '土',
     palace: '艮',
     generation: 7,
-    yangCounts: [2, 2, 1, 2, 1, 1],
+    yangs: [2, 2, 1, 2, 1, 1],
+    name: '渐',
   },
   {
     binary: '101011',
@@ -580,7 +640,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '木',
     palace: '巽',
     generation: 2,
-    yangCounts: [1, 2, 1, 2, 1, 1],
+    yangs: [1, 2, 1, 2, 1, 1],
+    name: '家人',
   },
   {
     binary: '011011',
@@ -589,7 +650,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '木',
     palace: '巽',
     generation: 0,
-    yangCounts: [2, 1, 1, 2, 1, 1],
+    yangs: [2, 1, 1, 2, 1, 1],
+    name: '风',
   },
   {
     binary: '111011',
@@ -598,7 +660,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '木',
     palace: '巽',
     generation: 1,
-    yangCounts: [1, 1, 1, 2, 1, 1],
+    yangs: [1, 1, 1, 2, 1, 1],
+    name: '小畜',
   },
   {
     binary: '000111',
@@ -607,7 +670,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '金',
     palace: '乾',
     generation: 3,
-    yangCounts: [2, 2, 2, 1, 1, 1],
+    yangs: [2, 2, 2, 1, 1, 1],
+    name: '否',
   },
   {
     binary: '100111',
@@ -616,7 +680,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '木',
     palace: '巽',
     generation: 4,
-    yangCounts: [1, 2, 2, 1, 1, 1],
+    yangs: [1, 2, 2, 1, 1, 1],
+    name: '无妄',
   },
   {
     binary: '010111',
@@ -625,7 +690,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '火',
     palace: '离',
     generation: 6,
-    yangCounts: [2, 1, 2, 1, 1, 1],
+    yangs: [2, 1, 2, 1, 1, 1],
+    name: '讼',
   },
   {
     binary: '110111',
@@ -634,7 +700,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '土',
     palace: '艮',
     generation: 5,
-    yangCounts: [1, 1, 2, 1, 1, 1],
+    yangs: [1, 1, 2, 1, 1, 1],
+    name: '履',
   },
   {
     binary: '001111',
@@ -643,7 +710,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '金',
     palace: '乾',
     generation: 2,
-    yangCounts: [2, 2, 1, 1, 1, 1],
+    yangs: [2, 2, 1, 1, 1, 1],
+    name: '遁',
   },
   {
     binary: '101111',
@@ -652,7 +720,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '火',
     palace: '离',
     generation: 7,
-    yangCounts: [1, 2, 1, 1, 1, 1],
+    yangs: [1, 2, 1, 1, 1, 1],
+    name: '同人',
   },
   {
     binary: '011111',
@@ -661,7 +730,8 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '金',
     palace: '乾',
     generation: 1,
-    yangCounts: [2, 1, 1, 1, 1, 1],
+    yangs: [2, 1, 1, 1, 1, 1],
+    name: '姤',
   },
   {
     binary: '111111',
@@ -670,13 +740,14 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     phase: '金',
     palace: '乾',
     generation: 0,
-    yangCounts: [1, 1, 1, 1, 1, 1],
+    yangs: [1, 1, 1, 1, 1, 1],
+    name: '天',
   },
 ]);
 
 export interface TrigramInfo {
   /**
-   * Presents the trigram as a 3-digit binary string. 1 represents a Yang line and 0 represents a Yin line.
+   * Presents the trigram as a 3-digit binary string. 1 image a Yang line and 0 image a Yin line.
    *
    * For example, "111" for 乾, "100" for 震, etc.
    */
@@ -685,7 +756,7 @@ export interface TrigramInfo {
   /**
    * How many Yang Yaos are in the trigram, such as 0 for 坤, 1 for 震, 2 for 兑, etc.
    */
-  yangCount: 0 | 1 | 2 | 3;
+  yangs: 0 | 1 | 2 | 3;
 
   /**
    * Name of the trigram in Chinese, such as "乾", "坤", "震", etc.
@@ -693,37 +764,102 @@ export interface TrigramInfo {
   id: string;
 
   /**
-   * Name of the trigram in English, such as "Qian", "Kun", "Zhen", etc.
+   * "象", means what the trigram represents in Chinese, such as "天", "地", "水", etc.
    */
-  nameEn: string;
-
-  /**
-   * What the trigram represents in Chinese, such as "天", "地", "水", etc.
-   */
-  represents: string;
-
-  /**
-   * What the trigram represents in English, such as "heaven", "earth", "water", etc.
-   */
-  representsEn: string;
+  image: string;
 
   /**
    * Unicode character representing the trigram, such as "☰" for 乾, "☷" for 坤, etc.
    */
   sign: string;
+
+  /**
+   * Earth Stem and Five Phases when this gram performs a inner gram of a hexagram.
+   * @see 《增删卜易·浑天甲子章》
+   */
+  inner: string[];
+
+  /**
+   * Earth Stem and Five Phases when this gram performs a outer gram of a hexagram.
+   * @see 《增删卜易·浑天甲子章》
+   */
+  outer: string[];
 }
 
-// 老阳：○，老阴：×，少阳：’，少阴：”
 /**
  * List of all trigrams in the I Ching, with their binary representation, number of yang lines, name, what they represent, and their corresponding sign.
  */
 export const TrigramInfoTable: readonly TrigramInfo[] = Object.freeze([
-  { id: '坤', binary: '000', yangCount: 0, represents: '地', nameEn: 'kun', representsEn: 'earth', sign: '☷' },
-  { id: '震', binary: '100', yangCount: 1, represents: '雷', nameEn: 'zhen', representsEn: 'thunder', sign: '☳' },
-  { id: '坎', binary: '010', yangCount: 1, represents: '水', nameEn: 'kan', representsEn: 'water', sign: '☵' },
-  { id: '兑', binary: '110', yangCount: 2, represents: '泽', nameEn: 'dui', representsEn: 'lake', sign: '☱' },
-  { id: '艮', binary: '001', yangCount: 1, represents: '山', nameEn: 'gen', representsEn: 'mountain', sign: '☶' },
-  { id: '离', binary: '101', yangCount: 2, represents: '火', nameEn: 'li', representsEn: 'fire', sign: '☲' },
-  { id: '巽', binary: '011', yangCount: 2, represents: '风', nameEn: 'xun', representsEn: 'wind', sign: '☴' },
-  { id: '乾', binary: '111', yangCount: 3, represents: '天', nameEn: 'qian', representsEn: 'heaven', sign: '☰' },
+  {
+    id: '坤',
+    binary: '000',
+    yangs: 0,
+    image: '地',
+    sign: '☷',
+    inner: ['未土', '巳火', '卯木'],
+    outer: ['丑土', '亥水', '酉金'],
+  },
+  {
+    id: '震',
+    binary: '100',
+    yangs: 1,
+    image: '雷',
+    sign: '☳',
+    inner: ['子水', '寅木', '辰土'],
+    outer: ['午火', '申金', '戌土'],
+  },
+  {
+    id: '坎',
+    binary: '010',
+    yangs: 1,
+    image: '水',
+    sign: '☵',
+    inner: ['寅木', '辰土', '午火'],
+    outer: ['申金', '戌土', '子水'],
+  },
+  {
+    id: '兑',
+    binary: '110',
+    yangs: 2,
+    image: '泽',
+    sign: '☱',
+    inner: ['巳火', '卯木', '丑土'],
+    outer: ['亥水', '酉金', '未土'],
+  },
+  {
+    id: '艮',
+    binary: '001',
+    yangs: 1,
+    image: '山',
+    sign: '☶',
+    inner: ['辰土', '午火', '申金'],
+    outer: ['戌土', '子水', '寅木'],
+  },
+  {
+    id: '离',
+    binary: '101',
+    yangs: 2,
+    image: '火',
+    sign: '☲',
+    inner: ['卯木', '丑土', '亥水'],
+    outer: ['酉金', '未土', '巳火'],
+  },
+  {
+    id: '巽',
+    binary: '011',
+    yangs: 2,
+    image: '风',
+    sign: '☴',
+    inner: ['丑土', '亥水', '酉金'],
+    outer: ['未土', '巳火', '卯木'],
+  },
+  {
+    id: '乾',
+    binary: '111',
+    yangs: 3,
+    image: '天',
+    sign: '☰',
+    inner: ['子水', '寅木', '辰土'],
+    outer: ['午火', '申金', '戌土'],
+  },
 ]);

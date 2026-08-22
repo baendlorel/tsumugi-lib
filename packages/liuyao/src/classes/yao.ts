@@ -7,15 +7,15 @@ const _digits = '0123' as const;
 const _countChange = [1, 1, 2, 2] as const;
 const _countToPolar = [0, 1, 0, 1] as const;
 
-function validYangCount(v: number): asserts v is 0 | 1 | 2 | 3 {
+function validyangs(v: number): asserts v is 0 | 1 | 2 | 3 {
   if (v !== 0 && v !== 1 && v !== 2 && v !== 3) {
     throw new Error('Count of yang must be 0, 1, 2 or 3');
   }
 }
 
 export class Yao {
-  static getName(yangCount: number) {
-    return _names[yangCount];
+  static getName(yangs: number) {
+    return _names[yangs];
   }
 
   /**
@@ -66,23 +66,16 @@ export class Yao {
 
   /**
    * Create a Yao from any Trigram field value.
-   * @param value `{id: '坤', binary: '000', yangCount: 0}`, so `'坤'`, `'000'` and `0` can all be used.
+   * @param value `{id: '坤', binary: '000', yangs: 0}`, so `'坤'`, `'000'` and `0` can all be used.
    */
   static fromTrigramField(value: string | number): Yao | null {
     const trigram = TrigramInfoTable.find(
-      (v) =>
-        v.id === value ||
-        v.yangCount === value ||
-        v.binary === value ||
-        v.nameEn === value ||
-        v.represents === value ||
-        v.representsEn === value ||
-        v.sign === value,
+      (v) => v.id === value || v.yangs === value || v.binary === value || v.sign === value,
     );
-    return trigram ? new Yao(trigram.yangCount) : null;
+    return trigram ? new Yao(trigram.yangs) : null;
   }
 
-  private _yangCount: 0 | 1 | 2 | 3;
+  private _yangs: 0 | 1 | 2 | 3;
 
   /**
    * How many faces of character of 3 coins in this Yao.
@@ -92,8 +85,8 @@ export class Yao {
    * - 2: 少阴 (two coins are Yang, one coin is Yin)
    * - 3: 老阳 (all three coins are Yang)
    */
-  get yangCount() {
-    return this._yangCount;
+  get yangs() {
+    return this._yangs;
   }
 
   /**
@@ -102,7 +95,7 @@ export class Yao {
    * - 1 represents Yang 阳
    */
   get polar(): 0 | 1 {
-    return _countToPolar[this.yangCount];
+    return _countToPolar[this.yangs];
   }
 
   /**
@@ -112,7 +105,7 @@ export class Yao {
    * - 少阳 (1) and 少阴 (2) cannot change, so they are static.
    */
   get isDynamic(): boolean {
-    return this.yangCount === 0 || this.yangCount === 3;
+    return this.yangs === 0 || this.yangs === 3;
   }
 
   /**
@@ -124,45 +117,45 @@ export class Yao {
    * @returns The symbol representing this Yao, which is one of '×', '’', '”', '○'.
    */
   get symbol() {
-    return _symbols[this.yangCount];
+    return _symbols[this.yangs];
   }
 
   get symbolName() {
-    return _symbolNames[this.yangCount];
+    return _symbolNames[this.yangs];
   }
 
   get name() {
-    return _names[this.yangCount];
+    return _names[this.yangs];
   }
 
-  constructor(yangCount: number, isChanged: boolean = false) {
-    validYangCount(yangCount);
-    this._yangCount = yangCount;
+  constructor(yangs: number, isChanged: boolean = false) {
+    validyangs(yangs);
+    this._yangs = yangs;
     this.isChanged = isChanged;
   }
 
   eq(other: Yao): boolean {
-    return this.yangCount === other.yangCount;
+    return this.yangs === other.yangs;
   }
 
   /**
-   * Change `this.yangCount`
+   * Change `this.yangs`
    */
-  set(yangCount: number) {
-    validYangCount(yangCount);
-    this._yangCount = yangCount;
+  set(yangs: number) {
+    validyangs(yangs);
+    this._yangs = yangs;
   }
 
   clone(): Yao {
-    return new Yao(this.yangCount, this.isChanged);
+    return new Yao(this.yangs, this.isChanged);
   }
 
   toChanged(): Yao {
     if (this.isDynamic) {
       // & 这里要注意，Yao的构造函数传入的是阳数量而不是两仪
-      return new Yao(_countChange[this.yangCount], true);
+      return new Yao(_countChange[this.yangs], true);
     } else {
-      return new Yao(this.yangCount, false);
+      return new Yao(this.yangs, false);
     }
   }
 }
