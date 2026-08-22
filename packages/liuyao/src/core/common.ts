@@ -1,48 +1,5 @@
-import type { SetupGramInfo } from './setup-gram.js';
+export const PalaceOrderTable = ['本宫卦', '一世卦', '二世卦', '三世卦', '四世卦', '五世卦', '游魂卦', '归魂卦'];
 
-/*
-䷁,䷖,䷇,䷓,䷏,䷢,䷬,䷋,
-坤,剥,比,观,豫,晋,萃,否,
-
-䷎,䷳,䷦,䷴,䷽,䷷,䷞,䷠,
-谦,艮,蹇,渐,小过,旅,咸,遁,
-
-䷆,䷃,䷜,䷺,䷧,䷿,䷮,䷅,
-师,蒙,坎,涣,解,未济,困,讼,
-
-䷭,䷑,䷯,䷸,䷟,䷱,䷛,䷫,
-升,蛊,井,巽,恒,鼎,大过,姤,
-
-䷗,䷚,䷂,䷩,䷲,䷔,䷐,䷘,
-复,颐,屯,益,震,噬嗑,随,无妄,
-
-䷣,䷕,䷾,䷤,䷶,䷝,䷰,䷌,
-明夷,贲,既济,家人,丰,离,革,同人,
-
-䷒,䷨,䷻,䷼,䷵,䷥,䷹,䷉,
-临,损,节,中孚,归妹,睽,兑,履,
-
-䷊,䷙,䷄,䷈,䷡,䷍,䷪,䷀,
-泰,大畜,需,小畜,大壮,大有,夬,乾
-*/
-
-interface PalaceOrderName {
-  name: string;
-  nameEn: string;
-}
-
-export const PalaceOrderTable: PalaceOrderName[] = [
-  { name: '本宫卦', nameEn: 'Original Palace' },
-  { name: '一世卦', nameEn: 'First Generation' },
-  { name: '二世卦', nameEn: 'Second Generation' },
-  { name: '三世卦', nameEn: 'Third Generation' },
-  { name: '四世卦', nameEn: 'Fourth Generation' },
-  { name: '五世卦', nameEn: 'Fifth Generation' },
-  { name: '游魂卦', nameEn: 'Wandering Soul' },
-  { name: '归魂卦', nameEn: 'Returning Soul' },
-];
-
-// EPIC 我真服了，原来还有浑天甲子装挂法
 export interface HexagramInfo {
   /**
    * Binary representation of the hexagram, where 0 image a yin line and 1 image a yang line. The lines are ordered from the bottom (first line) to the top (sixth line).
@@ -102,7 +59,7 @@ export interface HexagramInfo {
   generation: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 }
 
-export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
+export const HexagramInfoTable: readonly HexagramInfo[] = [
   {
     binary: '000000',
     id: '坤为地',
@@ -743,7 +700,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     yangs: [1, 1, 1, 1, 1, 1],
     name: '天',
   },
-]);
+];
 
 export interface TrigramInfo {
   /**
@@ -789,7 +746,7 @@ export interface TrigramInfo {
 /**
  * List of all trigrams in the I Ching, with their binary representation, number of yang lines, name, what they represent, and their corresponding sign.
  */
-export const TrigramInfoTable: readonly TrigramInfo[] = Object.freeze([
+export const TrigramInfoTable: readonly TrigramInfo[] = [
   {
     id: '坤',
     binary: '000',
@@ -862,4 +819,8 @@ export const TrigramInfoTable: readonly TrigramInfo[] = Object.freeze([
     inner: ['子水', '寅木', '辰土'],
     outer: ['午火', '申金', '戌土'],
   },
-]);
+];
+
+Object.freeze(PalaceOrderTable);
+Object.freeze(HexagramInfoTable);
+Object.freeze(TrigramInfoTable);
