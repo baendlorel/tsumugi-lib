@@ -1,5 +1,6 @@
-import { Hexagram, type AIReadableInfo } from '../classes/hexagram.js';
+import { Hexagram } from '../classes/hexagram.js';
 import { Yao } from '../classes/yao.js';
+import { toAIReadableJSON } from '../core/ai.js';
 
 /**
  * Convert 本卦 and 变卦 to AI readable json
@@ -7,7 +8,7 @@ import { Yao } from '../classes/yao.js';
  * @param bian 变卦 like 天雷无妄
  * @returns AI readable json
  */
-export function resolveHexagram(ben: string, bian: string): AIReadableInfo {
+export function resolveHexagram(ben: string, bian: string) {
   const h1 = Hexagram.fromId(ben);
   const h2 = Hexagram.fromId(bian);
 
@@ -35,10 +36,12 @@ export function resolveHexagram(ben: string, bian: string): AIReadableInfo {
     throw new Error(`Invalid 变卦: ${bian}, it is not a valid change from 本卦: ${ben}`);
   });
 
-  return new Hexagram(yaos).toAIReadable();
+  return new Hexagram(yaos);
 }
 
 const [, , ben, bian] = process.argv;
 if (ben && bian) {
-  console.log(JSON.stringify(resolveHexagram(ben, bian), null, 2));
+  const gram = resolveHexagram(ben, bian);
+  const json = toAIReadableJSON(gram);
+  console.log(JSON.stringify({ yaos: gram.yangs.join(''), ...json }, null, 2));
 }

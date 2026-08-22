@@ -157,7 +157,7 @@ export class Hexagram implements HexagramInfo {
     // properties from HexagramInfo
     this.id = info.id;
     this.generation = info.generation;
-    this.yangs = [...info.yangs];
+    this.yangs = this.yaos.map((v) => v.yangs);
     this.phase = info.phase;
     this.name = info.name;
     this.sign = info.sign;
