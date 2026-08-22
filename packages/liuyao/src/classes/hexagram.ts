@@ -76,7 +76,7 @@ export class Hexagram {
 
   get palace(): string {
     const i = this.info;
-    return `${i.palace}宫（${i.phase}）${PalaceOrderTable[i.palaceIndex].name}`;
+    return `${i.palace}宫（${i.phase}）${PalaceOrderTable[i.generation].name}`;
   }
 
   /**

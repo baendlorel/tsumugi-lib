@@ -1,6 +1,8 @@
 /**
  * Kins and their corresponding earthly branches in the Liu Yao divination system, along with the type of relation (世 or 应).
  * This information is crucial for interpreting the hexagrams and their changing lines in the context of a divination reading.
+ *
+ * @deprecated This is for beginners.
  */
 export interface SetupGramInfo {
   /**
@@ -85,4 +87,46 @@ export interface SetupGramInfo {
    * ```
    */
   hostGuest?: '世' | '应';
+}
+
+export const enum GramType {
+  /** 内卦 */
+  Inner,
+  /** 外卦 */
+  Outer,
+}
+
+`
+乾在内卦，子水、寅木、辰土；乾在外卦，午火、申金、戌土。
+坎在内卦，寅木、辰土、午火；坎在外卦，申金、戌土、子水。
+艮在内卦，辰土、午火、申金；艮在外卦，戌土、子水、寅木。
+震在内卦，子水、寅木、辰土；震在外卦，午火、申金、戌土。
+巽在内卦，丑土、亥水、酉金；巽在外卦，未土、巳火、卯木。
+离在内卦，卯木、丑土、亥水；离在外卦，酉金、未土、巳火。
+坤在内卦，未土、巳火、卯木；坤在外卦，丑土、亥水、酉金。
+兑在内卦，巳火、卯木、丑土，兑在外卦，亥水、酉金、未土。
+`;
+
+/**
+ * @see 《增删卜易·浑天甲子章》
+ */
+export function setupStemAndPhase(name: string, type: GramType) {
+  switch (name) {
+    case '乾':
+      return type === GramType.Inner ? ['子水', '寅木', '辰土'] : ['午火', '申金', '戌土'];
+    case '坎':
+      return type === GramType.Inner ? ['寅木', '辰土', '午火'] : ['申金', '戌土', '子水'];
+    case '艮':
+      return type === GramType.Inner ? ['辰土', '午火', '申金'] : ['戌土', '子水', '寅木'];
+    case '震':
+      return type === GramType.Inner ? ['子水', '寅木', '辰土'] : ['午火', '申金', '戌土'];
+    case '巽':
+      return type === GramType.Inner ? ['丑土', '亥水', '酉金'] : ['未土', '巳火', '卯木'];
+    case '离':
+      return type === GramType.Inner ? ['卯木', '丑土', '亥水'] : ['酉金', '未土', '巳火'];
+    case '坤':
+      return type === GramType.Inner ? ['未土', '巳火', '卯木'] : ['丑土', '亥水', '酉金'];
+    case '兑':
+      return type === GramType.Inner ? ['巳火', '卯木', '丑土'] : ['亥水', '酉金', '未土'];
+  }
 }

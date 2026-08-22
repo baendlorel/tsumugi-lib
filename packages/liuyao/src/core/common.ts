@@ -92,14 +92,7 @@ export interface HexagramInfo {
    * - 游魂卦 Wandering Soul, restores 4th yao of Fifth Generation
    * - 归魂卦 Returning Soul, restores lower 3 yaos of Fifth Generation
    */
-  palaceIndex: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
-
-  /**
-   * Setup information of the hexagram. Includes Host-Guest（世应） and Six Kins (六亲) for each of the six lines. This information is crucial for interpreting the hexagrams and their changing lines in the context of a divination reading.
-   *
-   * Host（世）is the augur and Guest（应） is the person or things which to ask about.
-   */
-  setupInfo: [SetupGramInfo, SetupGramInfo, SetupGramInfo, SetupGramInfo, SetupGramInfo, SetupGramInfo];
+  generation: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 }
 
 export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
@@ -109,29 +102,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷁',
     phase: '土',
     palace: '坤',
-    palaceIndex: 0,
-    setupInfo: [
-      {
-        kin: '兄弟未土',
-      },
-      {
-        kin: '父母巳火',
-      },
-      {
-        kin: '官鬼卯木',
-        hostGuest: '应',
-      },
-      {
-        kin: '兄弟丑土',
-      },
-      {
-        kin: '妻财亥水',
-      },
-      {
-        kin: '子孙酉金',
-        hostGuest: '世',
-      },
-    ],
+    generation: 0,
     yangCounts: [2, 2, 2, 2, 2, 2],
   },
   {
@@ -140,29 +111,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷗',
     phase: '土',
     palace: '坤',
-    palaceIndex: 1,
-    setupInfo: [
-      {
-        kin: '妻财子水',
-        hostGuest: '世',
-      },
-      {
-        kin: '官鬼寅木',
-      },
-      {
-        kin: '兄弟辰土',
-      },
-      {
-        kin: '兄弟丑土',
-        hostGuest: '应',
-      },
-      {
-        kin: '妻财亥水',
-      },
-      {
-        kin: '子孙酉金',
-      },
-    ],
+    generation: 1,
     yangCounts: [1, 2, 2, 2, 2, 2],
   },
   {
@@ -171,29 +120,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷆',
     phase: '水',
     palace: '坎',
-    palaceIndex: 7,
-    setupInfo: [
-      {
-        kin: '子孙寅木',
-      },
-      {
-        kin: '官鬼辰土',
-      },
-      {
-        kin: '妻财午火',
-        hostGuest: '世',
-      },
-      {
-        kin: '官鬼丑土',
-      },
-      {
-        kin: '兄弟亥水',
-      },
-      {
-        kin: '父母酉金',
-        hostGuest: '应',
-      },
-    ],
+    generation: 7,
     yangCounts: [2, 1, 2, 2, 2, 2],
   },
   {
@@ -202,29 +129,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷒',
     phase: '土',
     palace: '坤',
-    palaceIndex: 2,
-    setupInfo: [
-      {
-        kin: '父母巳火',
-      },
-      {
-        kin: '官鬼卯木',
-        hostGuest: '世',
-      },
-      {
-        kin: '兄弟丑土',
-      },
-      {
-        kin: '兄弟丑土',
-      },
-      {
-        kin: '妻财亥水',
-        hostGuest: '应',
-      },
-      {
-        kin: '子孙酉金',
-      },
-    ],
+    generation: 2,
     yangCounts: [1, 1, 2, 2, 2, 2],
   },
   {
@@ -233,29 +138,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷎',
     phase: '土',
     palace: '兑',
-    palaceIndex: 5,
-    setupInfo: [
-      {
-        kin: '父母辰土',
-      },
-      {
-        kin: '官鬼午火',
-        hostGuest: '应',
-      },
-      {
-        kin: '兄弟申金',
-      },
-      {
-        kin: '父母丑土',
-      },
-      {
-        kin: '子孙亥水',
-        hostGuest: '世',
-      },
-      {
-        kin: '兄弟酉金',
-      },
-    ],
+    generation: 5,
     yangCounts: [2, 2, 1, 2, 2, 2],
   },
   {
@@ -264,29 +147,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷣',
     phase: '水',
     palace: '坎',
-    palaceIndex: 6,
-    setupInfo: [
-      {
-        kin: '子孙卯木',
-        hostGuest: '应',
-      },
-      {
-        kin: '官鬼丑土',
-      },
-      {
-        kin: '兄弟亥水',
-      },
-      {
-        kin: '官鬼丑土',
-        hostGuest: '世',
-      },
-      {
-        kin: '兄弟亥水',
-      },
-      {
-        kin: '父母酉金',
-      },
-    ],
+    generation: 6,
     yangCounts: [1, 2, 1, 2, 2, 2],
   },
   {
@@ -295,29 +156,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷭',
     phase: '木',
     palace: '震',
-    palaceIndex: 4,
-    setupInfo: [
-      {
-        kin: '妻财丑土',
-        hostGuest: '应',
-      },
-      {
-        kin: '父母亥水',
-      },
-      {
-        kin: '官鬼酉金',
-      },
-      {
-        kin: '妻财丑土',
-        hostGuest: '世',
-      },
-      {
-        kin: '父母亥水',
-      },
-      {
-        kin: '官鬼酉金',
-      },
-    ],
+    generation: 4,
     yangCounts: [2, 1, 1, 2, 2, 2],
   },
   {
@@ -326,29 +165,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷊',
     phase: '土',
     palace: '坤',
-    palaceIndex: 3,
-    setupInfo: [
-      {
-        kin: '妻财子水',
-      },
-      {
-        kin: '官鬼寅木',
-      },
-      {
-        kin: '兄弟辰土',
-        hostGuest: '世',
-      },
-      {
-        kin: '兄弟丑土',
-      },
-      {
-        kin: '妻财亥水',
-      },
-      {
-        kin: '子孙酉金',
-        hostGuest: '应',
-      },
-    ],
+    generation: 3,
     yangCounts: [1, 1, 1, 2, 2, 2],
   },
   {
@@ -357,29 +174,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷏',
     phase: '木',
     palace: '震',
-    palaceIndex: 1,
-    setupInfo: [
-      {
-        kin: '妻财未土',
-        hostGuest: '世',
-      },
-      {
-        kin: '子孙巳火',
-      },
-      {
-        kin: '兄弟卯木',
-      },
-      {
-        kin: '子孙午火',
-        hostGuest: '应',
-      },
-      {
-        kin: '官鬼申金',
-      },
-      {
-        kin: '妻财戌土',
-      },
-    ],
+    generation: 1,
     yangCounts: [2, 2, 2, 1, 2, 2],
   },
   {
@@ -388,29 +183,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷲',
     phase: '木',
     palace: '震',
-    palaceIndex: 0,
-    setupInfo: [
-      {
-        kin: '父母子水',
-      },
-      {
-        kin: '兄弟寅木',
-      },
-      {
-        kin: '妻财辰土',
-        hostGuest: '应',
-      },
-      {
-        kin: '子孙午火',
-      },
-      {
-        kin: '官鬼申金',
-      },
-      {
-        kin: '妻财戌土',
-        hostGuest: '世',
-      },
-    ],
+    generation: 0,
     yangCounts: [1, 2, 2, 1, 2, 2],
   },
   {
@@ -419,29 +192,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷧',
     phase: '木',
     palace: '震',
-    palaceIndex: 2,
-    setupInfo: [
-      {
-        kin: '兄弟寅木',
-      },
-      {
-        kin: '妻财辰土',
-        hostGuest: '世',
-      },
-      {
-        kin: '子孙午火',
-      },
-      {
-        kin: '子孙午火',
-      },
-      {
-        kin: '官鬼申金',
-        hostGuest: '应',
-      },
-      {
-        kin: '妻财戌土',
-      },
-    ],
+    generation: 2,
     yangCounts: [2, 1, 2, 1, 2, 2],
   },
   {
@@ -450,29 +201,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷵',
     phase: '金',
     palace: '兑',
-    palaceIndex: 7,
-    setupInfo: [
-      {
-        kin: '官鬼巳火',
-      },
-      {
-        kin: '妻财卯木',
-      },
-      {
-        kin: '父母丑土',
-        hostGuest: '世',
-      },
-      {
-        kin: '官鬼午火',
-      },
-      {
-        kin: '兄弟申金',
-      },
-      {
-        kin: '父母戌土',
-        hostGuest: '应',
-      },
-    ],
+    generation: 7,
     yangCounts: [1, 1, 2, 1, 2, 2],
   },
   {
@@ -481,29 +210,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷽',
     phase: '金',
     palace: '兑',
-    palaceIndex: 6,
-    setupInfo: [
-      {
-        kin: '父母辰土',
-        hostGuest: '应',
-      },
-      {
-        kin: '官鬼午火',
-      },
-      {
-        kin: '兄弟申金',
-      },
-      {
-        kin: '官鬼午火',
-        hostGuest: '世',
-      },
-      {
-        kin: '兄弟申金',
-      },
-      {
-        kin: '父母戌土',
-      },
-    ],
+    generation: 6,
     yangCounts: [2, 2, 1, 1, 2, 2],
   },
   {
@@ -512,29 +219,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷶',
     phase: '水',
     palace: '坎',
-    palaceIndex: 5,
-    setupInfo: [
-      {
-        kin: '子孙卯木',
-      },
-      {
-        kin: '官鬼丑土',
-        hostGuest: '应',
-      },
-      {
-        kin: '兄弟亥水',
-      },
-      {
-        kin: '妻财午火',
-      },
-      {
-        kin: '父母申金',
-        hostGuest: '世',
-      },
-      {
-        kin: '官鬼戌土',
-      },
-    ],
+    generation: 5,
     yangCounts: [1, 2, 1, 1, 2, 2],
   },
   {
@@ -543,29 +228,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷟',
     phase: '木',
     palace: '震',
-    palaceIndex: 3,
-    setupInfo: [
-      {
-        kin: '妻财丑土',
-      },
-      {
-        kin: '父母亥水',
-      },
-      {
-        kin: '官鬼酉金',
-        hostGuest: '世',
-      },
-      {
-        kin: '子孙午火',
-      },
-      {
-        kin: '官鬼申金',
-      },
-      {
-        kin: '妻财戌土',
-        hostGuest: '应',
-      },
-    ],
+    generation: 3,
     yangCounts: [2, 1, 1, 1, 2, 2],
   },
   {
@@ -574,29 +237,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷡',
     phase: '土',
     palace: '坤',
-    palaceIndex: 4,
-    setupInfo: [
-      {
-        kin: '妻财子水',
-        hostGuest: '应',
-      },
-      {
-        kin: '官鬼寅木',
-      },
-      {
-        kin: '兄弟辰土',
-      },
-      {
-        kin: '父母午火',
-        hostGuest: '世',
-      },
-      {
-        kin: '子孙申金',
-      },
-      {
-        kin: '兄弟戌土',
-      },
-    ],
+    generation: 4,
     yangCounts: [1, 1, 1, 1, 2, 2],
   },
   {
@@ -605,29 +246,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷇',
     phase: '土',
     palace: '坤',
-    palaceIndex: 7,
-    setupInfo: [
-      {
-        kin: '兄弟未土',
-      },
-      {
-        kin: '父母巳火',
-      },
-      {
-        kin: '官鬼卯木',
-        hostGuest: '世',
-      },
-      {
-        kin: '子孙申金',
-      },
-      {
-        kin: '兄弟戌土',
-      },
-      {
-        kin: '妻财子水',
-        hostGuest: '应',
-      },
-    ],
+    generation: 7,
     yangCounts: [2, 2, 2, 2, 1, 2],
   },
   {
@@ -636,29 +255,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷂',
     phase: '水',
     palace: '坎',
-    palaceIndex: 2,
-    setupInfo: [
-      {
-        kin: '兄弟子水',
-      },
-      {
-        kin: '子孙寅木',
-        hostGuest: '世',
-      },
-      {
-        kin: '官鬼辰土',
-      },
-      {
-        kin: '父母申金',
-      },
-      {
-        kin: '官鬼戌土',
-        hostGuest: '应',
-      },
-      {
-        kin: '兄弟子水',
-      },
-    ],
+    generation: 2,
     yangCounts: [1, 2, 2, 2, 1, 2],
   },
   {
@@ -667,29 +264,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷜',
     phase: '水',
     palace: '坎',
-    palaceIndex: 0,
-    setupInfo: [
-      {
-        kin: '子孙寅木',
-      },
-      {
-        kin: '官鬼辰土',
-      },
-      {
-        kin: '妻财午火',
-        hostGuest: '应',
-      },
-      {
-        kin: '父母申金',
-      },
-      {
-        kin: '官鬼戌土',
-      },
-      {
-        kin: '兄弟子水',
-        hostGuest: '世',
-      },
-    ],
+    generation: 0,
     yangCounts: [2, 1, 2, 2, 1, 2],
   },
   {
@@ -698,29 +273,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷻',
     phase: '水',
     palace: '坎',
-    palaceIndex: 1,
-    setupInfo: [
-      {
-        kin: '妻财巳火',
-        hostGuest: '世',
-      },
-      {
-        kin: '子孙卯木',
-      },
-      {
-        kin: '官鬼丑土',
-      },
-      {
-        kin: '父母申金',
-        hostGuest: '应',
-      },
-      {
-        kin: '官鬼戌土',
-      },
-      {
-        kin: '兄弟子水',
-      },
-    ],
+    generation: 1,
     yangCounts: [1, 1, 2, 2, 1, 2],
   },
   {
@@ -729,29 +282,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷦',
     phase: '金',
     palace: '兑',
-    palaceIndex: 4,
-    setupInfo: [
-      {
-        kin: '父母辰土',
-        hostGuest: '应',
-      },
-      {
-        kin: '官鬼午火',
-      },
-      {
-        kin: '兄弟申金',
-      },
-      {
-        kin: '兄弟申金',
-        hostGuest: '世',
-      },
-      {
-        kin: '父母戌土',
-      },
-      {
-        kin: '子孙子水',
-      },
-    ],
+    generation: 4,
     yangCounts: [2, 2, 1, 2, 1, 2],
   },
   {
@@ -760,29 +291,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷾',
     phase: '水',
     palace: '坎',
-    palaceIndex: 3,
-    setupInfo: [
-      {
-        kin: '子孙卯木',
-      },
-      {
-        kin: '官鬼丑土',
-      },
-      {
-        kin: '兄弟亥水',
-        hostGuest: '世',
-      },
-      {
-        kin: '父母申金',
-      },
-      {
-        kin: '官鬼戌土',
-      },
-      {
-        kin: '兄弟子水',
-        hostGuest: '应',
-      },
-    ],
+    generation: 3,
     yangCounts: [1, 2, 1, 2, 1, 2],
   },
   {
@@ -791,29 +300,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷯',
     phase: '木',
     palace: '震',
-    palaceIndex: 5,
-    setupInfo: [
-      {
-        kin: '妻财丑土',
-      },
-      {
-        kin: '父母亥水',
-        hostGuest: '应',
-      },
-      {
-        kin: '官鬼酉金',
-      },
-      {
-        kin: '官鬼申金',
-      },
-      {
-        kin: '妻财戌土',
-        hostGuest: '世',
-      },
-      {
-        kin: '父母子水',
-      },
-    ],
+    generation: 5,
     yangCounts: [2, 1, 1, 2, 1, 2],
   },
   {
@@ -822,29 +309,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷄',
     phase: '土',
     palace: '坤',
-    palaceIndex: 6,
-    setupInfo: [
-      {
-        kin: '妻财子水',
-        hostGuest: '应',
-      },
-      {
-        kin: '官鬼寅木',
-      },
-      {
-        kin: '兄弟辰土',
-      },
-      {
-        kin: '子孙申金',
-        hostGuest: '世',
-      },
-      {
-        kin: '兄弟戌土',
-      },
-      {
-        kin: '妻财子水',
-      },
-    ],
+    generation: 6,
     yangCounts: [1, 1, 1, 2, 1, 2],
   },
   {
@@ -853,29 +318,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷬',
     phase: '金',
     palace: '兑',
-    palaceIndex: 2,
-    setupInfo: [
-      {
-        kin: '父母未土',
-      },
-      {
-        kin: '官鬼巳火',
-        hostGuest: '世',
-      },
-      {
-        kin: '妻财卯木',
-      },
-      {
-        kin: '子孙亥水',
-      },
-      {
-        kin: '兄弟酉金',
-        hostGuest: '应',
-      },
-      {
-        kin: '父母未土',
-      },
-    ],
+    generation: 2,
     yangCounts: [2, 2, 2, 1, 1, 2],
   },
   {
@@ -884,29 +327,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷐',
     phase: '木',
     palace: '震',
-    palaceIndex: 7,
-    setupInfo: [
-      {
-        kin: '父母子水',
-      },
-      {
-        kin: '兄弟寅木',
-      },
-      {
-        kin: '妻财辰土',
-        hostGuest: '世',
-      },
-      {
-        kin: '父母亥水',
-      },
-      {
-        kin: '官鬼酉金',
-      },
-      {
-        kin: '妻财未土',
-        hostGuest: '应',
-      },
-    ],
+    generation: 7,
     yangCounts: [1, 2, 2, 1, 1, 2],
   },
   {
@@ -915,29 +336,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷮',
     phase: '金',
     palace: '兑',
-    palaceIndex: 1,
-    setupInfo: [
-      {
-        kin: '妻财卯木',
-        hostGuest: '世',
-      },
-      {
-        kin: '父母辰土',
-      },
-      {
-        kin: '官鬼午火',
-      },
-      {
-        kin: '子孙亥水',
-        hostGuest: '应',
-      },
-      {
-        kin: '兄弟酉金',
-      },
-      {
-        kin: '父母未土',
-      },
-    ],
+    generation: 1,
     yangCounts: [2, 1, 2, 1, 1, 2],
   },
   {
@@ -946,29 +345,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷹',
     phase: '金',
     palace: '兑',
-    palaceIndex: 0,
-    setupInfo: [
-      {
-        kin: '官鬼巳火',
-      },
-      {
-        kin: '妻财卯木',
-      },
-      {
-        kin: '父母丑土',
-        hostGuest: '应',
-      },
-      {
-        kin: '子孙亥水',
-      },
-      {
-        kin: '兄弟酉金',
-      },
-      {
-        kin: '父母未土',
-        hostGuest: '世',
-      },
-    ],
+    generation: 0,
     yangCounts: [1, 1, 2, 1, 1, 2],
   },
   {
@@ -977,29 +354,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷞',
     phase: '金',
     palace: '兑',
-    palaceIndex: 3,
-    setupInfo: [
-      {
-        kin: '父母辰土',
-      },
-      {
-        kin: '官鬼午火',
-      },
-      {
-        kin: '兄弟申金',
-        hostGuest: '世',
-      },
-      {
-        kin: '子孙亥水',
-      },
-      {
-        kin: '兄弟酉金',
-      },
-      {
-        kin: '父母未土',
-        hostGuest: '应',
-      },
-    ],
+    generation: 3,
     yangCounts: [2, 2, 1, 1, 1, 2],
   },
   {
@@ -1008,29 +363,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷰',
     phase: '水',
     palace: '坎',
-    palaceIndex: 4,
-    setupInfo: [
-      {
-        kin: '子孙卯木',
-        hostGuest: '应',
-      },
-      {
-        kin: '官鬼丑土',
-      },
-      {
-        kin: '兄弟亥水',
-      },
-      {
-        kin: '兄弟亥水',
-        hostGuest: '世',
-      },
-      {
-        kin: '父母酉金',
-      },
-      {
-        kin: '官鬼未土',
-      },
-    ],
+    generation: 4,
     yangCounts: [1, 2, 1, 1, 1, 2],
   },
   {
@@ -1039,29 +372,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷛',
     phase: '木',
     palace: '震',
-    palaceIndex: 6,
-    setupInfo: [
-      {
-        kin: '妻财丑土',
-        hostGuest: '应',
-      },
-      {
-        kin: '父母亥水',
-      },
-      {
-        kin: '官鬼酉金',
-      },
-      {
-        kin: '父母亥水',
-        hostGuest: '世',
-      },
-      {
-        kin: '官鬼酉金',
-      },
-      {
-        kin: '妻财未土',
-      },
-    ],
+    generation: 6,
     yangCounts: [2, 1, 1, 1, 1, 2],
   },
   {
@@ -1070,29 +381,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷪',
     phase: '土',
     palace: '坤',
-    palaceIndex: 5,
-    setupInfo: [
-      {
-        kin: '妻财子水',
-      },
-      {
-        kin: '官鬼寅木',
-        hostGuest: '应',
-      },
-      {
-        kin: '兄弟辰土',
-      },
-      {
-        kin: '妻财亥水',
-      },
-      {
-        kin: '子孙酉金',
-        hostGuest: '世',
-      },
-      {
-        kin: '兄弟未土',
-      },
-    ],
+    generation: 5,
     yangCounts: [1, 1, 1, 1, 1, 2],
   },
   {
@@ -1101,29 +390,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷖',
     phase: '金',
     palace: '乾',
-    palaceIndex: 5,
-    setupInfo: [
-      {
-        kin: '父母未土',
-      },
-      {
-        kin: '官鬼巳火',
-        hostGuest: '应',
-      },
-      {
-        kin: '妻财卯木',
-      },
-      {
-        kin: '父母戌土',
-      },
-      {
-        kin: '子孙子水',
-        hostGuest: '世',
-      },
-      {
-        kin: '妻财卯木',
-      },
-    ],
+    generation: 5,
     yangCounts: [2, 2, 2, 2, 2, 1],
   },
   {
@@ -1132,29 +399,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷚',
     phase: '木',
     palace: '巽',
-    palaceIndex: 6,
-    setupInfo: [
-      {
-        kin: '父母子水',
-        hostGuest: '应',
-      },
-      {
-        kin: '兄弟寅木',
-      },
-      {
-        kin: '妻财辰土',
-      },
-      {
-        kin: '妻财戌土',
-        hostGuest: '世',
-      },
-      {
-        kin: '父母子水',
-      },
-      {
-        kin: '兄弟寅木',
-      },
-    ],
+    generation: 6,
     yangCounts: [1, 2, 2, 2, 2, 1],
   },
   {
@@ -1163,29 +408,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷃',
     phase: '火',
     palace: '离',
-    palaceIndex: 4,
-    setupInfo: [
-      {
-        kin: '父母寅木',
-        hostGuest: '应',
-      },
-      {
-        kin: '子孙辰土',
-      },
-      {
-        kin: '兄弟午火',
-      },
-      {
-        kin: '子孙戌土',
-        hostGuest: '世',
-      },
-      {
-        kin: '官鬼子水',
-      },
-      {
-        kin: '父母寅木',
-      },
-    ],
+    generation: 4,
     yangCounts: [2, 1, 2, 2, 2, 1],
   },
   {
@@ -1194,29 +417,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷨',
     phase: '土',
     palace: '艮',
-    palaceIndex: 3,
-    setupInfo: [
-      {
-        kin: '父母巳火',
-      },
-      {
-        kin: '官鬼卯木',
-      },
-      {
-        kin: '兄弟丑土',
-        hostGuest: '世',
-      },
-      {
-        kin: '兄弟戌土',
-      },
-      {
-        kin: '妻财子水',
-      },
-      {
-        kin: '官鬼寅木',
-        hostGuest: '应',
-      },
-    ],
+    generation: 3,
     yangCounts: [1, 1, 2, 2, 2, 1],
   },
   {
@@ -1225,29 +426,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷳',
     phase: '土',
     palace: '艮',
-    palaceIndex: 0,
-    setupInfo: [
-      {
-        kin: '兄弟辰土',
-      },
-      {
-        kin: '父母午火',
-      },
-      {
-        kin: '子孙申金',
-        hostGuest: '应',
-      },
-      {
-        kin: '兄弟戌土',
-      },
-      {
-        kin: '妻财子水',
-      },
-      {
-        kin: '官鬼寅木',
-        hostGuest: '世',
-      },
-    ],
+    generation: 0,
     yangCounts: [2, 2, 1, 2, 2, 1],
   },
   {
@@ -1256,29 +435,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷕',
     phase: '土',
     palace: '艮',
-    palaceIndex: 1,
-    setupInfo: [
-      {
-        kin: '官鬼卯木',
-        hostGuest: '世',
-      },
-      {
-        kin: '兄弟丑土',
-      },
-      {
-        kin: '妻财亥水',
-      },
-      {
-        kin: '兄弟戌土',
-        hostGuest: '应',
-      },
-      {
-        kin: '妻财子水',
-      },
-      {
-        kin: '官鬼寅木',
-      },
-    ],
+    generation: 1,
     yangCounts: [1, 2, 1, 2, 2, 1],
   },
   {
@@ -1287,29 +444,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷑',
     phase: '木',
     palace: '巽',
-    palaceIndex: 7,
-    setupInfo: [
-      {
-        kin: '妻财丑土',
-      },
-      {
-        kin: '父母亥水',
-      },
-      {
-        kin: '官鬼酉金',
-        hostGuest: '世',
-      },
-      {
-        kin: '妻财戌土',
-      },
-      {
-        kin: '父母子水',
-      },
-      {
-        kin: '兄弟寅木',
-        hostGuest: '应',
-      },
-    ],
+    generation: 7,
     yangCounts: [2, 1, 1, 2, 2, 1],
   },
   {
@@ -1318,29 +453,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷙',
     phase: '土',
     palace: '艮',
-    palaceIndex: 2,
-    setupInfo: [
-      {
-        kin: '妻财子水',
-      },
-      {
-        kin: '官鬼寅木',
-        hostGuest: '世',
-      },
-      {
-        kin: '兄弟辰土',
-      },
-      {
-        kin: '兄弟戌土',
-      },
-      {
-        kin: '妻财子水',
-        hostGuest: '应',
-      },
-      {
-        kin: '官鬼寅木',
-      },
-    ],
+    generation: 2,
     yangCounts: [1, 1, 1, 2, 2, 1],
   },
   {
@@ -1349,29 +462,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷢',
     phase: '金',
     palace: '乾',
-    palaceIndex: 6,
-    setupInfo: [
-      {
-        kin: '父母未土',
-        hostGuest: '应',
-      },
-      {
-        kin: '官鬼巳火',
-      },
-      {
-        kin: '妻财卯木',
-      },
-      {
-        kin: '兄弟酉金',
-        hostGuest: '世',
-      },
-      {
-        kin: '父母未土',
-      },
-      {
-        kin: '官鬼巳火',
-      },
-    ],
+    generation: 6,
     yangCounts: [2, 2, 2, 1, 2, 1],
   },
   {
@@ -1380,29 +471,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷔',
     phase: '木',
     palace: '巽',
-    palaceIndex: 5,
-    setupInfo: [
-      {
-        kin: '父母子水',
-      },
-      {
-        kin: '兄弟寅木',
-        hostGuest: '应',
-      },
-      {
-        kin: '妻财辰土',
-      },
-      {
-        kin: '官鬼酉金',
-      },
-      {
-        kin: '妻财未土',
-        hostGuest: '世',
-      },
-      {
-        kin: '子孙巳火',
-      },
-    ],
+    generation: 5,
     yangCounts: [1, 2, 2, 1, 2, 1],
   },
   {
@@ -1411,29 +480,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷿',
     phase: '火',
     palace: '离',
-    palaceIndex: 3,
-    setupInfo: [
-      {
-        kin: '父母寅木',
-      },
-      {
-        kin: '子孙辰土',
-      },
-      {
-        kin: '兄弟午火',
-        hostGuest: '世',
-      },
-      {
-        kin: '妻财酉金',
-      },
-      {
-        kin: '子孙未土',
-      },
-      {
-        kin: '兄弟巳火',
-        hostGuest: '应',
-      },
-    ],
+    generation: 3,
     yangCounts: [2, 1, 2, 1, 2, 1],
   },
   {
@@ -1442,29 +489,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷥',
     phase: '土',
     palace: '艮',
-    palaceIndex: 4,
-    setupInfo: [
-      {
-        kin: '父母巳火',
-        hostGuest: '应',
-      },
-      {
-        kin: '官鬼卯木',
-      },
-      {
-        kin: '兄弟丑土',
-      },
-      {
-        kin: '子孙酉金',
-        hostGuest: '世',
-      },
-      {
-        kin: '兄弟未土',
-      },
-      {
-        kin: '父母巳火',
-      },
-    ],
+    generation: 4,
     yangCounts: [1, 1, 2, 1, 2, 1],
   },
   {
@@ -1473,29 +498,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷷',
     phase: '火',
     palace: '离',
-    palaceIndex: 1,
-    setupInfo: [
-      {
-        kin: '子孙辰土',
-        hostGuest: '世',
-      },
-      {
-        kin: '兄弟午火',
-      },
-      {
-        kin: '妻财申金',
-      },
-      {
-        kin: '妻财酉金',
-        hostGuest: '应',
-      },
-      {
-        kin: '子孙未土',
-      },
-      {
-        kin: '兄弟巳火',
-      },
-    ],
+    generation: 1,
     yangCounts: [2, 2, 1, 1, 2, 1],
   },
   {
@@ -1504,29 +507,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷝',
     phase: '火',
     palace: '离',
-    palaceIndex: 0,
-    setupInfo: [
-      {
-        kin: '父母卯木',
-      },
-      {
-        kin: '子孙丑土',
-      },
-      {
-        kin: '官鬼亥水',
-        hostGuest: '应',
-      },
-      {
-        kin: '妻财酉金',
-      },
-      {
-        kin: '子孙未土',
-      },
-      {
-        kin: '兄弟巳火',
-        hostGuest: '世',
-      },
-    ],
+    generation: 0,
     yangCounts: [1, 2, 1, 1, 2, 1],
   },
   {
@@ -1535,29 +516,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷱',
     phase: '火',
     palace: '离',
-    palaceIndex: 2,
-    setupInfo: [
-      {
-        kin: '子孙丑土',
-      },
-      {
-        kin: '官鬼亥水',
-        hostGuest: '世',
-      },
-      {
-        kin: '妻财酉金',
-      },
-      {
-        kin: '妻财酉金',
-      },
-      {
-        kin: '子孙未土',
-        hostGuest: '应',
-      },
-      {
-        kin: '兄弟巳火',
-      },
-    ],
+    generation: 2,
     yangCounts: [2, 1, 1, 1, 2, 1],
   },
   {
@@ -1566,29 +525,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷍',
     phase: '金',
     palace: '乾',
-    palaceIndex: 7,
-    setupInfo: [
-      {
-        kin: '子孙子水',
-      },
-      {
-        kin: '妻财寅木',
-      },
-      {
-        kin: '父母辰土',
-        hostGuest: '世',
-      },
-      {
-        kin: '兄弟酉金',
-      },
-      {
-        kin: '父母未土',
-      },
-      {
-        kin: '官鬼巳火',
-        hostGuest: '应',
-      },
-    ],
+    generation: 7,
     yangCounts: [1, 1, 1, 1, 2, 1],
   },
   {
@@ -1597,29 +534,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷓',
     phase: '金',
     palace: '乾',
-    palaceIndex: 4,
-    setupInfo: [
-      {
-        kin: '父母未土',
-        hostGuest: '应',
-      },
-      {
-        kin: '官鬼巳火',
-      },
-      {
-        kin: '妻财卯木',
-      },
-      {
-        kin: '父母未土',
-        hostGuest: '世',
-      },
-      {
-        kin: '官鬼巳火',
-      },
-      {
-        kin: '妻财卯木',
-      },
-    ],
+    generation: 4,
     yangCounts: [2, 2, 2, 2, 1, 1],
   },
   {
@@ -1628,29 +543,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷩',
     phase: '木',
     palace: '巽',
-    palaceIndex: 3,
-    setupInfo: [
-      {
-        kin: '父母子水',
-      },
-      {
-        kin: '兄弟寅木',
-      },
-      {
-        kin: '妻财辰土',
-        hostGuest: '世',
-      },
-      {
-        kin: '妻财未土',
-      },
-      {
-        kin: '子孙巳火',
-      },
-      {
-        kin: '兄弟卯木',
-        hostGuest: '应',
-      },
-    ],
+    generation: 3,
     yangCounts: [1, 2, 2, 2, 1, 1],
   },
   {
@@ -1659,29 +552,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷺',
     phase: '火',
     palace: '离',
-    palaceIndex: 5,
-    setupInfo: [
-      {
-        kin: '父母寅木',
-      },
-      {
-        kin: '子孙辰土',
-        hostGuest: '应',
-      },
-      {
-        kin: '兄弟午火',
-      },
-      {
-        kin: '子孙未土',
-      },
-      {
-        kin: '兄弟巳火',
-        hostGuest: '世',
-      },
-      {
-        kin: '父母卯木',
-      },
-    ],
+    generation: 5,
     yangCounts: [2, 1, 2, 2, 1, 1],
   },
   {
@@ -1690,29 +561,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷼',
     phase: '土',
     palace: '艮',
-    palaceIndex: 6,
-    setupInfo: [
-      {
-        kin: '父母巳火',
-        hostGuest: '应',
-      },
-      {
-        kin: '官鬼卯木',
-      },
-      {
-        kin: '兄弟丑土',
-      },
-      {
-        kin: '兄弟未土',
-        hostGuest: '世',
-      },
-      {
-        kin: '父母巳火',
-      },
-      {
-        kin: '官鬼卯木',
-      },
-    ],
+    generation: 6,
     yangCounts: [1, 1, 2, 2, 1, 1],
   },
   {
@@ -1721,29 +570,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷴',
     phase: '土',
     palace: '艮',
-    palaceIndex: 7,
-    setupInfo: [
-      {
-        kin: '兄弟辰土',
-      },
-      {
-        kin: '父母午火',
-      },
-      {
-        kin: '子孙申金',
-        hostGuest: '世',
-      },
-      {
-        kin: '兄弟未土',
-      },
-      {
-        kin: '父母巳火',
-      },
-      {
-        kin: '官鬼卯木',
-        hostGuest: '应',
-      },
-    ],
+    generation: 7,
     yangCounts: [2, 2, 1, 2, 1, 1],
   },
   {
@@ -1752,29 +579,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷤',
     phase: '木',
     palace: '巽',
-    palaceIndex: 2,
-    setupInfo: [
-      {
-        kin: '兄弟卯木',
-      },
-      {
-        kin: '妻财丑土',
-        hostGuest: '世',
-      },
-      {
-        kin: '父母亥水',
-      },
-      {
-        kin: '妻财未土',
-      },
-      {
-        kin: '子孙巳火',
-        hostGuest: '应',
-      },
-      {
-        kin: '兄弟卯木',
-      },
-    ],
+    generation: 2,
     yangCounts: [1, 2, 1, 2, 1, 1],
   },
   {
@@ -1783,29 +588,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷸',
     phase: '木',
     palace: '巽',
-    palaceIndex: 0,
-    setupInfo: [
-      {
-        kin: '妻财丑土',
-      },
-      {
-        kin: '父母亥水',
-      },
-      {
-        kin: '官鬼酉金',
-        hostGuest: '应',
-      },
-      {
-        kin: '妻财未土',
-      },
-      {
-        kin: '子孙巳火',
-      },
-      {
-        kin: '兄弟卯木',
-        hostGuest: '世',
-      },
-    ],
+    generation: 0,
     yangCounts: [2, 1, 1, 2, 1, 1],
   },
   {
@@ -1814,29 +597,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷈',
     phase: '木',
     palace: '巽',
-    palaceIndex: 1,
-    setupInfo: [
-      {
-        kin: '父母子水',
-        hostGuest: '世',
-      },
-      {
-        kin: '兄弟寅木',
-      },
-      {
-        kin: '妻财辰土',
-      },
-      {
-        kin: '妻财未土',
-        hostGuest: '应',
-      },
-      {
-        kin: '子孙巳火',
-      },
-      {
-        kin: '兄弟卯木',
-      },
-    ],
+    generation: 1,
     yangCounts: [1, 1, 1, 2, 1, 1],
   },
   {
@@ -1845,29 +606,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷋',
     phase: '金',
     palace: '乾',
-    palaceIndex: 3,
-    setupInfo: [
-      {
-        kin: '父母未土',
-      },
-      {
-        kin: '官鬼巳火',
-      },
-      {
-        kin: '妻财卯木',
-        hostGuest: '世',
-      },
-      {
-        kin: '官鬼午火',
-      },
-      {
-        kin: '兄弟申金',
-      },
-      {
-        kin: '父母戌土',
-        hostGuest: '应',
-      },
-    ],
+    generation: 3,
     yangCounts: [2, 2, 2, 1, 1, 1],
   },
   {
@@ -1876,29 +615,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷘',
     phase: '木',
     palace: '巽',
-    palaceIndex: 4,
-    setupInfo: [
-      {
-        kin: '父母子水',
-        hostGuest: '应',
-      },
-      {
-        kin: '兄弟寅木',
-      },
-      {
-        kin: '妻财辰土',
-      },
-      {
-        kin: '子孙午火',
-        hostGuest: '世',
-      },
-      {
-        kin: '官鬼申金',
-      },
-      {
-        kin: '妻财戌土',
-      },
-    ],
+    generation: 4,
     yangCounts: [1, 2, 2, 1, 1, 1],
   },
   {
@@ -1907,29 +624,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷅',
     phase: '火',
     palace: '离',
-    palaceIndex: 6,
-    setupInfo: [
-      {
-        kin: '父母寅木',
-        hostGuest: '应',
-      },
-      {
-        kin: '子孙辰土',
-      },
-      {
-        kin: '兄弟午火',
-      },
-      {
-        kin: '兄弟午火',
-        hostGuest: '世',
-      },
-      {
-        kin: '妻财申金',
-      },
-      {
-        kin: '子孙戌土',
-      },
-    ],
+    generation: 6,
     yangCounts: [2, 1, 2, 1, 1, 1],
   },
   {
@@ -1938,29 +633,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷉',
     phase: '土',
     palace: '艮',
-    palaceIndex: 5,
-    setupInfo: [
-      {
-        kin: '父母巳火',
-      },
-      {
-        kin: '官鬼卯木',
-        hostGuest: '应',
-      },
-      {
-        kin: '兄弟丑土',
-      },
-      {
-        kin: '父母午火',
-      },
-      {
-        kin: '子孙申金',
-        hostGuest: '世',
-      },
-      {
-        kin: '兄弟戌土',
-      },
-    ],
+    generation: 5,
     yangCounts: [1, 1, 2, 1, 1, 1],
   },
   {
@@ -1969,29 +642,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷠',
     phase: '金',
     palace: '乾',
-    palaceIndex: 2,
-    setupInfo: [
-      {
-        kin: '父母辰土',
-      },
-      {
-        kin: '官鬼午火',
-        hostGuest: '世',
-      },
-      {
-        kin: '兄弟申金',
-      },
-      {
-        kin: '官鬼午火',
-      },
-      {
-        kin: '兄弟申金',
-        hostGuest: '应',
-      },
-      {
-        kin: '父母戌土',
-      },
-    ],
+    generation: 2,
     yangCounts: [2, 2, 1, 1, 1, 1],
   },
   {
@@ -2000,29 +651,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷌',
     phase: '火',
     palace: '离',
-    palaceIndex: 7,
-    setupInfo: [
-      {
-        kin: '父母寅木',
-      },
-      {
-        kin: '子孙辰土',
-      },
-      {
-        kin: '兄弟午火',
-        hostGuest: '世',
-      },
-      {
-        kin: '子孙未土',
-      },
-      {
-        kin: '父母巳火',
-      },
-      {
-        kin: '子孙戌土',
-        hostGuest: '应',
-      },
-    ],
+    generation: 7,
     yangCounts: [1, 2, 1, 1, 1, 1],
   },
   {
@@ -2031,29 +660,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷫',
     phase: '金',
     palace: '乾',
-    palaceIndex: 1,
-    setupInfo: [
-      {
-        kin: '父母丑土',
-        hostGuest: '世',
-      },
-      {
-        kin: '子孙亥水',
-      },
-      {
-        kin: '兄弟酉金',
-      },
-      {
-        kin: '官鬼午火',
-        hostGuest: '应',
-      },
-      {
-        kin: '兄弟申金',
-      },
-      {
-        kin: '父母戌土',
-      },
-    ],
+    generation: 1,
     yangCounts: [2, 1, 1, 1, 1, 1],
   },
   {
@@ -2062,29 +669,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = Object.freeze([
     sign: '䷀',
     phase: '金',
     palace: '乾',
-    palaceIndex: 0,
-    setupInfo: [
-      {
-        kin: '子孙子水',
-      },
-      {
-        kin: '妻财寅木',
-      },
-      {
-        kin: '父母辰土',
-        hostGuest: '应',
-      },
-      {
-        kin: '官鬼午火',
-      },
-      {
-        kin: '兄弟申金',
-      },
-      {
-        kin: '父母戌土',
-        hostGuest: '世',
-      },
-    ],
+    generation: 0,
     yangCounts: [1, 1, 1, 1, 1, 1],
   },
 ]);
