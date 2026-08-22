@@ -60,7 +60,7 @@ export function toAIReadableJSON(hexagram: Hexagram, gods?: SixGod[]): AIReadabl
       二爻: createYaoInfo(hexagram, 1, gods),
       初爻: createYaoInfo(hexagram, 0, gods),
       卦名: hexagram.name,
-      宫: hexagram.palace,
+      宫: hexagram.palaceInfo,
       变爻: hexagram.dynamic
         ? hexagram.yaos
             .map((y, i) => (y.dynamic ? HexagramYaoOrder[i] : null))
@@ -77,7 +77,7 @@ export function toAIReadableJSON(hexagram: Hexagram, gods?: SixGod[]): AIReadabl
           二爻: createYaoInfo(changed, 1, gods),
           初爻: createYaoInfo(changed, 0, gods),
           卦名: changed.name,
-          宫: changed.palace,
+          宫: changed.palaceInfo,
           六冲六合: changed.specialType ?? '不是',
         }
       : '无',
