@@ -49,11 +49,18 @@ function map(
   throw new Error(`No StemPhase[${sp}] matches phase[${phase0},${phase1},${phase2},${phase3},${phase4}]`);
 }
 
-const mappers: Record<string, (sp: StemPhase) => Kin> = {
+const _mappers: Record<string, (sp: StemPhase) => Kin> = {
   乾: (v: StemPhase) => map(v, '金', '兄弟', '土', '父母', '木', '妻财', '火', '官鬼', '水', '子孙'),
+  兑: (v: StemPhase) => map(v, '金', '兄弟', '土', '父母', '木', '妻财', '火', '官鬼', '水', '子孙'),
+  坎: (v: StemPhase) => map(v, '木', '子孙', '水', '兄弟', '金', '父母', '火', '妻财', '土', '官鬼'),
+  坤: (v: StemPhase) => map(v, '土', '兄弟', '火', '父母', '木', '官鬼', '水', '妻财', '金', '子孙'),
+  艮: (v: StemPhase) => map(v, '土', '兄弟', '火', '父母', '木', '官鬼', '水', '妻财', '金', '子孙'),
+  离: (v: StemPhase) => map(v, '木', '父母', '土', '子孙', '水', '官鬼', '金', '妻财', '火', '兄弟'),
+  震: (v: StemPhase) => map(v, '木', '兄弟', '水', '父母', '金', '官鬼', '火', '子孙', '土', '妻财'),
+  巽: (v: StemPhase) => map(v, '木', '兄弟', '水', '父母', '金', '官鬼', '火', '子孙', '土', '妻财'),
 };
 
 export function setupSinKins(hexagram: Hexagram): Kin[] {
-  const mapper = mappers[hexagram.palace];
+  const mapper = _mappers[hexagram.palace];
   return [...hexagram.inner.inner.map(mapper), ...hexagram.outer.outer.map(mapper)];
 }
