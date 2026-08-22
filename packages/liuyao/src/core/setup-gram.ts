@@ -88,10 +88,3 @@ export interface SetupGramInfo {
    */
   hostGuest?: '世' | '应';
 }
-
-export const enum GramType {
-  /** 内卦 */
-  Inner,
-  /** 外卦 */
-  Outer,
-}

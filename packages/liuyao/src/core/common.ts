@@ -4,7 +4,7 @@ export interface HexagramInfo {
   /**
    * Binary representation of the hexagram, where 0 image a yin line and 1 image a yang line. The lines are ordered from the bottom (first line) to the top (sixth line).
    */
-  binary: `${0 | 1}${0 | 1}${0 | 1}${0 | 1}${0 | 1}${0 | 1}`;
+  binary: string;
 
   /**
    * Binary to yangs.
