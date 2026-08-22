@@ -3,7 +3,7 @@ import type { SixGod } from './six-gods.js';
 
 interface YaoInfo {
   爻: string;
-  信息: string;
+  装卦: string;
   关系?: '世' | '应';
   六神?: SixGod;
 }
@@ -29,7 +29,7 @@ export interface HexagramAIReadable {
 function createYaoInfo(hexagram: Hexagram, index: number, gods?: SixGod[]): YaoInfo {
   const a: YaoInfo = {
     爻: hexagram.yaos[index].name,
-    信息: hexagram.kins[index],
+    装卦: hexagram.kins[index],
   };
 
   if (hexagram.host === index) {

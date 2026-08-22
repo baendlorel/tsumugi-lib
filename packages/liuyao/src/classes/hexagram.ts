@@ -5,6 +5,7 @@ import {
   type HexagramInfo,
   TrigramInfoTable,
 } from '../core/common.js';
+import { setupHeavenStem } from '../core/heaven-stem.js';
 import { setupHostGuest } from '../core/host-guest.js';
 import { setupSixKins } from '../core/six-kins.js';
 import { Yao } from './yao.js';
@@ -117,7 +118,7 @@ export class Hexagram implements HexagramInfo {
   readonly pure: boolean;
 
   /**
-   * Includes 六亲、地支、五行. Looks like "妻财丑土" "父母戌土"
+   * Includes 六亲、天干、地支、五行. Looks like "兄弟癸丑土" "官鬼辛卯木"
    */
   readonly kins: string[];
 
@@ -175,9 +176,10 @@ export class Hexagram implements HexagramInfo {
     this.outer = TrigramInfoTable.find((t) => t.binary === lb)!;
 
     const sixKins = setupSixKins(this);
+    const hs = setupHeavenStem(this);
     this.kins = [
-      ...this.inner.inner.map((v, i) => sixKins[i] + v),
-      ...this.outer.outer.map((v, i) => sixKins[i + 3] + v),
+      ...this.inner.inner.map((v, i) => sixKins[i] + hs[i] + v),
+      ...this.outer.outer.map((v, i) => sixKins[i + 3] + hs[i + 3] + v),
     ];
 
     const hg = setupHostGuest(this);
