@@ -1,6 +1,6 @@
 export const PalaceOrderTable = ['本宫卦', '一世卦', '二世卦', '三世卦', '四世卦', '五世卦', '游魂卦', '归魂卦'];
 
-export type StemPhase =
+export type BranchPhase =
   | '子水'
   | '寅木'
   | '辰土'
@@ -786,13 +786,13 @@ export interface TrigramInfo {
    * Earth Stem and Five Phases when this gram performs a inner gram of a hexagram.
    * @see 《增删卜易·浑天甲子章》
    */
-  inner: StemPhase[];
+  inner: BranchPhase[];
 
   /**
    * Earth Stem and Five Phases when this gram performs a outer gram of a hexagram.
    * @see 《增删卜易·浑天甲子章》
    */
-  outer: StemPhase[];
+  outer: BranchPhase[];
 }
 
 /**

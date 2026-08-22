@@ -1,5 +1,5 @@
 import { Hexagram } from '../classes/hexagram.js';
-import { Phase, StemPhase } from './common.js';
+import { Phase, BranchPhase } from './common.js';
 
 export type Kin = '父母' | '子孙' | '妻财' | '官鬼' | '兄弟';
 
@@ -14,12 +14,12 @@ export type Kin = '父母' | '子孙' | '妻财' | '官鬼' | '兄弟';
 `;
 /**
  * Returns kins.
- * @param sp inner outer extracted from trigram
+ * @param v inner outer extracted from trigram
  * @param phase 金木水火土
  * @param kin 六亲
  */
 function map(
-  sp: StemPhase,
+  v: BranchPhase,
   phase0: Phase,
   kin0: Kin,
   phase1: Phase,
@@ -31,36 +31,36 @@ function map(
   phase4: Phase,
   kin4: Kin,
 ): Kin {
-  if (sp.includes(phase0)) {
+  if (v.includes(phase0)) {
     return kin0;
   }
-  if (sp.includes(phase1)) {
+  if (v.includes(phase1)) {
     return kin1;
   }
-  if (sp.includes(phase2)) {
+  if (v.includes(phase2)) {
     return kin2;
   }
-  if (sp.includes(phase3)) {
+  if (v.includes(phase3)) {
     return kin3;
   }
-  if (sp.includes(phase4)) {
+  if (v.includes(phase4)) {
     return kin4;
   }
-  throw new Error(`No StemPhase[${sp}] matches phase[${phase0},${phase1},${phase2},${phase3},${phase4}]`);
+  throw new Error(`No BranchPhase[${v}] matches phase[${phase0},${phase1},${phase2},${phase3},${phase4}]`);
 }
 
-const _mappers: Record<string, (sp: StemPhase) => Kin> = {
-  乾: (v: StemPhase) => map(v, '金', '兄弟', '土', '父母', '木', '妻财', '火', '官鬼', '水', '子孙'),
-  兑: (v: StemPhase) => map(v, '金', '兄弟', '土', '父母', '木', '妻财', '火', '官鬼', '水', '子孙'),
-  坎: (v: StemPhase) => map(v, '木', '子孙', '水', '兄弟', '金', '父母', '火', '妻财', '土', '官鬼'),
-  坤: (v: StemPhase) => map(v, '土', '兄弟', '火', '父母', '木', '官鬼', '水', '妻财', '金', '子孙'),
-  艮: (v: StemPhase) => map(v, '土', '兄弟', '火', '父母', '木', '官鬼', '水', '妻财', '金', '子孙'),
-  离: (v: StemPhase) => map(v, '木', '父母', '土', '子孙', '水', '官鬼', '金', '妻财', '火', '兄弟'),
-  震: (v: StemPhase) => map(v, '木', '兄弟', '水', '父母', '金', '官鬼', '火', '子孙', '土', '妻财'),
-  巽: (v: StemPhase) => map(v, '木', '兄弟', '水', '父母', '金', '官鬼', '火', '子孙', '土', '妻财'),
+const _mappers: Record<string, (sp: BranchPhase) => Kin> = {
+  乾: (v: BranchPhase) => map(v, '金', '兄弟', '土', '父母', '木', '妻财', '火', '官鬼', '水', '子孙'),
+  兑: (v: BranchPhase) => map(v, '金', '兄弟', '土', '父母', '木', '妻财', '火', '官鬼', '水', '子孙'),
+  坎: (v: BranchPhase) => map(v, '木', '子孙', '水', '兄弟', '金', '父母', '火', '妻财', '土', '官鬼'),
+  坤: (v: BranchPhase) => map(v, '土', '兄弟', '火', '父母', '木', '官鬼', '水', '妻财', '金', '子孙'),
+  艮: (v: BranchPhase) => map(v, '土', '兄弟', '火', '父母', '木', '官鬼', '水', '妻财', '金', '子孙'),
+  离: (v: BranchPhase) => map(v, '木', '父母', '土', '子孙', '水', '官鬼', '金', '妻财', '火', '兄弟'),
+  震: (v: BranchPhase) => map(v, '木', '兄弟', '水', '父母', '金', '官鬼', '火', '子孙', '土', '妻财'),
+  巽: (v: BranchPhase) => map(v, '木', '兄弟', '水', '父母', '金', '官鬼', '火', '子孙', '土', '妻财'),
 };
 
-export function setupSinKins(hexagram: Hexagram): Kin[] {
+export function setupSixKins(hexagram: Hexagram): Kin[] {
   const mapper = _mappers[hexagram.palace];
   return [...hexagram.inner.inner.map(mapper), ...hexagram.outer.outer.map(mapper)];
 }

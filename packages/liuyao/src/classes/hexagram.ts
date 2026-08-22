@@ -5,6 +5,7 @@ import {
   type HexagramInfo,
   TrigramInfoTable,
 } from '../core/common.js';
+import { setupSixKins } from '../core/six-kins.js';
 import { Yao } from './yao.js';
 
 type LiuYao = [Yao, Yao, Yao, Yao, Yao, Yao];
@@ -115,6 +116,21 @@ export class Hexagram implements HexagramInfo {
   readonly pure: boolean;
 
   /**
+   * Includes 六亲、地支、五行. Looks like "妻财丑土" "父母戌土"
+   */
+  readonly kins: string[];
+
+  /**
+   * Index of the 世爻
+   */
+  readonly host: number;
+
+  /**
+   * Index of the 应爻
+   */
+  readonly guest: number;
+
+  /**
    * Create a Hexagram from an array of Yao with length 6.
    */
   constructor(yaos: Yao[], isChanged = false) {
@@ -150,6 +166,12 @@ export class Hexagram implements HexagramInfo {
     const lb = this.binary.slice(3);
     this.inner = TrigramInfoTable.find((t) => t.binary === ub)!;
     this.outer = TrigramInfoTable.find((t) => t.binary === lb)!;
+
+    const sixKins = setupSixKins(this);
+    this.kins = [
+      ...this.inner.inner.map((v, i) => sixKins[i] + v),
+      ...this.outer.outer.map((v, i) => sixKins[i + 3] + v),
+    ];
 
     if (_scattering.includes(info.name)) {
       this.specialType = '六冲';
