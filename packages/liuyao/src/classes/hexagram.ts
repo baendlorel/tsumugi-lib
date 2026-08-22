@@ -35,7 +35,7 @@ const _pure = ['乾', '坤', '震', '巽', '坎', '离', '艮', '兑'];
  * - The hexagram can be constructed from an array of Yao or an array of counts of yang.
  * - Creates “乾为天” by default.
  */
-export class Hexagram {
+export class Hexagram implements HexagramInfo {
   // #region Static
   /**
    * Use tokens like `'012132'` to create a Hexagram, where each digit represents the count of Yang in the corresponding Yao (0 for 老阴, 1 for 少阳, 2 for 少阴, 3 for 老阳). The first digit represents the first Yao (初爻) and the last digit represents the sixth Yao (上爻).
@@ -93,18 +93,18 @@ export class Hexagram {
    */
   readonly yaos: LiuYao;
 
-  /**
-   * Binary version of the gram, like `001001`.
-   * - Does not describe dynamic yaos, that is to say, 0 means 阴 not 老阴
-   */
+  // #region inherited from HexagramInfo
+  readonly yangs: number[];
   readonly binary: string;
+  readonly id: string;
+  readonly name: string;
+  readonly sign: string;
+  readonly palace: '乾' | '坤' | '震' | '巽' | '坎' | '离' | '艮' | '兑';
+  readonly phase: '金' | '木' | '水' | '火' | '土';
+  readonly generation: 0 | 6 | 1 | 2 | 3 | 4 | 5 | 7;
+  // #endregion
 
-  /**
-   * HexagramInfo of this hexagram, which can be used to get more information about this hexagram, such as its name, sign, phase, palace, etc.
-   */
-  readonly info: HexagramInfo;
-
-  readonly palace: string;
+  readonly palaceInfo;
 
   /**
    * There are 3 states of a hexagram, "动卦" "静卦" "变卦无所谓动静"
@@ -148,8 +148,20 @@ export class Hexagram {
 
     this.yaos = yaos.map((a) => a.clone()) as LiuYao;
     this.binary = this.yaos.map((y) => y.polar).join('');
-    this.info = HexagramInfoTable.find((h) => h.binary === this.binary)!; // This is guaranteed
-    this.palace = `${this.info.palace}宫（${this.info.phase}）${PalaceOrderTable[this.info.generation]}`;
+    const info = HexagramInfoTable.find((h) => h.binary === this.binary)!; // This is guaranteed
+    this.palace = info.palace;
+
+    // properties from HexagramInfo
+    this.id = info.id;
+    this.generation = info.generation;
+    this.yangs = [...info.yangs];
+    this.phase = info.phase;
+    this.name = info.name;
+    this.sign = info.sign;
+
+    // details
+
+    this.palaceInfo = `${info.palace}宫（${info.phase}）${PalaceOrderTable[info.generation]}`;
     this.status = isChanged
       ? Status.None
       : this.yaos.some((y) => y.dynamic || y.isChanged)
@@ -164,14 +176,14 @@ export class Hexagram {
     this.inner = TrigramInfoTable.find((t) => t.binary === ub)!;
     this.outer = TrigramInfoTable.find((t) => t.binary === lb)!;
 
-    if (_scattering.includes(this.info.name)) {
+    if (_scattering.includes(info.name)) {
       this.specialType = '六冲';
     }
-    if (_gathering.includes(this.info.name)) {
+    if (_gathering.includes(info.name)) {
       this.specialType = '六合';
     }
 
-    this.pure = _pure.includes(this.info.name);
+    this.pure = _pure.includes(info.name);
   }
 
   toChanged(): Hexagram | null {
@@ -194,10 +206,10 @@ export class Hexagram {
   }
 
   toString(): string {
-    return this.info.id;
+    return this.id;
   }
 
   [Symbol.toPrimitive]() {
-    return this.info.id;
+    return this.id;
   }
 }
