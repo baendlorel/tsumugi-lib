@@ -100,7 +100,7 @@ export class Yao {
   /**
    * Whether this Yao has already changed to another Yao. Once a Yao is changed, it cannot change again.
    */
-  readonly isChanged: boolean; /**
+  readonly changed: boolean; /**
    * The symbol representing this Yao, which is one of '×', '’', '”', '○'.
    */
   readonly pattern: '×' | '’' | '”' | '○';
@@ -114,14 +114,14 @@ export class Yao {
       throw new Error('Count of yang must be 0, 1, 2 or 3');
     }
     this.yangs = yangs;
-    this.isChanged = isChanged;
+    this.changed = isChanged;
     this.polar = _countToPolar[yangs];
     this.dynamic = yangs === 0 || yangs === 3;
     this.pattern = _patterns[yangs] as '×' | '’' | '”' | '○';
     this.name = _names[yangs];
     this.symbol = _symbolNames[yangs] as '单' | '拆' | '重' | '交';
 
-    if (this.dynamic && this.isChanged) {
+    if (this.dynamic && this.changed) {
       throw new Error(`Changed Yao should not be dynamic.`);
     }
   }
@@ -139,11 +139,11 @@ export class Yao {
    * 2. `this.isChanged` is same
    */
   eqeqeq(other: Yao): boolean {
-    return this.yangs === other.yangs && this.isChanged === other.isChanged;
+    return this.yangs === other.yangs && this.changed === other.changed;
   }
 
   clone(): Yao {
-    return new Yao(this.yangs, this.isChanged);
+    return new Yao(this.yangs, this.changed);
   }
 
   toChanged(): Yao {

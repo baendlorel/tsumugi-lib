@@ -96,12 +96,12 @@ export class Hexagram implements HexagramInfo {
   /**
    * Whether the 6 Yaos of this hexagram contain any dynamic Yao.
    */
-  readonly isDynamic: boolean;
+  readonly dynamic: boolean;
 
   /**
    * Whether this hexagram has already changed to another hexagram. Once a hexagram is changed, it cannot change again.
    */
-  readonly isChanged: boolean;
+  readonly changed: boolean;
 
   readonly inner: TrigramInfo;
   readonly outer: TrigramInfo;
@@ -165,8 +165,8 @@ export class Hexagram implements HexagramInfo {
 
     this.palaceInfo = `${info.palace}宫（${info.phase}）${PalaceOrderTable[info.generation]}`;
 
-    this.isDynamic = this.yaos.some((y) => y.dynamic || y.isChanged);
-    this.isChanged = !!primary;
+    this.dynamic = this.yaos.some((y) => y.dynamic || y.changed);
+    this.changed = !!primary;
     this.primary = primary;
 
     const ub = this.binary.slice(0, 3);
@@ -197,11 +197,11 @@ export class Hexagram implements HexagramInfo {
   }
 
   toChanged(): Hexagram | null {
-    if (!this.isDynamic) {
+    if (!this.dynamic) {
       return null;
     }
 
-    if (this.isChanged) {
+    if (this.changed) {
       throw new Error('The gram is already changed, cannot change again.');
     }
 

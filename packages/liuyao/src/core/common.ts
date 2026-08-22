@@ -52,6 +52,10 @@ export type BranchPhase =
 
 export type Phase = '金' | '木' | '水' | '火' | '土';
 
+export type HeavenStem = '甲' | '乙' | '丙' | '丁' | '戊' | '己' | '庚' | '辛' | '壬' | '癸';
+
+export type TrigramName = '乾' | '兑' | '离' | '震' | '巽' | '坎' | '艮' | '坤';
+
 export interface HexagramInfo {
   /**
    * Binary representation of the hexagram, where 0 image a yin line and 1 image a yang line. The lines are ordered from the bottom (first line) to the top (sixth line).
@@ -94,7 +98,7 @@ export interface HexagramInfo {
    * Eight Palaces (八宫) to which the hexagram belongs.
    * 'Palace' is not a physical palace, but rather a category or family of hexagrams.
    */
-  palace: '乾' | '兑' | '离' | '震' | '巽' | '坎' | '艮' | '坤';
+  palace: TrigramName;
 
   /**
    * Index of the hexagram within its palace, ranging from 0 to 7. This index helps to identify the specific hexagram within the context of its palace.
