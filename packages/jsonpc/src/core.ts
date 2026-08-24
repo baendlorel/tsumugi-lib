@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 export function isComment(t: string) {
   return t.startsWith('//');
 }
@@ -49,4 +51,53 @@ export function compressComments(lines: string[]): Array<string | string[]> {
   return modified;
 }
 
-export function findPropertyNameBelow(lines: string[], commentIndex: number) {}
+export function interpretName(line: string) {
+  if (line[0] !== '"') {
+    throw new Error(`Comments not above property names are not supported yet`);
+  }
+  if (line.startsWith('""')) {
+    return '';
+  }
+  if (line.length <= 3) {
+    throw new Error(`Invalid line: ${line}`);
+  }
+
+  const chars: string[] = [];
+  let escaping = false;
+  let finish = false;
+  for (let i = 1; i < line.length; i++) {
+    const c = line[i];
+    if (escaping) {
+      escaping = false;
+      continue;
+    }
+    if (c === '\\') {
+      escaping = true;
+    } else if (c === '"') {
+      finish = true;
+      break;
+    } else {
+      chars.push(c);
+    }
+  }
+
+  if (!finish) {
+    throw new Error(`Cannot find 2nd '"': ${line}`);
+  }
+
+  return chars.join('');
+}
+
+export function convertCommentsToProperties(compressed: Array<string | string[]>) {
+  const names: string[] = [];
+  const lines = compressed.map((v, i) => {
+    if (typeof v === 'string') {
+      return v;
+    }
+    const name = interpretName(compressed[i + 1] as string) + '_' + randomUUID();
+    names.push(name);
+    return `"${name}":"${JSON.stringify(v)}",`;
+  });
+
+  return { lines, names };
+}
