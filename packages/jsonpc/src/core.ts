@@ -88,6 +88,10 @@ export function interpretName(line: string) {
   return chars.join('');
 }
 
+export function uuidName(origin: string) {
+  return origin + '_' + randomUUID();
+}
+
 export function convertCommentsToProperties(compressed: Array<string | string[]>) {
   // Maps uuid name to the original name
   const names = new Map<string, string>();
@@ -100,7 +104,7 @@ export function convertCommentsToProperties(compressed: Array<string | string[]>
     // "prop":"value" -> "prop_2e09b0fc-b188-4d50-b97e-e21dc0694c1c_comment":"// prop的注释","prop_2e09b0fc-b188-4d50-b97e-e21dc0694c1c":"value"
     const next = compressed[i + 1] as string;
     const origin = interpretName(next);
-    const name = origin + '_' + randomUUID();
+    const name = uuidName(origin);
     compressed[i + 1] = next.replace(origin, name);
     const commentName = name + '_comment';
     names.set(name, origin);
@@ -111,31 +115,29 @@ export function convertCommentsToProperties(compressed: Array<string | string[]>
   return { lines, names };
 }
 
-type KeyPropNameMap = Map<string[], { origin: string; current: string }>;
+export type PropMap = Map<string, { origin: string; current: string }>;
 
 /**
+ * Deep visit, collect prop path.
  * @param o the parsed object
  * @param names the names with uuids
+ * @param path property name path for ReflectDeep
+ * @param map returned map
  */
-export function visit(
-  o: any,
-  names: Map<string, string>,
-  keyStack: string[] = [],
-  map: KeyPropNameMap = new Map(),
-): KeyPropNameMap {
+export function visit(o: any, names: Map<string, string>, path: string[] = [], map: PropMap = new Map()): PropMap {
   for (const key in o) {
     const origin = names.get(key);
     const v = o[key];
     if (origin) {
       // Use original prop name instead of uuid name
-      map.set(keyStack.concat(origin), { origin, current: key });
+      map.set(JSON.stringify(path.concat(origin)), { origin, current: key });
       continue;
     } else if (Array.isArray(v)) {
       for (let i = 0; i < v.length; i++) {
-        visit(v[i], names, keyStack.concat(key, i.toString()), map);
+        visit(v[i], names, path.concat(key, i.toString()), map);
       }
     } else if (typeof v === 'object') {
-      visit(v, names, keyStack.concat(key), map);
+      visit(v, names, path.concat(key), map);
     }
   }
   return map;
