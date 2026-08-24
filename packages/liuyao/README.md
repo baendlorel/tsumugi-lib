@@ -90,7 +90,7 @@ Useful instance members:
 Useful factory methods:
 
 - `Hexagram.fromYaos(yaos)`
-- `Hexagram.fromYangCounts(counts)`
+- `Hexagram.fromyangs(counts)`
 - `Hexagram.fromId(id)`
 - `Hexagram.fromPalace(palace)`
 

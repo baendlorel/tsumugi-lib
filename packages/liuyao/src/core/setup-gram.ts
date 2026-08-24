@@ -1,6 +1,8 @@
 /**
  * Kins and their corresponding earthly branches in the Liu Yao divination system, along with the type of relation (世 or 应).
  * This information is crucial for interpreting the hexagrams and their changing lines in the context of a divination reading.
+ *
+ * @deprecated This is for beginners.
  */
 export interface SetupGramInfo {
   /**

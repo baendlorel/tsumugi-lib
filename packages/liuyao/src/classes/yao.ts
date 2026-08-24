@@ -2,20 +2,18 @@ import { TrigramInfoTable } from '../core/common.js';
 
 const _names = ['老阴', '少阳', '少阴', '老阳'] as const;
 const _symbolNames = '交单拆重' as const;
-const _symbols = '×’”○' as const;
+const _patterns = '×’”○' as const;
 const _digits = '0123' as const;
-const _countChange = [1, 1, 2, 2] as const;
+const _change = [1, 1, 2, 2] as const;
 const _countToPolar = [0, 1, 0, 1] as const;
 
-function validYangCount(v: number): asserts v is 0 | 1 | 2 | 3 {
-  if (v !== 0 && v !== 1 && v !== 2 && v !== 3) {
-    throw new Error('Count of yang must be 0, 1, 2 or 3');
-  }
-}
-
 export class Yao {
-  static getName(yangCount: number) {
-    return _names[yangCount];
+  // #region static methods
+  /**
+   * Returns 老阴、老阳、少阴、少阳
+   */
+  static getName(yangs: number) {
+    return _names[yangs];
   }
 
   /**
@@ -34,7 +32,7 @@ export class Yao {
    * @param symbol e.g. '×' for 0, '’' for 1, '”' for 2, '○' for 3.
    */
   static fromSymbol(symbol: string): Yao | null {
-    const index = _symbols.indexOf(symbol);
+    const index = _patterns.indexOf(symbol);
     return index !== -1 ? new Yao(index) : null;
   }
 
@@ -66,44 +64,30 @@ export class Yao {
 
   /**
    * Create a Yao from any Trigram field value.
-   * @param value `{id: '坤', binary: '000', yangCount: 0}`, so `'坤'`, `'000'` and `0` can all be used.
+   * @param value `{id: '坤', binary: '000', yangs: 0}`, so `'坤'`, `'000'` and `0` can all be used.
    */
   static fromTrigramField(value: string | number): Yao | null {
     const trigram = TrigramInfoTable.find(
-      (v) =>
-        v.id === value ||
-        v.yangCount === value ||
-        v.binary === value ||
-        v.nameEn === value ||
-        v.represents === value ||
-        v.representsEn === value ||
-        v.sign === value,
+      (v) => v.id === value || v.yangs === value || v.binary === value || v.sign === value,
     );
-    return trigram ? new Yao(trigram.yangCount) : null;
+    return trigram ? new Yao(trigram.yangs) : null;
   }
-
-  private _yangCount: 0 | 1 | 2 | 3;
+  // #endregion
 
   /**
    * How many faces of character of 3 coins in this Yao.
    * It can only be 0, 1, 2 or 3, which corresponds to 老阴、少阳、少阴、老阳 respectively.
-   * - 0: 老阴 (all three coins are Yin)
-   * - 1: 少阳 (one coin is Yang, two coins are Yin)
-   * - 2: 少阴 (two coins are Yang, one coin is Yin)
-   * - 3: 老阳 (all three coins are Yang)
+   * - 0: 老阴 (all three coins are 阴面)
+   * - 1: 少阳 (one coin is 阳面, two coins are 阴面)
+   * - 2: 少阴 (two coins are 阳面, one coin is 阴面)
+   * - 3: 老阳 (all three coins are 阳面)
    */
-  get yangCount() {
-    return this._yangCount;
-  }
+  readonly yangs: 0 | 1 | 2 | 3;
 
   /**
-   * Two Polars.
-   * - 0 represents Yin 阴
-   * - 1 represents Yang 阳
+   * 两仪, aka 阴阳
    */
-  get polar(): 0 | 1 {
-    return _countToPolar[this.yangCount];
-  }
+  readonly polar: 0 | 1;
 
   /**
    * If this Yao is dynamic, which means it can change to another Yao. In LiuYao, only 老阴 and 老阳 are dynamic.
@@ -111,58 +95,58 @@ export class Yao {
    * - 老阳 (3) can change to 少阴 (2)
    * - 少阳 (1) and 少阴 (2) cannot change, so they are static.
    */
-  get isDynamic(): boolean {
-    return this.yangCount === 0 || this.yangCount === 3;
-  }
+  readonly dynamic;
 
   /**
    * Whether this Yao has already changed to another Yao. Once a Yao is changed, it cannot change again.
    */
-  readonly isChanged: boolean;
+  readonly changed: boolean; /**
+   * The symbol representing this Yao, which is one of '×', '’', '”', '○'.
+   */
+  readonly pattern: '×' | '’' | '”' | '○';
+
+  readonly name: '老阴' | '少阳' | '少阴' | '老阳';
+
+  readonly symbol: '单' | '拆' | '重' | '交';
+
+  constructor(yangs: number, isChanged = false) {
+    if (yangs !== 0 && yangs !== 1 && yangs !== 2 && yangs !== 3) {
+      throw new Error('Count of yang must be 0, 1, 2 or 3');
+    }
+    this.yangs = yangs;
+    this.changed = isChanged;
+    this.polar = _countToPolar[yangs];
+    this.dynamic = yangs === 0 || yangs === 3;
+    this.pattern = _patterns[yangs] as '×' | '’' | '”' | '○';
+    this.name = _names[yangs];
+    this.symbol = _symbolNames[yangs] as '单' | '拆' | '重' | '交';
+
+    if (this.dynamic && this.changed) {
+      throw new Error(`Changed Yao should not be dynamic.`);
+    }
+  }
 
   /**
-   * @returns The symbol representing this Yao, which is one of '×', '’', '”', '○'.
+   * Consider the Yaos are same if `this.yangs` is same
    */
-  get symbol() {
-    return _symbols[this.yangCount];
-  }
-
-  get symbolName() {
-    return _symbolNames[this.yangCount];
-  }
-
-  get name() {
-    return _names[this.yangCount];
-  }
-
-  constructor(yangCount: number, isChanged: boolean = false) {
-    validYangCount(yangCount);
-    this._yangCount = yangCount;
-    this.isChanged = isChanged;
-  }
-
   eq(other: Yao): boolean {
-    return this.yangCount === other.yangCount;
+    return this.yangs === other.yangs;
   }
 
   /**
-   * Change `this.yangCount`
+   * Consider the Yaos are `===` if:
+   * 1. `this.yangs` is same
+   * 2. `this.isChanged` is same
    */
-  set(yangCount: number) {
-    validYangCount(yangCount);
-    this._yangCount = yangCount;
+  eqeqeq(other: Yao): boolean {
+    return this.yangs === other.yangs && this.changed === other.changed;
   }
 
   clone(): Yao {
-    return new Yao(this.yangCount, this.isChanged);
+    return new Yao(this.yangs, this.changed);
   }
 
   toChanged(): Yao {
-    if (this.isDynamic) {
-      // & 这里要注意，Yao的构造函数传入的是阳数量而不是两仪
-      return new Yao(_countChange[this.yangCount], true);
-    } else {
-      return new Yao(this.yangCount, false);
-    }
+    return new Yao(_change[this.yangs], this.dynamic); // & This is the simplified version.
   }
 }

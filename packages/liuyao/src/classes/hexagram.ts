@@ -1,9 +1,21 @@
-import { HexagramInfoTable, PalaceOrderTable, type HexagramInfo } from '../core/common.js';
-import { SetupGramInfo } from '../core/setup-gram.js';
+import {
+  HexagramInfoTable,
+  PalaceOrderTable,
+  type TrigramInfo,
+  type HexagramInfo,
+  TrigramInfoTable,
+} from '../core/common.js';
+import { setupHeavenStem } from '../core/heaven-stem.js';
+import { setupHostGuest } from '../core/host-guest.js';
+import { setupSixKins } from '../core/six-kins.js';
 import { Yao } from './yao.js';
 
 type LiuYao = [Yao, Yao, Yao, Yao, Yao, Yao];
 export const HexagramYaoOrder = ['初爻', '二爻', '三爻', '四爻', '五爻', '上爻'] as const;
+
+const _scattering = ['乾', '坤', '震', '巽', '坎', '离', '艮', '兑', '无妄', '大壮'];
+const _gathering = ['否', '泰', '复', '豫', '贲', '旅', '困', '节'];
+const _pure = ['乾', '坤', '震', '巽', '坎', '离', '艮', '兑'];
 
 /**
  * Hexagram class represents a hexagram, which consists of 6 Yao.
@@ -11,7 +23,8 @@ export const HexagramYaoOrder = ['初爻', '二爻', '三爻', '四爻', '五爻
  * - The hexagram can be constructed from an array of Yao or an array of counts of yang.
  * - Creates “乾为天” by default.
  */
-export class Hexagram {
+export class Hexagram implements HexagramInfo {
+  // #region Static
   /**
    * Use tokens like `'012132'` to create a Hexagram, where each digit represents the count of Yang in the corresponding Yao (0 for 老阴, 1 for 少阳, 2 for 少阴, 3 for 老阳). The first digit represents the first Yao (初爻) and the last digit represents the sixth Yao (上爻).
    */
@@ -50,7 +63,7 @@ export class Hexagram {
     const exist = HexagramInfoTable.find(
       (h) => h.id === id || h.id.slice(2) === id || (h.id.startsWith(id) && id.length > 1),
     );
-    return exist ? Hexagram.fromYangCounts(exist.yangCounts) : null;
+    return exist ? Hexagram.fromYangCounts(exist.yangs) : null;
   }
 
   /**
@@ -58,8 +71,9 @@ export class Hexagram {
    */
   static fromPalace(palace: string): Hexagram | null {
     const exist = HexagramInfoTable.find((h) => h.id[2] === palace);
-    return exist ? Hexagram.fromYangCounts(exist.yangCounts) : null;
+    return exist ? Hexagram.fromYangCounts(exist.yangs) : null;
   }
+  // #endregion
 
   /**
    * 6 Yao positions, indexed from bottom to top.
@@ -67,250 +81,147 @@ export class Hexagram {
    */
   readonly yaos: LiuYao;
 
-  /**
-   * HexagramInfo of this hexagram, which can be used to get more information about this hexagram, such as its name, sign, phase, palace, etc.
-   */
-  get info(): HexagramInfo {
-    return HexagramInfoTable.find((h) => h.binary === this.yaos.map((y) => y.polar).join(''))!;
-  }
+  // #region inherited from HexagramInfo
+  readonly yangs: number[];
+  readonly binary: string;
+  readonly id: string;
+  readonly name: string;
+  readonly sign: string;
+  readonly palace: '乾' | '坤' | '震' | '巽' | '坎' | '离' | '艮' | '兑';
+  readonly phase: '金' | '木' | '水' | '火' | '土';
+  readonly generation: 0 | 6 | 1 | 2 | 3 | 4 | 5 | 7;
+  // #endregion
 
-  get palace(): string {
-    const i = this.info;
-    return `${i.palace}宫（${i.phase}）${PalaceOrderTable[i.palaceIndex].name}`;
-  }
+  readonly palaceInfo;
 
   /**
    * Whether the 6 Yaos of this hexagram contain any dynamic Yao.
    */
-  get isDynamic(): boolean {
-    return this.yaos.some((y) => y.isDynamic || y.isChanged);
-  }
+  readonly dynamic: boolean;
 
   /**
    * Whether this hexagram has already changed to another hexagram. Once a hexagram is changed, it cannot change again.
    */
-  get isChanged(): boolean {
-    return this.yaos.some((y) => y.isChanged);
-  }
+  readonly changed: boolean;
+
+  readonly inner: TrigramInfo;
+  readonly outer: TrigramInfo;
 
   /**
-   * Outer trigram of this hexagram, which consists of the last three yao (四爻、五爻、上爻).
-   * @returns A trigram if the outer trigram is dynamic.
+   * Whether this gram is 六冲、六合
    */
-  get dynamicOuter(): boolean {
-    return this.yaos.slice(3).some((y) => y.isDynamic || y.isChanged);
-  }
+  readonly specialType?: '六冲' | '六合';
 
   /**
-   * Inner trigram of this hexagram, which consists of the first three yao (初爻、二爻、三爻).
-   * @returns A trigram if the inner trigram is dynamic.
+   * Whether this gram is "八纯卦"
    */
-  get dynamicInner(): boolean {
-    return this.yaos.slice(0, 3).some((y) => y.isDynamic || y.isChanged);
-  }
+  readonly pure: boolean;
 
   /**
-   * Whether this hexagram is one of ‘六冲卦’
+   * Includes 六亲、天干、地支、五行. Looks like "兄弟癸丑土" "官鬼辛卯木"
    */
-  get isSixScattering(): boolean {
-    return [
-      '乾为天',
-      '坤为地',
-      '震为雷',
-      '巽为风',
-      '坎为水',
-      '离为火',
-      '艮为山',
-      '兑为泽',
-      '天雷无妄',
-      '雷天大壮',
-    ].includes(this.info.id);
-  }
+  readonly kins: string[];
 
   /**
-   * Whether this hexagram is one of ‘六合卦’
+   * Index of the 世爻
    */
-  get isSixGathering(): boolean {
-    return ['天地否', '地天泰', '地雷复', '雷地豫', '山火贲', '火山旅', '泽水困', '水泽节'].includes(this.info.id);
-  }
+  readonly host: number;
+
+  /**
+   * Index of the 应爻
+   */
+  readonly guest: number;
+
+  /**
+   * if it is a changed gram, this points to the primary one.
+   */
+  readonly primary: Hexagram | null;
 
   /**
    * Create a Hexagram from an array of Yao with length 6.
    */
-  constructor(yaos: Yao[]) {
+  constructor(yaos: Yao[], primary: Hexagram | null = null) {
     if (yaos.length !== 6) {
       throw new Error('Array length mismatch, A Hexagram must be constructed with exactly 6 Yaos or 6 counts of yang');
     }
 
-    if (yaos.every((a) => a instanceof Yao)) {
-      this.yaos = yaos.map((a) => a.clone()) as LiuYao;
-    } else {
+    if (yaos.some((a) => !(a instanceof Yao))) {
       throw new Error('Invalid Arguments, Hexagram must be constructed with exactly 6 Yaos or 6 counts of yang');
     }
-  }
 
-  setYao(index: number, yangCount: number): void {
-    this.yaos[index].set(yangCount);
+    this.yaos = yaos.map((a) => a.clone()) as LiuYao;
+    this.binary = this.yaos.map((y) => y.polar).join('');
+    const info = HexagramInfoTable.find((h) => h.binary === this.binary)!; // This is guaranteed
+    this.palace = info.palace;
+
+    // properties from HexagramInfo
+    this.id = info.id;
+    this.generation = info.generation;
+    this.yangs = this.yaos.map((v) => v.yangs);
+    this.phase = info.phase;
+    this.name = info.name;
+    this.sign = info.sign;
+
+    // details
+
+    this.palaceInfo = `${info.palace}宫（${info.phase}）${PalaceOrderTable[info.generation]}`;
+
+    this.dynamic = this.yaos.some((y) => y.dynamic || y.changed);
+    this.changed = !!primary;
+    this.primary = primary;
+
+    const ub = this.binary.slice(0, 3);
+    const lb = this.binary.slice(3);
+    this.inner = TrigramInfoTable.find((t) => t.binary === ub)!;
+    this.outer = TrigramInfoTable.find((t) => t.binary === lb)!;
+
+    const sixKins = setupSixKins(this);
+    const hs = setupHeavenStem(this);
+    this.kins = [
+      ...this.inner.inner.map((v, i) => sixKins[i] + hs[i] + v),
+      ...this.outer.outer.map((v, i) => sixKins[i + 3] + hs[i + 3] + v),
+    ];
+
+    const hg = setupHostGuest(this);
+    this.host = hg.host;
+    this.guest = hg.guest;
+
+    // special types
+
+    if (_scattering.includes(info.name)) {
+      this.specialType = '六冲';
+    }
+    if (_gathering.includes(info.name)) {
+      this.specialType = '六合';
+    }
+
+    this.pure = _pure.includes(info.name);
   }
 
   toChanged(): Hexagram | null {
-    if (!this.isDynamic) {
+    if (!this.dynamic) {
       return null;
     }
 
-    if (this.isChanged) {
-      throw new Error('已经是变卦了，无法再变');
+    if (this.changed) {
+      throw new Error('The gram is already changed, cannot change again.');
     }
 
-    return new Hexagram(this.yaos.map((y) => y.toChanged()));
+    return new Hexagram(
+      this.yaos.map((y) => y.toChanged()),
+      this,
+    );
   }
 
-  /**
-   * Describe this hexagram in a human-readable way, including the original hexagram, the changed hexagram (if any), and the dynamic yao (if any).
-   * - e.g.：“本卦乾为天，变卦坤为地，动爻：初爻、三爻”
-   */
-  toDescription(): string {
-    const hostIndex = this.info.setupInfo.findIndex((s) => s.hostGuest === '世');
-    const guestIndex = this.info.setupInfo.findIndex((s) => s.hostGuest === '应');
-    const infos: string[] = [
-      `本卦${this.info.id}`,
-      `世爻为${HexagramYaoOrder[hostIndex]}`,
-      `应爻为${HexagramYaoOrder[guestIndex]}`,
-    ];
-    const changed = this.toChanged();
-    if (changed) {
-      infos.push(
-        `${this.yaos
-          .map((y, i) => (y.isDynamic ? `${HexagramYaoOrder[i]}` : null))
-          .filter((s): s is string => s !== null)
-          .join('、')}是动爻`,
-      );
-      infos.push(`变卦为${changed.info.id}`);
-
-      const changedHostIndex = changed.info.setupInfo.findIndex((s) => s.hostGuest === '世');
-      if (this.yaos[changedHostIndex].isDynamic) {
-        infos.push(`变卦世爻为${HexagramYaoOrder[changedHostIndex]}`);
-      } else {
-        infos.push(`未变出新的世爻`);
-      }
-
-      const changedGuestIndex = changed.info.setupInfo.findIndex((s) => s.hostGuest === '应');
-      if (this.yaos[changedGuestIndex].isDynamic) {
-        infos.push(`变卦应爻为${HexagramYaoOrder[changedGuestIndex]}`);
-      } else {
-        infos.push(`未变出新的应爻`);
-      }
-    } else {
-      infos.push('无动爻');
-    }
-    return infos.join('，');
-  }
-
-  /**
-   * This output is meant for AI skills.
-   */
-  toAIReadable(): AIReadableInfo {
-    const si = this.info.setupInfo;
-    const changed = this.toChanged();
-    const csi = changed?.info.setupInfo;
-
-    const hostGuestChange: string[] = [];
-    if (csi) {
-      const dynamicIndexes = this.yaos.map((y, i) => (y.isDynamic ? i : null)).filter((y) => y !== null);
-      csi.forEach((s, i) => {
-        if (dynamicIndexes.includes(i)) {
-          if (s.hostGuest === '世') {
-            hostGuestChange.push(`新世爻为${changed.info.id}的${HexagramYaoOrder[i]}`);
-          }
-          if (s.hostGuest === '应') {
-            hostGuestChange.push(`新应爻为${changed.info.id}的${HexagramYaoOrder[i]}`);
-          }
-        }
-      });
-    } else {
-      hostGuestChange.push('没有新的世应爻出现，世应不变');
-    }
-
-    const createYaoInfo = (yaos: Yao[], si: SetupGramInfo[], index: number): YaoInfo => {
-      const o = { 爻: yaos[index].name, 六亲: si[index].kin, 类型: si[index].hostGuest };
-      if (!o.类型) {
-        delete o.类型;
-      }
-      return o;
-    };
-
-    return {
-      本卦: {
-        上爻: createYaoInfo(this.yaos, si, 5),
-        五爻: createYaoInfo(this.yaos, si, 4),
-        四爻: createYaoInfo(this.yaos, si, 3),
-        三爻: createYaoInfo(this.yaos, si, 2),
-        二爻: createYaoInfo(this.yaos, si, 1),
-        初爻: createYaoInfo(this.yaos, si, 0),
-        卦名: this.info.id,
-        宫: this.palace,
-        变爻: this.isDynamic
-          ? this.yaos
-              .map((y, i) => (y.isDynamic ? HexagramYaoOrder[i] : null))
-              .filter((s): s is '初爻' | '二爻' | '三爻' | '四爻' | '五爻' | '上爻' => s !== null)
-          : undefined,
-        六冲六合: this.isSixScattering ? '六冲卦' : this.isSixGathering ? '六合卦' : '不是',
-      },
-      变卦: csi
-        ? {
-            上爻: createYaoInfo(changed.yaos, csi, 5),
-            五爻: createYaoInfo(changed.yaos, csi, 4),
-            四爻: createYaoInfo(changed.yaos, csi, 3),
-            三爻: createYaoInfo(changed.yaos, csi, 2),
-            二爻: createYaoInfo(changed.yaos, csi, 1),
-            初爻: createYaoInfo(changed.yaos, csi, 0),
-            卦名: changed.info.id,
-            宫: changed.palace,
-            六冲六合: changed.isSixScattering ? '六冲卦' : changed.isSixGathering ? '六合卦' : '不是',
-          }
-        : '无',
-      // 世应变化: hostGuestChange.join('，'),
-    };
-  }
-
-  // #region Utility Methods
   clone(): Hexagram {
-    return new Hexagram(this.yaos);
+    return new Hexagram(this.yaos, this.primary);
   }
 
   toString(): string {
-    return this.info.id;
+    return this.id;
   }
 
   [Symbol.toPrimitive]() {
-    return this.info.id;
+    return this.id;
   }
-  // #endregion
 }
-
-// #region Hexagram Json is for AI skills
-interface YaoInfo {
-  爻: string; // 少阴少阳老阴老阳
-  类型?: '世' | '应';
-  六亲: string; // 例如：父金、兄弟水、妻财木等
-}
-
-export interface AIReadableInfo {
-  本卦: HexagramAIReadable;
-  变卦: HexagramAIReadable | '无';
-  世应变化?: string;
-}
-
-export interface HexagramAIReadable {
-  初爻: YaoInfo;
-  二爻: YaoInfo;
-  三爻: YaoInfo;
-  四爻: YaoInfo;
-  五爻: YaoInfo;
-  上爻: YaoInfo;
-  卦名: string;
-  宫: string;
-  变爻?: string[];
-  六冲六合: '六合卦' | '六冲卦' | '不是';
-}
-// #endregion

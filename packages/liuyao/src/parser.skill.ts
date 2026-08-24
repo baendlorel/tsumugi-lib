@@ -2,6 +2,7 @@ import solar2lunar from 'solarlunar';
 import { Hexagram } from './classes/hexagram.js';
 import { Yao } from './classes/yao.js';
 import { SixGodTable } from './core/six-gods.js';
+import { toAIReadableJSON } from './core/ai.js';
 
 function getInfo() {
   const rawYaos = process.argv[2];
@@ -38,19 +39,24 @@ function getLunarInfo() {
 
   const gods = SixGodTable.find((g) => g.heavenlyStem === l.gzDay[0])!.gods;
   return {
-    年: l.gzYear,
-    月: l.gzMonth,
-    日: l.gzDay,
-    时: getShichen(datetime),
-    六神顺序: {
-      上爻: gods[5],
-      五爻: gods[4],
-      四爻: gods[3],
-      三爻: gods[2],
-      二爻: gods[1],
-      初爻: gods[0],
+    时辰: {
+      年: l.gzYear,
+      月: l.gzMonth,
+      日: l.gzDay,
+      时: getShichen(datetime),
     },
+    gods,
   };
 }
 
-console.log(JSON.stringify({ version: '__VERSION__', 卦象: getInfo()?.toAIReadable(), 时辰: getLunarInfo() }, null, 2));
+function main() {
+  const h = getInfo();
+  if (!h) {
+    return JSON.stringify({ version: '__VERSION__', 卦象: null }, null, 2);
+  }
+  const t = getLunarInfo();
+
+  return JSON.stringify({ version: '__VERSION__', 卦象: toAIReadableJSON(h, t?.gods), 时辰: t?.时辰 }, null, 2);
+}
+
+console.log(main());
