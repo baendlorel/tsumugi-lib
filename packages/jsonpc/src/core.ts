@@ -127,7 +127,8 @@ export function visit(
     const origin = names.get(key);
     const v = o[key];
     if (origin) {
-      map.set(keyStack.concat(key), { origin, current: key });
+      // Use original prop name instead of uuid name
+      map.set(keyStack.concat(origin), { origin, current: key });
       continue;
     } else if (Array.isArray(v)) {
       for (let i = 0; i < v.length; i++) {
