@@ -12,7 +12,7 @@ export function normalizeLines(text: string) {
 }
 
 export function stripTopBottom(lines: string[]) {
-  let top = 0;
+  let top = NaN;
   for (let i = 0; i < lines.length; i++) {
     if (isComment(lines[i])) {
       top = i;
@@ -21,7 +21,7 @@ export function stripTopBottom(lines: string[]) {
     }
   }
 
-  let bottom = lines.length;
+  let bottom = NaN;
   for (let i = lines.length - 1; i >= 0; i--) {
     if (isComment(lines[i])) {
       bottom = i;
@@ -33,7 +33,7 @@ export function stripTopBottom(lines: string[]) {
   return { top, bottom };
 }
 
-export function compressComments(lines: string[]): Array<string | string[]> {
+export function aggregateComments(lines: string[]): Array<string | string[]> {
   const modified: Array<string | string[]> = [];
   let array: string[] = [];
   for (let i = 0; i < lines.length; i++) {
@@ -89,15 +89,53 @@ export function interpretName(line: string) {
 }
 
 export function convertCommentsToProperties(compressed: Array<string | string[]>) {
-  const names: string[] = [];
+  // Maps uuid name to the original name
+  const names = new Map<string, string>();
   const lines = compressed.map((v, i) => {
     if (typeof v === 'string') {
       return v;
     }
-    const name = interpretName(compressed[i + 1] as string) + '_' + randomUUID();
-    names.push(name);
-    return `"${name}":"${JSON.stringify(v)}",`;
+
+    // // prop的注释
+    // "prop":"value" -> "prop_2e09b0fc-b188-4d50-b97e-e21dc0694c1c_comment":"// prop的注释","prop_2e09b0fc-b188-4d50-b97e-e21dc0694c1c":"value"
+    const next = compressed[i + 1] as string;
+    const origin = interpretName(next);
+    const name = origin + '_' + randomUUID();
+    compressed[i + 1] = next.replace(origin, name);
+    const commentName = name + '_comment';
+    names.set(name, origin);
+
+    return `"${commentName}":${JSON.stringify(v)},`;
   });
 
   return { lines, names };
+}
+
+type KeyPropNameMap = Map<string[], { origin: string; current: string }>;
+
+/**
+ * @param o the parsed object
+ * @param names the names with uuids
+ */
+export function visit(
+  o: any,
+  names: Map<string, string>,
+  keyStack: string[] = [],
+  map: KeyPropNameMap = new Map(),
+): KeyPropNameMap {
+  for (const key in o) {
+    const origin = names.get(key);
+    const v = o[key];
+    if (origin) {
+      map.set(keyStack.concat(key), { origin, current: key });
+      continue;
+    } else if (Array.isArray(v)) {
+      for (let i = 0; i < v.length; i++) {
+        visit(v[i], names, keyStack.concat(key, i.toString()), map);
+      }
+    } else if (typeof v === 'object') {
+      visit(v, names, keyStack.concat(key), map);
+    }
+  }
+  return map;
 }

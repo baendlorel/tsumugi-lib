@@ -44,6 +44,7 @@
   "homepage": "https://github.com/baendlorel/tsumugi-lib/tree/main/packages/lines#readme",
   "dependencies": {
     "glob": "^13.0.6",
-    "minimatch": "^10.2.5"
+    "minimatch": "^10.2.5",
+    "reflect-deep": "^2.0.1"
   }
 }
