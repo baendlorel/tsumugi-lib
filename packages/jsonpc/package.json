@@ -1,13 +1,13 @@
 {
-  "name": "total-lines",
-  "version": "0.2.3",
+  "name": "json-property-comment",
+  "version": "0.0.1",
   "author": {
     "name": "Kasukabe Tsumugi",
     "email": "futami16237@gmail.com"
   },
   "purpose": "npm",
-  "description": "Count how many lines of code you have written with the 'lines' command",
-  "description_zh": "通过lines命令计算自己写了多少行代码",
+  "description": "This is a lightweight JSON variant that allows comments under certain conditions.",
+  "description_zh": "这是一个轻量级的、可以写注释的json，注释满足一定条件",
   "type": "module",
   "bin": {
     "lines": "./dist/index.mjs"
@@ -29,7 +29,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/baendlorel/tsumugi-lib.git",
-    "directory": "packages/lines"
+    "directory": "packages/jsonpc"
   },
   "keywords": [
     "cli",
