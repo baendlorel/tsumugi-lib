@@ -9,6 +9,7 @@ import {
   visit,
   uuidName,
 } from './core.js';
+import { COMMENT_SUFFIX } from './consts.js';
 
 export class JSONWithPropertyComment {
   private topComments: string[] = [];
@@ -58,34 +59,67 @@ export class JSONWithPropertyComment {
    */
   setComments(propPath: string, comments: string[]) {
     const k = propPath.split('.');
-    const parent = k.slice(0, -1);
     const kstr = JSON.stringify(k);
 
     const exists = this.propMap.get(kstr);
     if (exists) {
-      ReflectDeep.set(this.data, parent.concat(exists.current + '_comment'), comments);
+      k[k.length - 1] = exists.current + COMMENT_SUFFIX;
+      ReflectDeep.set(this.data, k, comments);
     } else {
-      // TODO 这里要改为用在下方set的逻辑
-      const name = uuidName(k[k.length - 1]);
-      ReflectDeep.set(this.data, parent.concat(name), null);
-      ReflectDeep.set(this.data, parent.concat(name + '_comment'), comments);
+      const value = ReflectDeep.get(this.data, k);
+      ReflectDeep.deleteProperty(this.data, k);
+
+      const origin = k[k.length - 1];
+      const current = uuidName(origin);
+
+      k[k.length - 1] = current;
+      ReflectDeep.set(this.data, k, value);
+
+      k[k.length - 1] = current + COMMENT_SUFFIX;
+      ReflectDeep.set(this.data, k, comments);
+
+      this.propMap.set(kstr, { origin, current });
     }
   }
 
   /**
    * Get comment for a property path.
-   * Return `null` if the property path does not exist.
+   * Return `undefined` if the property path does not exist.
    * @param propPath like `"a.b.c.0.1"`
    */
-  getComments(propPath: string): string[] | null {
+  getComments(propPath: string): string[] | undefined {
     const k = propPath.split('.');
     const kstr = JSON.stringify(k);
     const exists = this.propMap.get(kstr);
     if (!exists) {
-      return null;
+      return undefined;
     }
-    return ReflectDeep.get(this.data, k.slice(0, -1).concat(exists.current + '_comment')) as string[] | null;
+    k[k.length - 1] = exists.current + COMMENT_SUFFIX;
+    return ReflectDeep.get(this.data, k);
   }
 
-  set(propPath: string, value: any) {}
+  set(propPath: string, value: any) {
+    const k = propPath.split('.');
+    const kstr = JSON.stringify(k);
+    const exists = this.propMap.get(kstr);
+    if (exists) {
+      k[k.length - 1] = exists.current + COMMENT_SUFFIX;
+    }
+    ReflectDeep.set(this.data, k, value);
+  }
+
+  // TODO 发现k、kstr、exists这三行都是重复的。
+  get(propPath: string, defaultValue?: any) {
+    const k = propPath.split('.');
+    const kstr = JSON.stringify(k);
+    const exists = this.propMap.get(kstr);
+    if (exists) {
+      k[k.length - 1] = exists.current + COMMENT_SUFFIX;
+    }
+    return ReflectDeep.get(this.data, k) ?? defaultValue;
+  }
+
+  stringify() {
+    // TODO 把原本的json组合出来
+  }
 }

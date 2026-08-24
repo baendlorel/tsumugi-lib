@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { aggregateComments, convertCommentsToProperties, normalizeLines, stripTopBottom } from '../src/core.js';
+import { COMMENT_SUFFIX } from '../src/consts.js';
 
 const text = `
 // 顶头注释1
@@ -46,7 +47,7 @@ describe('core函数解析流程测试', () => {
   it('解析为对象', () => {
     expect(JSON.parse(named.lines.join(''))).toEqual({
       [names[0]]: 23,
-      [names[0] + '_comment']: ['// ddd注释1', '// ddd注释2'],
+      [names[0] + COMMENT_SUFFIX]: ['// ddd注释1', '// ddd注释2'],
     });
   });
 });

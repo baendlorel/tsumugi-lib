@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { COMMENT_SUFFIX } from './consts.js';
 
 export function isComment(t: string) {
   return t.startsWith('//');
@@ -51,6 +52,19 @@ export function aggregateComments(lines: string[]): Array<string | string[]> {
   return modified;
 }
 
+function nextNonSpaceIsColon(line: string, start: number) {
+  for (let i = start; i < line.length; i++) {
+    if (line[i] === ' ') {
+      continue;
+    } else if (line[i] === ':') {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  return false;
+}
+
 export function interpretName(line: string) {
   if (line[0] !== '"') {
     throw new Error(`Comments not above property names are not supported yet`);
@@ -71,9 +85,10 @@ export function interpretName(line: string) {
       escaping = false;
       continue;
     }
+
     if (c === '\\') {
       escaping = true;
-    } else if (c === '"') {
+    } else if (c === '"' && nextNonSpaceIsColon(line, i + 1)) {
       finish = true;
       break;
     } else {
@@ -106,7 +121,7 @@ export function convertCommentsToProperties(compressed: Array<string | string[]>
     const origin = interpretName(next);
     const name = uuidName(origin);
     compressed[i + 1] = next.replace(origin, name);
-    const commentName = name + '_comment';
+    const commentName = name + COMMENT_SUFFIX;
     names.set(name, origin);
 
     return `"${commentName}":${JSON.stringify(v)},`;
