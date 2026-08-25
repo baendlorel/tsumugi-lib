@@ -1,33 +1,52 @@
 import readline from 'node:readline';
+import type { ApiInterface } from './types.js';
 
-interface CliArgs {
-  key: string | null;
-  help: boolean;
+export type Command =
+  | { kind: 'help' }
+  | { kind: 'interactive' }
+  | { kind: 'models'; key: string }
+  | { kind: 'test'; key: string; api: ApiInterface; model: string | null }
+  | { kind: 'error'; message: string };
+
+const FLAGS: Record<string, ApiInterface> = {
+  '--anthropic': 'anthropic',
+  '--chat': 'chat',
+  '--response': 'responses',
+};
+
+const FLAGS_HINT = Object.keys(FLAGS).join(' | ');
+
+function usageError(): never {
+  console.error(`{"usage":"ttc models <key> 或 ttc test <key> [${FLAGS_HINT}] [model_name]"}`);
+  process.exit(1);
 }
 
-export let verbose: boolean = false;
+function toTest(key: string, flag: string, model?: string): Command {
+  const api = FLAGS[flag];
+  if (api) return { kind: 'test', key, api, model: model ?? null };
+  if (flag.startsWith('-')) return { kind: 'error', message: `应该使用 ${FLAGS_HINT}` };
+  return { kind: 'test', key, api: 'chat', model: flag || null };
+}
 
-export function parseArgs(): CliArgs {
-  const args = process.argv.slice(2);
-  const result: CliArgs = { key: null, help: false };
+export function parseArgs(argv: string[]): Command {
+  if (argv.length === 0) return { kind: 'interactive' };
+  const first = argv[0];
 
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    if (arg === '--key' || arg === '-k') {
-      if (i + 1 < args.length) {
-        result.key = args[++i];
-      }
-    } else if (arg === '--help' || arg === '-h') {
-      result.help = true;
-    }
+  if (first === '--help' || first === '-h' || first === 'help') return { kind: 'help' };
+
+  if (first === 'models') {
+    if (!argv[1]) usageError();
+    return { kind: 'models', key: argv[1] };
   }
 
-  verbose = args.includes('--verbose') || args.includes('-v');
+  if (first === 'test') {
+    if (!argv[1]) usageError();
+    return toTest(argv[1], argv[2] ?? '', argv[3]);
+  }
 
-  return result;
+  usageError();
 }
 
-// ============ 交互式输入 ============
 export function createPrompt(): readline.Interface {
   return readline.createInterface({
     input: process.stdin,

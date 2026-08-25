@@ -1,29 +1,22 @@
 import type {
   AnthropicResponse,
-  ChatCompletionResponse,
-  ResponsesResponse,
+  ApiInterface,
   ApiTestResult,
+  ChatCompletionResponse,
   ModelInfo,
   ModelsResponse,
-  ApiInterface,
+  ResponsesResponse,
 } from './types.js';
-import { URLS } from './config.js';
-import { verbose } from './cli.js';
+import { URLS } from './consts.js';
+
+const TEST_MESSAGE = '用1句话介绍自己';
 
 async function extractApiError(response: Response, fallback: string): Promise<string> {
   let message = `HTTP ${response.status}`;
   try {
-    const data = await response.text();
-    message += `: ${data}`;
+    message += `: ${await response.text()}`;
   } catch (e) {
-    if (e instanceof Error) {
-      message += `: ${e.message}`;
-    } else if (typeof e === 'string') {
-      message += `: ${e}`;
-    } else {
-      message += `: ${String(e)}`;
-    }
-    // is not valid JSON
+    message += `: ${e instanceof Error ? e.message : String(e)}`;
   }
   return `${fallback} (${message})`;
 }
@@ -31,8 +24,8 @@ async function extractApiError(response: Response, fallback: string): Promise<st
 function query<R extends ModelsResponse | ChatCompletionResponse | AnthropicResponse | ResponsesResponse>(
   url: string,
   apiKey: string,
-  body: any,
-) {
+  body: Record<string, unknown>,
+): Promise<R | string> {
   const isModelsEndpoint = url.endsWith('models');
   return fetch(url, {
     method: isModelsEndpoint ? 'GET' : 'POST',
@@ -45,107 +38,95 @@ function query<R extends ModelsResponse | ChatCompletionResponse | AnthropicResp
     body: isModelsEndpoint ? undefined : JSON.stringify(body),
   }).then((r) => (r.ok ? r.json() : extractApiError(r, '请求失败'))) as Promise<R | string>;
 }
-// verbose && console.log('[chat-completion]', data);
 
-function err(data: string, type: ApiInterface) {
-  return {
-    content: '',
-    error: data,
-    type,
-  };
+function fail(error: string, type: ApiInterface): ApiTestResult {
+  return { content: '', error, type };
 }
 
-export async function testChatCompletion(apiKey: string, model: string, testMessage: string): Promise<ApiTestResult> {
+export async function testChatCompletion(apiKey: string, model: string): Promise<ApiTestResult> {
   const data = await query<ChatCompletionResponse>(URLS.chat, apiKey, {
     model,
     messages: [
       { role: 'system', content: '你是一个有用的助手。' },
-      { role: 'user', content: testMessage },
+      { role: 'user', content: TEST_MESSAGE },
     ],
     max_tokens: 50,
     temperature: 0.3,
     stream: false,
   });
-  if (typeof data === 'string') {
-    return err(data, 'chat-completion');
-  }
+  if (typeof data === 'string') return fail(data, 'chat');
 
-  if (data.choices && data.choices.length > 0) {
-    return { content: data.choices[0].message.content, usage: data.usage, type: 'chat-completion' };
-  } else {
-    verbose && console.log('[chat-completion]', data);
-    return {
-      content: '',
-      error: '响应格式异常：缺少 choices 字段',
-      type: 'chat-completion',
-    };
-  }
+  const content = data.choices?.[0]?.message?.content ?? '';
+  return {
+    content,
+    error: content ? undefined : '响应格式异常：缺少 choices 字段',
+    usage: data.usage,
+    type: 'chat',
+  };
 }
 
-export async function testResponses(apiKey: string, model: string, testMessage: string): Promise<ApiTestResult> {
+export async function testResponses(apiKey: string, model: string): Promise<ApiTestResult> {
   const data = await query<ResponsesResponse>(URLS.responses, apiKey, {
     model,
-    input: testMessage,
+    input: TEST_MESSAGE,
     max_output_tokens: 50,
   });
-  if (typeof data === 'string') {
-    return err(data, 'responses');
-  }
+  if (typeof data === 'string') return fail(data, 'responses');
 
   let content = '';
   for (const item of data.output ?? []) {
     if (item.type === 'message') {
       for (const c of item.content ?? []) {
-        if (c.type === 'output_text' && c.text) {
-          content += c.text;
-        }
+        if (c.type === 'output_text' && c.text) content += c.text;
       }
     }
   }
-
-  if (!content) {
-    verbose && console.log('[responses]', data);
-    return { content: '响应格式异常：缺少 output 字段', usage: data.usage, type: 'responses' };
-  }
-  return { content, usage: data.usage ?? {}, type: 'responses' };
+  return {
+    content,
+    error: content ? undefined : '响应格式异常：缺少 output 字段',
+    usage: data.usage,
+    type: 'responses',
+  };
 }
 
-export async function testAnthropic(apiKey: string, model: string, testMessage: string): Promise<ApiTestResult> {
+export async function testAnthropic(apiKey: string, model: string): Promise<ApiTestResult> {
   const data = await query<AnthropicResponse>(URLS.anthropic, apiKey, {
     model,
     max_tokens: 50,
     system: '你是一个有用的助手。',
-    messages: [{ role: 'user', content: testMessage }],
+    messages: [{ role: 'user', content: TEST_MESSAGE }],
   });
-  if (typeof data === 'string') {
-    return err(data, 'anthropic');
-  }
+  if (typeof data === 'string') return fail(data, 'anthropic');
 
-  const text = data.content?.find((c) => c.type === 'text')?.text;
-
-  if (!text) {
-    verbose && console.log('[anthropic]', data);
-    return { content: '响应格式异常：缺少 content 字段', usage: data.usage, type: 'anthropic' };
-  }
-  return { content: text, usage: data.usage, type: 'anthropic' };
+  const content = data.content?.find((c) => c.type === 'text')?.text ?? '';
+  return {
+    content,
+    error: content ? undefined : '响应格式异常：缺少 content 字段',
+    usage: data.usage,
+    type: 'anthropic',
+  };
 }
 
-export async function fetchModels(apiKey: string): Promise<{ models: ModelInfo[]; error: string }> {
+export const TESTERS: Record<ApiInterface, (apiKey: string, model: string) => Promise<ApiTestResult>> = {
+  chat: testChatCompletion,
+  responses: testResponses,
+  anthropic: testAnthropic,
+};
+
+export async function fetchModels(apiKey: string): Promise<{ models: ModelInfo[]; error?: string }> {
   const data = await query<ModelsResponse>(URLS.models, apiKey, {});
-  if (typeof data === 'string') {
-    return { models: [], error: data };
-  }
-  return { models: data.data || [], error: '' };
+  if (typeof data === 'string') return { models: [], error: data };
+  return { models: data.data ?? [] };
 }
 
 export function logResults(results: ApiTestResult[]): void {
-  results.forEach((result) => {
-    console.log(`[${result.type}] ${result.content}`);
+  for (const result of results) {
+    console.log(`[${result.type}] ${result.error ? `❌ ${result.error}` : result.content}`);
     if (result.usage) {
       const usageText = Object.entries(result.usage)
         .map(([k, v]) => `${k}: ${v}`)
         .join(', ');
       console.log(`📦 Token 用量: ${usageText}`);
     }
-  });
+  }
 }

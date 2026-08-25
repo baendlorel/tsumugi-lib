@@ -1,30 +1,30 @@
-export type ApiInterface = 'chat-completion' | 'responses' | 'anthropic';
+export type ApiInterface = 'chat' | 'responses' | 'anthropic';
 
 export interface ModelInfo {
   id: string;
-  object: string;
-  created: number;
-  owned_by: string;
+  object?: string;
+  created?: number;
+  owned_by?: string;
 }
 
 export interface ModelsResponse {
-  object: string;
-  data: ModelInfo[];
+  object?: string;
+  data?: ModelInfo[];
 }
 
 export interface ApiTestResult {
   content: string;
-  usage?: Record<string, number>;
   error?: string;
+  usage?: Record<string, number>;
   type: ApiInterface;
 }
 
-export interface ApiError {
-  error?: {
-    message: string;
-    type: string;
-    code?: string;
-  };
+export interface TestOutput {
+  key: string;
+  model: string;
+  content: string;
+  valid: boolean;
+  url: string;
 }
 
 export interface ChatCompletionResponse {

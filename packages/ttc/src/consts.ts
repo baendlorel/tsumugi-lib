@@ -5,3 +5,4 @@ export const URLS = {
   anthropic: `${base}/messages`,
   models: `${base}/models`,
 };
+export const DIVIDER = '='.repeat(50);

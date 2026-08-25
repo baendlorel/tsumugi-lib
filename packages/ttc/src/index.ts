@@ -1,128 +1,121 @@
 #!/usr/bin/env node
 
-/**
- * test_api_key.ts
- * 用途：测试电信大模型网关API密钥有效性的命令行工具
- * 使用方法：npx ts-node test_api_key.ts --key YOUR_API_KEY
- */
+import { createPrompt, parseArgs, promptUser } from './cli.js';
+import type { ApiInterface, TestOutput } from './types.js';
+import { URLS, DIVIDER } from './consts.js';
+import { TESTERS, fetchModels, logResults, testAnthropic, testChatCompletion, testResponses } from './protocols.js';
+import { showHelp } from './help.js';
 
-import type { ModelInfo, ApiTestResult } from './types.js';
-import { fetchModels, testChatCompletion, testResponses, testAnthropic, logResults } from './protocols.js';
-import { parseArgs } from './cli.js';
-import { createPrompt, promptUser } from './cli.js';
+const API_URLS: Record<ApiInterface, string> = {
+  chat: URLS.chat,
+  responses: URLS.responses,
+  anthropic: URLS.anthropic,
+};
 
-function showHelp(): void {
-  console.log(`
-🔑 电信大模型网关 API 密钥测试工具
-
-用法:
-  npx ts-node test_api_key.ts [选项]
-
-选项:
-  --key, -k <API_KEY>    直接指定 API 密钥（若不提供，将交互式输入）
-  --help, -h             显示此帮助信息
-
-交互流程:
-  1. 输入或通过 --key 提供 API 密钥
-  2. 选择要检测的接口（Chat Completions / Responses / Anthropic）
-  3. 自动获取可用模型列表
-  4. 选择要测试的模型
-  5. 发送请求并显示结果
-
-示例:
-  npx ts-node test_api_key.ts --key sk-xxxxxx
-  npx ts-node test_api_key.ts -k sk-xxxxxx
-`);
+async function runModels(key: string): Promise<void> {
+  const { models, error } = await fetchModels(key);
+  if (error) {
+    console.error(error);
+    process.exit(1);
+  }
+  console.log(JSON.stringify({ url: URLS.models, models: models.map((m) => m.id) }));
 }
 
-// ============ 主程序 ============
-async function main(): Promise<void> {
-  const args = parseArgs();
+async function runTest(key: string, api: ApiInterface, model: string | null): Promise<void> {
+  const url = API_URLS[api];
+  let target = model;
+  let output: TestOutput = { key, model: '', content: '', valid: false, url };
 
-  if (args.help) {
-    showHelp();
-    process.exit(0);
-  }
-
-  console.log('\n🔑 电信大模型网关 API 密钥测试工具\n');
-  console.log('='.repeat(50));
-
-  // ----- 获取 API Key -----
-  let apiKey: string;
-  if (args.key) {
-    apiKey = args.key;
-    console.log(`✅ 使用命令行提供的 API Key: ${apiKey.substring(0, 8)}...`);
-  } else {
-    const rl = createPrompt();
-    apiKey = await promptUser(rl, '🔑 请输入您的 API Key: ');
-    rl.close();
-    if (!apiKey) {
-      console.error('❌ 错误: API Key 不能为空');
-      process.exit(1);
+  try {
+    if (!target) {
+      const { models, error } = await fetchModels(key);
+      if (error || models.length === 0) {
+        console.error(error || '未获取到任何可用模型');
+        console.log(JSON.stringify(output));
+        return;
+      }
+      target = models[0].id;
     }
-    console.log(`✅ 已获取 API Key: ${apiKey.substring(0, 8)}...`);
+
+    const result = await TESTERS[api](key, target);
+    output = { key, model: target, content: result.content, valid: !result.error && result.content.length > 0, url };
+  } catch (e) {
+    console.error(e instanceof Error ? e.message : String(e));
+    output.model = target ?? '';
   }
 
-  console.log('\n' + '='.repeat(50));
+  console.log(JSON.stringify(output));
+}
 
-  // ----- 获取模型列表 -----
-  console.log('\n📡 正在获取可用模型列表...');
-  const modelResult = await fetchModels(apiKey);
-  if (modelResult.error) {
-    console.error(`❌ 获取模型列表失败: ${modelResult.error}`);
+async function runInteractive(): Promise<void> {
+  console.log('\n🔑 电信大模型网关 API 密钥测试工具\n');
+  console.log(DIVIDER);
+
+  const rl = createPrompt();
+  const apiKey = await promptUser(rl, '🔑 请输入您的 API Key: ');
+  if (!apiKey) {
+    console.error('❌ 错误: API Key 不能为空');
     process.exit(1);
   }
 
-  const models = modelResult.models;
-  if (models.length === 0) {
-    console.error('❌ 未获取到任何可用模型');
+  console.log('\n📡 正在获取可用模型列表...');
+  const { models, error } = await fetchModels(apiKey);
+  if (error || models.length === 0) {
+    console.error(`❌ 获取模型列表失败: ${error || '未获取到任何可用模型'}`);
     process.exit(1);
   }
 
   console.log(`✅ 获取到 ${models.length} 个可用模型:\n`);
-  models.forEach((model, index) => {
-    console.log(`  ${index + 1}. ${model.id}`);
-  });
+  models.forEach((model, index) => console.log(`  ${index + 1}. ${model.id}`));
 
-  console.log('\n' + '='.repeat(50));
-
-  // ----- 选择模型 -----
-  let selectedModel: string;
-
-  // ----- 选择接口 -----
-  const rl = createPrompt();
+  let selected = '';
   while (true) {
     const answer = await promptUser(rl, `\n🔢 请选择要测试的模型 (1-${models.length}): `);
-
     const index = parseInt(answer, 10);
-    if (!isNaN(index) && index >= 1 && index <= models.length) {
-      selectedModel = models[index - 1].id;
+    if (!Number.isNaN(index) && index >= 1 && index <= models.length) {
+      selected = models[index - 1].id;
       break;
-    } else {
-      console.log(`❌ 无效选择，请输入 1 到 ${models.length} 之间的数字`);
     }
+    console.log(`❌ 无效选择，请输入 1 到 ${models.length} 之间的数字`);
   }
   rl.close();
 
-  console.log(`✅ 开始测试chat-completion、responses和anthropic接口，使用模型:  ${selectedModel}`);
+  console.log(`✅ 开始测试 chat-completion、responses 和 anthropic 接口，使用模型: ${selected}`);
 
   try {
-    const startTime = Date.now();
-    const all = await Promise.all([
-      testChatCompletion(apiKey, selectedModel, '用1句话介绍自己'),
-      testResponses(apiKey, selectedModel, '用1句话介绍自己'),
-      testAnthropic(apiKey, selectedModel, '用1句话介绍自己'),
+    const start = Date.now();
+    const results = await Promise.all([
+      testChatCompletion(apiKey, selected),
+      testResponses(apiKey, selected),
+      testAnthropic(apiKey, selected),
     ]);
-    const elapsed = Date.now() - startTime;
-
-    console.log(`✅ 请求成功，耗时: ${elapsed}ms:`);
-    logResults(all);
-
-    console.log('\n注：接口都是透传，如果源供应商没有对应接口（如/anthropic、/responses），则返回失败是正常的。\n');
-    process.exit(0);
-  } catch (error) {
-    console.error(`❌ ${error instanceof Error ? error.message : String(error)}`);
+    console.log(`✅ 请求完成，耗时: ${Date.now() - start}ms:`);
+    logResults(results);
+    console.log('\n注：接口都是透传，如果源供应商没有对应接口（如 /anthropic、/responses），返回失败是正常的。\n');
+  } catch (e) {
+    console.error(`❌ ${e instanceof Error ? e.message : String(e)}`);
     process.exit(1);
+  }
+}
+
+async function main(): Promise<void> {
+  const cmd = parseArgs(process.argv.slice(2));
+  switch (cmd.kind) {
+    case 'help':
+      showHelp();
+      return;
+    case 'models':
+      await runModels(cmd.key);
+      return;
+    case 'test':
+      await runTest(cmd.key, cmd.api, cmd.model);
+      return;
+    case 'error':
+      console.log(JSON.stringify({ error: cmd.message }));
+      process.exitCode = 1;
+      return;
+    case 'interactive':
+      await runInteractive();
   }
 }
 
