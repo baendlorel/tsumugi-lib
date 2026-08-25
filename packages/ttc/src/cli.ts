@@ -8,6 +8,8 @@ export type Command =
   | { kind: 'test'; key: string; api: ApiInterface; model: string | null }
   | { kind: 'error'; message: string };
 
+export type CommandType<K extends Command['kind']> = Extract<Command, { kind: K }>;
+
 const FLAGS: Record<string, ApiInterface> = {
   '--anthropic': 'anthropic',
   '--chat': 'chat',
