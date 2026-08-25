@@ -7,7 +7,8 @@ export type Command =
   | { kind: 'interactive' }
   | { kind: 'models'; key: string }
   | { kind: 'test'; key: string; api: ApiInterface; model: string }
-  | { kind: 'error'; message: string };
+  | { kind: 'error'; message: string }
+  | { kind: 'version' };
 
 export type CommandType<K extends Command['kind']> = Extract<Command, { kind: K }>;
 
@@ -45,6 +46,10 @@ function toTest(key: string, b?: string, c?: string): Command {
 export function parseArgs(argv: string[]): Command {
   if (argv.length === 0) return { kind: 'interactive' };
   const first = argv[0];
+
+  if (first === '--version' || first === '-v') {
+    return { kind: 'version' };
+  }
 
   if (first === '--help' || first === '-h' || first === 'help') {
     return { kind: 'help' };

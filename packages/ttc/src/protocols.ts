@@ -14,10 +14,11 @@ const TEST_MESSAGE = '用1句话介绍自己';
 async function extractApiError(response: Response, fallback: string): Promise<string> {
   let message = `HTTP ${response.status}`;
   try {
+    const e = await response.json();
+    message += `: ${e.message ?? JSON.stringify(e)}`;
+  } catch {
     const text = await response.text();
     message += `: ${text}`;
-  } catch (e) {
-    message += `: ${e instanceof Error ? e.message : String(e)}`;
   }
   return `${fallback} (${message})`;
 }
@@ -67,10 +68,11 @@ export async function testChatCompletion(apiKey: string, model: string): Promise
 }
 
 export async function testResponses(apiKey: string, model: string): Promise<ApiTestResult> {
+  const max_output_tokens = parseInt(process.env.TTC_MAX_OUTPUT_TOKENS ?? '0', 300);
   const data = await query<ResponsesResponse>(URLS.responses, apiKey, {
     model,
     input: TEST_MESSAGE,
-    max_output_tokens: 50,
+    max_output_tokens,
   });
   if (typeof data === 'string') return fail(data, 'responses');
 
@@ -82,6 +84,7 @@ export async function testResponses(apiKey: string, model: string): Promise<ApiT
       }
     }
   }
+
   return {
     content,
     error: content ? undefined : '响应格式异常：缺少 output 字段',

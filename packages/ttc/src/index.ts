@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 
-import type { ApiInterface, TestOutput } from './types.js';
-import type { Command, CommandType } from './cli.js';
+import type { CommandType } from './cli.js';
 import { createPrompt, parseArgs, promptUser } from './cli.js';
 import { URLS, DIVIDER, errorExit, getElapsed } from './common.js';
 import { TESTERS, fetchModels, logResults, testAnthropic, testChatCompletion, testResponses } from './protocols.js';
 import { help } from './help.js';
 
 const handlers = {
+  version: async function () {
+    console.log('v__VERSION__');
+  },
   models: async function ({ key }: CommandType<'models'>) {
     const { models, error } = await fetchModels(key);
     if (error) {
@@ -22,10 +24,21 @@ const handlers = {
     try {
       const result = await TESTERS[api](key, model);
       const elapsed = getElapsed(start);
-      return { valid: !result.error && result.content.length > 0, key, model, content: result.content, url, elapsed };
+
+      delete result.usage;
+      return { valid: !result.error && result.content.length > 0, key, model, ...result, url, elapsed };
     } catch (e) {
       const elapsed = getElapsed(start);
-      return { valid: false, key, model, content: '', url, error: e instanceof Error ? e.message : String(e), elapsed };
+      return {
+        valid: false,
+        key,
+        model,
+        content: '',
+        url,
+        type: api,
+        error: e instanceof Error ? e.message : String(e),
+        elapsed,
+      };
     }
   },
   interactive: async function (): Promise<void> {
