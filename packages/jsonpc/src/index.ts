@@ -118,7 +118,28 @@ export class JSONWithPropertyComment {
     return ReflectDeep.get(this.data, k) ?? defaultValue;
   }
 
-  stringify() {
+  /**
+   * Convert the data back to json text, with comments.
+   * - Like `JSON.stringify(data, null, 2)`.
+   * - Definitely change lines.
+   *
+   * @param replacer Like the replacer in `JSON.stringify`, default is `undefined`.
+   * @param space default is 2.
+   */
+  stringify(replacer?: (this: any, key: string, value: any) => any, space?: string | number) {
     // 这里可能要手动序列化了，默认按照padding为2字符
+  }
+
+  /**
+   * Return a pure js object.
+   */
+  toJSON<T = any>(): T {}
+
+  /**
+   * Equal to `JSON.stringify(this.toJSON(), null, 2)`.
+   */
+  toJSONString(replacer?: (this: any, key: string, value: any) => any, space?: string | number): string;
+  toJSONString(...args: any[]) {
+    return JSON.stringify(this.toJSON(), ...args);
   }
 }
