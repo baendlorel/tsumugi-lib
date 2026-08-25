@@ -2,7 +2,6 @@ import type {
   AnthropicResponse,
   ChatCompletionResponse,
   ResponsesResponse,
-  ApiError,
   ApiTestResult,
   ModelInfo,
   ModelsResponse,
@@ -14,12 +13,17 @@ import { verbose } from './cli.js';
 async function extractApiError(response: Response, fallback: string): Promise<string> {
   let message = `HTTP ${response.status}`;
   try {
-    const data = (await response.json()) as ApiError;
-    if (data.error?.message) {
-      message += `: ${data.error.message}`;
+    const data = await response.text();
+    message += `: ${data}`;
+  } catch (e) {
+    if (e instanceof Error) {
+      message += `: ${e.message}`;
+    } else if (typeof e === 'string') {
+      message += `: ${e}`;
+    } else {
+      message += `: ${String(e)}`;
     }
-  } catch {
-    // ignore parse error
+    // is not valid JSON
   }
   return `${fallback} (${message})`;
 }
@@ -29,16 +33,17 @@ function query<R extends ModelsResponse | ChatCompletionResponse | AnthropicResp
   apiKey: string,
   body: any,
 ) {
+  const isModelsEndpoint = url.endsWith('models');
   return fetch(url, {
-    method: 'POST',
+    method: isModelsEndpoint ? 'GET' : 'POST',
     headers: {
       'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(body),
-  }).then((r) => (r.ok ? r.json() : extractApiError(r, '聊天请求失败'))) as Promise<R | string>;
+    body: isModelsEndpoint ? undefined : JSON.stringify(body),
+  }).then((r) => (r.ok ? r.json() : extractApiError(r, '请求失败'))) as Promise<R | string>;
 }
 // verbose && console.log('[chat-completion]', data);
 

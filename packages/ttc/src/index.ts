@@ -106,17 +106,13 @@ async function main(): Promise<void> {
 
   console.log(`✅ 开始测试chat-completion、responses和anthropic接口，使用模型:  ${selectedModel}`);
 
-  const testMessage = '用1句话介绍自己';
-
   try {
     const startTime = Date.now();
-
     const all = await Promise.all([
-      testChatCompletion(apiKey, selectedModel, testMessage),
-      testResponses(apiKey, selectedModel, testMessage),
-      testAnthropic(apiKey, selectedModel, testMessage),
+      testChatCompletion(apiKey, selectedModel, '用1句话介绍自己'),
+      testResponses(apiKey, selectedModel, '用1句话介绍自己'),
+      testAnthropic(apiKey, selectedModel, '用1句话介绍自己'),
     ]);
-
     const elapsed = Date.now() - startTime;
 
     console.log(`✅ 请求成功，耗时: ${elapsed}ms:`);
