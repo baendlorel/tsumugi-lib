@@ -33,7 +33,7 @@ export async function testChatCompletion(apiKey: string, model: string, testMess
   if (data.choices && data.choices.length > 0) {
     return { content: data.choices[0].message.content, usage: data.usage, type: 'chat-completion' };
   }
-  throw new Error('响应格式异常：缺少 choices 字段');
+  throw new Error('[chat-completion] 响应格式异常：缺少 choices 字段');
 }
 
 export async function testResponses(apiKey: string, model: string, testMessage: string): Promise<ApiTestResult> {
@@ -62,6 +62,8 @@ export async function testResponses(apiKey: string, model: string, testMessage: 
     usage?: Record<string, number>;
   };
 
+  console.log('[responses]', data);
+
   let content = '';
   for (const item of data.output ?? []) {
     if (item.type === 'message') {
@@ -74,7 +76,7 @@ export async function testResponses(apiKey: string, model: string, testMessage: 
   }
 
   if (!content) {
-    throw new Error('响应格式异常：缺少 output 字段');
+    throw new Error('[responses] 响应格式异常：缺少 output 字段');
   }
   return { content, usage: data.usage, type: 'responses' };
 }
@@ -110,7 +112,7 @@ export async function testAnthropic(apiKey: string, model: string, testMessage: 
   const text = data.content?.find((c) => c.type === 'text')?.text;
 
   if (!text) {
-    throw new Error('响应格式异常：缺少 content 字段');
+    throw new Error('[anthropic] 响应格式异常：缺少 content 字段');
   }
   return { content: text, usage: data.usage, type: 'anthropic' };
 }
@@ -147,7 +149,7 @@ export async function fetchModels(apiKey: string): Promise<ModelInfo[]> {
   return data.data || [];
 }
 
-function logResults(results: ApiTestResult[]): void {
+export function logResults(results: ApiTestResult[]): void {
   results.forEach((result) => {
     console.log(`[${result.type}] ${result.content}`);
     if (result.usage) {

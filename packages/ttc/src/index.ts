@@ -7,7 +7,7 @@
  */
 
 import type { ModelInfo, ApiTestResult } from './types.js';
-import { fetchModels, testChatCompletion, testResponses, testAnthropic } from './protocols.js';
+import { fetchModels, testChatCompletion, testResponses, testAnthropic, logResults } from './protocols.js';
 import { parseArgs } from './cli.js';
 import { createPrompt, promptUser } from './cli.js';
 
@@ -106,12 +106,10 @@ async function main(): Promise<void> {
   }
   rl.close();
 
-  console.log(`✅ 已选择模型: ${selectedModel}`);
+  console.log(`✅ 开始测试chat-completion、responses和anthropic接口，使用模型:  ${selectedModel}`);
 
-  // ----- 输入测试消息 -----
   const testMessage = '用1句话介绍自己';
 
-  // ----- 发送测试请求 -----
   try {
     const startTime = Date.now();
 
@@ -124,15 +122,7 @@ async function main(): Promise<void> {
     const elapsed = Date.now() - startTime;
 
     console.log(`✅ 请求成功，耗时: ${elapsed}ms:`);
-    all.forEach((result) => {
-      console.log(`   ${result.content}`);
-      if (result.usage) {
-        const usageText = Object.entries(result.usage)
-          .map(([k, v]) => `${k}: ${v}`)
-          .join(', ');
-        console.log(`📦 Token 用量: ${usageText}`);
-      }
-    });
+    logResults(all);
 
     console.log('\n✅ API Key 有效！测试通过 🎉\n');
     process.exit(0);
