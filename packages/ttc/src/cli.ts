@@ -1,10 +1,11 @@
 import readline from 'node:readline';
-import { ApiInterface } from './types.js';
 
 interface CliArgs {
   key: string | null;
   help: boolean;
 }
+
+export let verbose: boolean = false;
 
 export function parseArgs(): CliArgs {
   const args = process.argv.slice(2);
@@ -20,6 +21,8 @@ export function parseArgs(): CliArgs {
       result.help = true;
     }
   }
+
+  verbose = args.includes('--verbose') || args.includes('-v');
 
   return result;
 }

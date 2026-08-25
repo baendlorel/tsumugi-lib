@@ -67,15 +67,13 @@ async function main(): Promise<void> {
 
   // ----- 获取模型列表 -----
   console.log('\n📡 正在获取可用模型列表...');
-  let models: ModelInfo[];
-  try {
-    models = await fetchModels(apiKey);
-  } catch (error) {
-    console.error(`❌ ${error instanceof Error ? error.message : String(error)}`);
-    console.error('💡 请检查 API Key 是否正确，以及网络是否正常');
+  const modelResult = await fetchModels(apiKey);
+  if (modelResult.error) {
+    console.error(`❌ 获取模型列表失败: ${modelResult.error}`);
     process.exit(1);
   }
 
+  const models = modelResult.models;
   if (models.length === 0) {
     console.error('❌ 未获取到任何可用模型');
     process.exit(1);

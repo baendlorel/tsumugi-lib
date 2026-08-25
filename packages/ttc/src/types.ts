@@ -1,4 +1,4 @@
-export type ApiInterface = 'chat' | 'responses' | 'anthropic';
+export type ApiInterface = 'chat-completion' | 'responses' | 'anthropic';
 
 export interface ModelInfo {
   id: string;
@@ -15,7 +15,8 @@ export interface ModelsResponse {
 export interface ApiTestResult {
   content: string;
   usage?: Record<string, number>;
-  type: 'chat-completion' | 'responses' | 'anthropic';
+  error?: string;
+  type: ApiInterface;
 }
 
 export interface ApiError {
@@ -24,4 +25,19 @@ export interface ApiError {
     type: string;
     code?: string;
   };
+}
+
+export interface ChatCompletionResponse {
+  choices?: Array<{ message: { content: string } }>;
+  usage?: Record<string, number>;
+}
+
+export interface ResponsesResponse {
+  output?: Array<{ type: string; content?: Array<{ type: string; text?: string }> }>;
+  usage?: Record<string, number>;
+}
+
+export interface AnthropicResponse {
+  content?: Array<{ type: string; text?: string }>;
+  usage?: Record<string, number>;
 }
