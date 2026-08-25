@@ -1,6 +1,6 @@
 {
   "name": "telecomjs-tokenhub-checker",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": {
     "name": "KasukabeTsumugi",
     "email": "futami16237@gmail.com"
@@ -14,7 +14,7 @@
     "types": "./dist/index.d.ts"
   },
   "bin": {
-    "ttc": "./dist/index.mjs"
+    "jstt": "./dist/index.mjs"
   },
   "files": [
     "dist"
