@@ -1,0 +1,43 @@
+{
+  "name": "telecomjs-tokenhub-checker",
+  "version": "0.1.0",
+  "author": {
+    "name": "KasukabeTsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "description": "Check if your TokenHub Key is valid.",
+  "description_zh": "测试你的TokenHub Key是否有效。",
+  "type": "module",
+  "exports": {
+    "import": "./dist/index.mjs",
+    "default": "./dist/index.mjs",
+    "types": "./dist/index.d.ts"
+  },
+  "bin": {
+    "ttc": "./dist/index.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rimraf dist && rollup -c",
+    "test": "clear && vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "directory": "packages/telecomjs-tokenhub-checker"
+  },
+  "keywords": [
+    "concat",
+    "utility",
+    "javascript",
+    "npm"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/baendlorel/kt-packages/issues"
+  },
+  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/to-assigned#readme",
+  "devDependencies": {}
+}
