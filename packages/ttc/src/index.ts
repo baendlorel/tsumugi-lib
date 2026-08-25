@@ -3,43 +3,30 @@
 import type { ApiInterface, TestOutput } from './types.js';
 import type { Command, CommandType } from './cli.js';
 import { createPrompt, parseArgs, promptUser } from './cli.js';
-import { URLS, DIVIDER } from './consts.js';
+import { URLS, DIVIDER, errorExit, getElapsed } from './common.js';
 import { TESTERS, fetchModels, logResults, testAnthropic, testChatCompletion, testResponses } from './protocols.js';
-import { showHelp } from './help.js';
+import { help } from './help.js';
 
 const handlers = {
-  models: async function ({ key }: CommandType<'models'>): Promise<void> {
+  models: async function ({ key }: CommandType<'models'>) {
     const { models, error } = await fetchModels(key);
     if (error) {
       console.error(error);
       process.exit(1);
     }
-    console.log(JSON.stringify({ url: URLS.models, models: models.map((m) => m.id) }));
+    return { url: URLS.models, models: models.map((m) => m.id) };
   },
-  test: async function ({ key, api, model }: CommandType<'test'>): Promise<void> {
+  test: async function ({ key, api, model }: CommandType<'test'>) {
     const url = URLS[api];
-    let target = model;
-    let output: TestOutput = { key, model: '', content: '', valid: false, url };
-
+    const start = performance.now();
     try {
-      if (!target) {
-        const { models, error } = await fetchModels(key);
-        if (error || models.length === 0) {
-          console.error(error || '未获取到任何可用模型');
-          console.log(JSON.stringify(output));
-          return;
-        }
-        target = models[0].id;
-      }
-
-      const result = await TESTERS[api](key, target);
-      output = { key, model: target, content: result.content, valid: !result.error && result.content.length > 0, url };
+      const result = await TESTERS[api](key, model);
+      const elapsed = getElapsed(start);
+      return { valid: !result.error && result.content.length > 0, key, model, content: result.content, url, elapsed };
     } catch (e) {
-      console.error(e instanceof Error ? e.message : String(e));
-      output.model = target ?? '';
+      const elapsed = getElapsed(start);
+      return { valid: false, key, model, content: '', url, error: e instanceof Error ? e.message : String(e), elapsed };
     }
-
-    console.log(JSON.stringify(output));
   },
   interactive: async function (): Promise<void> {
     console.log('\n🔑 电信大模型网关 API 密钥测试工具\n');
@@ -91,16 +78,19 @@ const handlers = {
       process.exit(1);
     }
   },
-  help: showHelp,
+  help,
   error: async ({ message }: CommandType<'error'>) => {
-    console.log(JSON.stringify({ error: message }));
-    process.exitCode = 1;
+    errorExit(message);
   },
 };
 
 async function main(): Promise<void> {
   const cmd = parseArgs(process.argv.slice(2));
-  await handlers[cmd.kind](cmd as any);
+  const result = await handlers[cmd.kind](cmd as any);
+  if (typeof result === 'object') {
+    (result as any).version = 'v__VERSION__';
+    console.log(JSON.stringify(result));
+  }
 }
 
 main().catch((error) => {

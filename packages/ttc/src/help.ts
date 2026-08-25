@@ -1,4 +1,4 @@
-export async function showHelp(): Promise<void> {
+export async function help(): Promise<void> {
   console.log(`
 江苏电信TokenHub API 密钥测试工具
 

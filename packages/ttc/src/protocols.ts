@@ -7,14 +7,15 @@ import type {
   ModelsResponse,
   ResponsesResponse,
 } from './types.js';
-import { URLS } from './consts.js';
+import { URLS } from './common.js';
 
 const TEST_MESSAGE = '用1句话介绍自己';
 
 async function extractApiError(response: Response, fallback: string): Promise<string> {
   let message = `HTTP ${response.status}`;
   try {
-    message += `: ${await response.text()}`;
+    const text = await response.text();
+    message += `: ${text}`;
   } catch (e) {
     message += `: ${e instanceof Error ? e.message : String(e)}`;
   }

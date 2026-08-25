@@ -1,52 +1,66 @@
 import readline from 'node:readline';
 import type { ApiInterface } from './types.js';
+import { errorExit, FLAGS, FLAGS_HINT } from './common.js';
 
 export type Command =
   | { kind: 'help' }
   | { kind: 'interactive' }
   | { kind: 'models'; key: string }
-  | { kind: 'test'; key: string; api: ApiInterface; model: string | null }
+  | { kind: 'test'; key: string; api: ApiInterface; model: string }
   | { kind: 'error'; message: string };
 
 export type CommandType<K extends Command['kind']> = Extract<Command, { kind: K }>;
 
-const FLAGS: Record<string, ApiInterface> = {
-  '--anthropic': 'anthropic',
-  '--chat': 'chat',
-  '--response': 'responses',
-};
+// 第一个一定是key，但第二第三个顺序不一定，可以调换
+function toTest(key: string, b?: string, c?: string): Command {
+  if (b === undefined) {
+    errorExit('test命令至少需要key和模型名称两个参数');
+  }
 
-const FLAGS_HINT = Object.keys(FLAGS).join(' | ');
+  let flag: string = '--chat';
+  let model: string = c === undefined ? b : '';
+  if (FLAGS[b]) {
+    flag = b;
+    if (c === undefined) {
+      errorExit('test命令需要提供模型名称');
+    }
+    model = c;
+  }
+  if (FLAGS[c ?? '']) {
+    flag = c as string;
+    model = b;
+  }
 
-function usageError(): never {
-  console.error(`{"usage":"ttc models <key> 或 ttc test <key> [${FLAGS_HINT}] [model_name]"}`);
-  process.exit(1);
-}
+  if (!model) {
+    errorExit('test命令需要提供模型名称');
+  }
 
-function toTest(key: string, flag: string, model?: string): Command {
   const api = FLAGS[flag];
-  if (api) return { kind: 'test', key, api, model: model ?? null };
-  if (flag.startsWith('-')) return { kind: 'error', message: `应该使用 ${FLAGS_HINT}` };
-  return { kind: 'test', key, api: 'chat', model: flag || null };
+  if (api) {
+    return { kind: 'test', key, api, model };
+  }
+  errorExit(`未知的接口类型: ${flag}, 可选值为: ${FLAGS_HINT}`);
 }
 
 export function parseArgs(argv: string[]): Command {
   if (argv.length === 0) return { kind: 'interactive' };
   const first = argv[0];
 
-  if (first === '--help' || first === '-h' || first === 'help') return { kind: 'help' };
-
+  if (first === '--help' || first === '-h' || first === 'help') {
+    return { kind: 'help' };
+  }
   if (first === 'models') {
-    if (!argv[1]) usageError();
+    if (argv[1] === undefined) {
+      errorExit();
+    }
     return { kind: 'models', key: argv[1] };
   }
 
   if (first === 'test') {
-    if (!argv[1]) usageError();
-    return toTest(argv[1], argv[2] ?? '', argv[3]);
+    return toTest(argv[1], argv[2], argv[3]);
   }
 
-  usageError();
+  errorExit();
 }
 
 export function createPrompt(): readline.Interface {
