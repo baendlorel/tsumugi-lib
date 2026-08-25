@@ -122,7 +122,7 @@ async function main(): Promise<void> {
     console.log(`✅ 请求成功，耗时: ${elapsed}ms:`);
     logResults(all);
 
-    console.log('\n✅ API Key 有效！测试通过 🎉\n');
+    console.log('\n注：接口都是透传，如果源供应商没有对应接口（如/anthropic、/responses），则返回失败是正常的。\n');
     process.exit(0);
   } catch (error) {
     console.error(`❌ ${error instanceof Error ? error.message : String(error)}`);
