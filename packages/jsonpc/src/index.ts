@@ -45,25 +45,28 @@ export class JSONWithPropertyComment {
     }
 
     const aggregated = aggregateComments(lines);
-
     const named = convertCommentsToProperties(aggregated);
     this.data = JSON.parse(named.lines.join(''));
     this.propMap = visit(this.data, named.names);
   }
 
+  private resolve(propPath: string) {
+    const k = propPath.split('.');
+    const kstr = JSON.stringify(k);
+    return { k, kstr, p: this.propMap.get(kstr) };
+  }
+
   /**
    * Set comment for a property path.
    * - if the property path does not exist, it will be created as `null`.
-   * @param propPath like `"a.b.c.0.1"`
+   * @param propPath like `"a.b.c.0.1"`, will be resolved by `.split('.')`
    * @param comments comments array
    */
   setComments(propPath: string, comments: string[]) {
-    const k = propPath.split('.');
-    const kstr = JSON.stringify(k);
+    const { k, kstr, p } = this.resolve(propPath);
 
-    const exists = this.propMap.get(kstr);
-    if (exists) {
-      k[k.length - 1] = exists.current + COMMENT_SUFFIX;
+    if (p) {
+      k[k.length - 1] = p.current + COMMENT_SUFFIX;
       ReflectDeep.set(this.data, k, comments);
     } else {
       const value = ReflectDeep.get(this.data, k);
@@ -85,16 +88,15 @@ export class JSONWithPropertyComment {
   /**
    * Get comment for a property path.
    * Return `undefined` if the property path does not exist.
-   * @param propPath like `"a.b.c.0.1"`
+   * @param propPath like `"a.b.c.0.1"`, will be resolved by `.split('.')`
    */
   getComments(propPath: string): string[] | undefined {
-    const k = propPath.split('.');
-    const kstr = JSON.stringify(k);
-    const exists = this.propMap.get(kstr);
-    if (!exists) {
+    const { k, p } = this.resolve(propPath);
+    if (!p) {
       return undefined;
     }
-    k[k.length - 1] = exists.current + COMMENT_SUFFIX;
+
+    k[k.length - 1] = p.current + COMMENT_SUFFIX;
     return ReflectDeep.get(this.data, k);
   }
 
@@ -108,18 +110,15 @@ export class JSONWithPropertyComment {
     ReflectDeep.set(this.data, k, value);
   }
 
-  // TODO 发现k、kstr、exists这三行都是重复的。
   get(propPath: string, defaultValue?: any) {
-    const k = propPath.split('.');
-    const kstr = JSON.stringify(k);
-    const exists = this.propMap.get(kstr);
-    if (exists) {
-      k[k.length - 1] = exists.current + COMMENT_SUFFIX;
+    const { k, p } = this.resolve(propPath);
+    if (p) {
+      k[k.length - 1] = p.current + COMMENT_SUFFIX;
     }
     return ReflectDeep.get(this.data, k) ?? defaultValue;
   }
 
   stringify() {
-    // TODO 把原本的json组合出来
+    // 这里可能要手动序列化了，默认按照padding为2字符
   }
 }

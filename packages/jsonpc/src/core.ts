@@ -34,6 +34,9 @@ export function stripTopBottom(lines: string[]) {
   return { top, bottom };
 }
 
+/**
+ * Multiple comment lines will be collapsed into a string array.
+ */
 export function aggregateComments(lines: string[]): Array<string | string[]> {
   const modified: Array<string | string[]> = [];
   let array: string[] = [];
@@ -107,6 +110,11 @@ export function uuidName(origin: string) {
   return origin + '_' + randomUUID();
 }
 
+/**
+ * This is the core feature. Converts property with comments into a uuidName, so that
+ * we can associate the right property with right comments.
+ * @param compressed
+ */
 export function convertCommentsToProperties(compressed: Array<string | string[]>) {
   // Maps uuid name to the original name
   const names = new Map<string, string>();
