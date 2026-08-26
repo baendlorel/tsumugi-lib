@@ -1,30 +1,33 @@
 # ttc
 
-测试你的 TokenHub / 电信大模型网关 API Key 是否有效的命令行工具。
+[![npm version](https://img.shields.io/npm/v/telecomjs-tokenhub-checker.svg)](https://www.npmjs.com/package/telecomjs-tokenhub-checker) [![npm downloads](http://img.shields.io/npm/dm/telecomjs-tokenhub-checker.svg)](https://npmcharts.com/compare/telecomjs-tokenhub-checker,token-types?start=1200&interval=30)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/59dd6795e61949fb97066ca52e6097ef)](https://www.codacy.com/app/Borewit/telecomjs-tokenhub-checker?utm_source=github.com&utm_medium=referral&utm_content=Borewit/telecomjs-tokenhub-checker&utm_campaign=Badge_Grade)
+
+**TokenHub Checker** — 测试 TokenHub / 电信大模型网关 API Key 是否有效的命令行工具。
+
+## 安装
+
+```bash
+npm install -g telecomjs-tokenhub-checker
+```
 
 ## 用法
 
+### 交互式测试
+
 ```bash
-# 交互式测试（无参数，供人类使用）
 ttc
-
-# 列出所有可用模型名称，返回 JSON 对象（url + 模型数组）
-ttc models <key>
-
-# 测试某个模型在某个接口下的回复是否有效，返回 JSON 对象
-# 缺省接口标志时默认为 --chat
-ttc test <key> [--anthropic|--chat|--response] [model_name]
 ```
 
-## 命令说明
+无参数时进入交互式流程：输入 API Key → 自动获取可用模型列表 → 选择模型 → 并行测试三种接口（chat-completion、responses、anthropic）并展示结果。
 
-### `ttc`
+### 列出可用模型
 
-不带任何参数时进入交互式流程：输入 API Key → 获取模型列表 → 选择模型 → 并行测试三种接口并展示结果。
+```bash
+ttc models <key>
+```
 
-### `ttc models <key>`
-
-列出 `<key>` 可用的所有模型名称，输出 JSON 对象（含接口地址和模型数组）：
+输出 JSON 对象：
 
 ```json
 {
@@ -33,36 +36,69 @@ ttc test <key> [--anthropic|--chat|--response] [model_name]
 }
 ```
 
-### `ttc test <key> [--anthropic|--chat|--response] [model_name]`
+### 测试单接口
 
-测试某个模型在某一种接口下的回复是否有效，输出 JSON 对象：
+```bash
+ttc test <key> [--chat | --anthropic | --responses] <model_name>
+```
+
+测试某个模型在指定接口下的回复是否正常，输出 JSON 对象：
 
 ```json
 {
   "key": "sk-xxxxxx",
   "model": "deepseek-v3",
-  "content": "你好，我是……",
+  "content": "我是……",
   "valid": true,
-  "url": "https://aigw.telecomjs.com/v1/chat/completions"
+  "url": "https://aigw.telecomjs.com/v1/chat/completions",
+  "elapsed": "123.456ms",
+  "type": "chat"
 }
 ```
 
-| 字段 | 类型 | 说明 |
-| ---- | ---- | ---- |
-| `key` | string | 本次使用的 API Key |
-| `model` | string | 测试用的模型；省略 `model_name` 时默认取可用模型列表的第一个 |
-| `content` | string | 返回的内容（失败时为空字符串） |
-| `valid` | boolean | 是否有效 |
-| `url` | string | 访问的接口地址 |
+**参数说明**
 
-接口标志：
+| 参数         | 说明                          |
+| ------------ | ----------------------------- |
+| `key`        | API Key（必填）               |
+| `model_name` | 模型名称（必填）              |
+| `--flag`     | 接口类型标志，默认为 `--chat` |
 
-- `--anthropic`：Anthropic Messages（`/v1/messages`）
-- `--chat`：Chat Completions（`/v1/chat/completions`）
-- `--response`：Responses（`/v1/responses`）
+**接口标志**
 
-> 缺省时默认为 `--chat`；不写接口标志时第二个参数为 `model_name`（如 `ttc test sk-xxx deepseek-v3`）。
-> 传入非法接口标志（如 `--xxx`）会返回 `{"error":"应该使用 --anthropic | --chat | --response"}`。
+| 标志             | 接口               | 端点                   |
+| ---------------- | ------------------ | ---------------------- |
+| `--chat`（默认） | Chat Completions   | `/v1/chat/completions` |
+| `--responses`    | Responses          | `/v1/responses`        |
+| `--anthropic`    | Anthropic Messages | `/v1/messages`         |
+
+> 标志和 `model_name` 顺序可互换：`ttc test sk-xxx deepseek-v3 --anthropic` 等效于 `ttc test sk-xxx --anthropic deepseek-v3`。
+> 如果只传一个位置参数（无标志），该参数视为 `model_name`，接口默认为 `--chat`。
+
+**输出字段**
+
+| 字段      | 类型    | 说明                                           |
+| --------- | ------- | ---------------------------------------------- |
+| `key`     | string  | 本次使用的 API Key                             |
+| `model`   | string  | 测试的模型名称                                 |
+| `content` | string  | 模型返回的内容（失败时为空字符串）             |
+| `valid`   | boolean | 请求是否成功且返回了有效内容                   |
+| `url`     | string  | 实际请求的接口地址                             |
+| `elapsed` | string  | 请求耗时（如 `123.456ms`）                     |
+| `type`    | string  | 接口类型（`chat` / `responses` / `anthropic`） |
+| `error`   | string  | 仅在失败时出现，描述错误原因                   |
+
+> `usage` 字段在单接口测试的输出中被移除，仅在交互模式的日志中展示。
+
+## 环境变量
+
+| 变量                    | 默认值 | 说明                                              |
+| ----------------------- | ------ | ------------------------------------------------- |
+| `TTC_MAX_OUTPUT_TOKENS` | `300`  | 最大输出 token 数，设置过小可能被截断导致响应异常 |
+
+## 协议透传说明
+
+电信大模型网关对三种接口均为透传。如果源供应商没有对应的接口（例如某些模型不支持 `/responses` 或 `/messages`），返回失败是正常现象。
 
 ## License
 
