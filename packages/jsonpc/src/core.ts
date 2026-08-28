@@ -114,26 +114,24 @@ export function uuidName(origin: string) {
 /**
  * This is the core feature. Converts property with comments into a uuidName, so that
  * we can associate the right property with right comments.
- * @param compressed
+ * @param aggregated muiltiple comment lines is collapsed into a string array.
  */
-export function convertCommentsToProperties(compressed: Array<string | string[]>) {
+export function convertCommentsToProperties(aggregated: Array<string | string[]>) {
   // Maps uuid name to the original name
   const names = new Map<string, string>();
-  const lines = compressed.map((v, i) => {
+  const lines = aggregated.map((v, i) => {
     if (typeof v === 'string') {
       return v;
     }
 
     // // prop的注释
     // "prop":"value" -> "prop_2e09b0fc-b188-4d50-b97e-e21dc0694c1c_comment":"// prop的注释","prop_2e09b0fc-b188-4d50-b97e-e21dc0694c1c":"value"
-    const next = compressed[i + 1] as string;
+    const next = aggregated[i + 1] as string;
     const origin = interpretName(next);
-    const name = uuidName(origin);
-    compressed[i + 1] = next.replace(origin, name);
-    const commentName = name + COMMENT_SUFFIX;
-    names.set(name, origin);
-
-    return `"${commentName}":${JSON.stringify(v)},`;
+    const uname = uuidName(origin);
+    aggregated[i + 1] = next.replace(origin, uname); // & Later we will change it back!
+    names.set(uname, origin);
+    return `"${uname}":${JSON.stringify(v)},`;
   });
 
   return { lines, names };
@@ -144,7 +142,7 @@ export type PropMap = Map<string, { origin: string; current: string }>;
 /**
  * Deep visit, collect prop path.
  * @param o the parsed object
- * @param names the names with uuids
+ * @param names uname -> original name map
  * @param path property name path for ReflectDeep
  * @param map returned map
  */
@@ -153,9 +151,16 @@ export function visit(o: any, names: Map<string, string>, path: string[] = [], m
     const origin = names.get(key);
     const v = o[key];
     if (origin) {
+      o[origin] = v;
+      delete o[key]; // & Delete the uuid name, so that later we can use the original name to get the value.
+
       // Use original prop name instead of uuid name
+      // TODO 也许这里不需要了？因为有了uname了，它可以自己记得自己了，或者干脆把comment数据记载在外部
+      // TODO 如果说本来子对象里有comment，但是这个子对象对应的数据被set成了新的，那么它的comment理应丢失。
       map.set(JSON.stringify(path.concat(origin)), { origin, current: key });
-      continue;
+      if (typeof v === 'object') {
+        visit(v, names, path.concat(key), map);
+      }
     } else if (Array.isArray(v)) {
       for (let i = 0; i < v.length; i++) {
         visit(v[i], names, path.concat(key, i.toString()), map);
