@@ -1,6 +1,7 @@
 import type { ApiInterface } from './types.js';
 
 const base = `https://aigw.telecomjs.com/v1`;
+// const base = `http://0.0.0.0:21110/v1`;
 export const URLS = {
   chat: `${base}/chat/completions`,
   responses: `${base}/responses`,
