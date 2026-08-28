@@ -75,12 +75,6 @@ importers:
 
   packages/jsonpc:
     dependencies:
-      glob:
-        specifier: ^13.0.6
-        version: 13.0.6
-      minimatch:
-        specifier: ^10.2.5
-        version: 10.2.5
       reflect-deep:
         specifier: ^2.0.1
         version: 2.0.1
@@ -183,6 +177,8 @@ importers:
   packages/singleton-pattern: {}
 
   packages/to-assigned: {}
+
+  packages/ttc: {}
 
   packages/type-narrow: {}
 
