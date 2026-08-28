@@ -70,7 +70,7 @@ function nextNonSpaceIsColon(line: string, start: number) {
 
 export function interpretName(line: string) {
   if (line[0] !== '"') {
-    throw new Error(`Comments not above property names are not supported yet`);
+    throw new Error(`Comments are only allowed directly above property names`);
   }
   if (line.startsWith('""')) {
     return '';

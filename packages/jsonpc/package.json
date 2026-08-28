@@ -9,9 +9,6 @@
   "description": "This is a lightweight JSON variant that allows comments under certain conditions.",
   "description_zh": "这是一个轻量级的、可以写注释的json，注释满足一定条件",
   "type": "module",
-  "bin": {
-    "lines": "./dist/index.mjs"
-  },
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
@@ -33,8 +30,8 @@
     "directory": "packages/jsonpc"
   },
   "keywords": [
-    "cli",
-    "lines",
+    "json",
+    "comments",
     "typescript",
     "nodenext"
   ],
@@ -42,10 +39,8 @@
   "bugs": {
     "url": "https://github.com/baendlorel/tsumugi-lib/issues"
   },
-  "homepage": "https://github.com/baendlorel/tsumugi-lib/tree/main/packages/lines#readme",
+  "homepage": "https://github.com/baendlorel/tsumugi-lib/tree/main/packages/jsonpc#readme",
   "dependencies": {
-    "glob": "^13.0.6",
-    "minimatch": "^10.2.5",
     "reflect-deep": "^2.0.1"
   }
 }

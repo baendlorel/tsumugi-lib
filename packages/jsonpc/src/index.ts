@@ -37,10 +37,10 @@ export class JSONWithPropertyComment {
 
     // Fill the whole file level comments
     const stripIndex = stripTopBottom(lines);
-    if (!isNaN(stripIndex.bottom)) {
+    if (!Number.isNaN(stripIndex.bottom)) {
       this.bottomComments = lines.splice(stripIndex.bottom); //! Must be done first, or indexes will change.
     }
-    if (!isNaN(stripIndex.top)) {
+    if (!Number.isNaN(stripIndex.top)) {
       this.topComments = lines.splice(0, stripIndex.top + 1);
     }
 
@@ -105,7 +105,7 @@ export class JSONWithPropertyComment {
     const kstr = JSON.stringify(k);
     const exists = this.propMap.get(kstr);
     if (exists) {
-      k[k.length - 1] = exists.current + COMMENT_SUFFIX;
+      k[k.length - 1] = exists.current;
     }
     ReflectDeep.set(this.data, k, value);
   }
@@ -113,7 +113,7 @@ export class JSONWithPropertyComment {
   get(propPath: string, defaultValue?: any) {
     const { k, p } = this.resolve(propPath);
     if (p) {
-      k[k.length - 1] = p.current + COMMENT_SUFFIX;
+      k[k.length - 1] = p.current;
     }
     return ReflectDeep.get(this.data, k) ?? defaultValue;
   }
