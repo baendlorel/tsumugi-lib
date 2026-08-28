@@ -1,6 +1,6 @@
 {
-  "name": "type-narrow",
-  "version": "0.2.3",
+  "name": "static_cast",
+  "version": "1.0.0",
   "author": {
     "name": "Kasukabe Tsumugi",
     "email": "futami16237@gmail.com"
