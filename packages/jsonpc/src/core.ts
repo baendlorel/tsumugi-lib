@@ -110,6 +110,7 @@ export function uuidName(origin: string) {
   return origin + '_' + randomUUID();
 }
 
+// TODO 决定不改变本体的字段名，也就是ddd_uuid_comments这个，uuid_comments会被记录，ddd这个不会变成ddd_uuid
 /**
  * This is the core feature. Converts property with comments into a uuidName, so that
  * we can associate the right property with right comments.
