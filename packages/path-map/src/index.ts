@@ -1,7 +1,7 @@
 import { assertKeys, clear, entries, iterate } from './core.js';
-import { ValueWrapper } from './value.js';
+import { Value } from './value.js';
 
-type DeepMap = Map<any, ValueWrapper<any> | DeepMap>;
+type DeepMap = Map<any, Value<any> | DeepMap>;
 
 /**
  * A Map that uses an array of keys (a path) to map to a value.
@@ -34,14 +34,14 @@ export class PathMap<K extends any[] = any[], V = any, NullType = undefined> {
       if (next === undefined) {
         return this.nullValue;
       }
-      if (next instanceof ValueWrapper) {
+      if (next instanceof Value) {
         return i === keys.length - 1 ? next.v : this.nullValue;
       }
       if (next instanceof Map) {
         cur = next;
       }
     }
-    return cur instanceof ValueWrapper ? cur.v : this.nullValue;
+    return cur instanceof Value ? cur.v : this.nullValue;
   }
 
   set(keys: K, value: V): this {
@@ -50,13 +50,14 @@ export class PathMap<K extends any[] = any[], V = any, NullType = undefined> {
     let cur = this.map;
     for (let i = 0; i < keys.length - 1; i++) {
       let next = cur.get(keys[i]);
+      // If it's a Value, then it will be overwritten.
       if (!(next instanceof Map)) {
         next = new Map();
         cur.set(keys[i], next);
       }
       cur = next;
     }
-    cur.set(keys[keys.length - 1], new ValueWrapper(value));
+    cur.set(keys[keys.length - 1], new Value(value));
     return this;
   }
 
@@ -69,14 +70,14 @@ export class PathMap<K extends any[] = any[], V = any, NullType = undefined> {
       if (next === undefined) {
         return false;
       }
-      if (next instanceof ValueWrapper) {
+      if (next instanceof Value) {
         return i === keys.length - 1;
       }
       if (next instanceof Map) {
         cur = next;
       }
     }
-    return cur instanceof ValueWrapper;
+    return cur instanceof Value;
   }
 
   delete(keys: K): void {
