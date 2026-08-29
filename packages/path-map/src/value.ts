@@ -1,6 +1,9 @@
+export const VK = Symbol('PathMap.Value');
+export type VK = typeof VK;
+
 export class Value<T> {
-  v: T;
+  [VK]: T;
   constructor(value: T) {
-    this.v = value;
+    this[VK] = value;
   }
 }

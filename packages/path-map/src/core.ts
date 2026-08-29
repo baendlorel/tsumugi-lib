@@ -1,4 +1,4 @@
-import { Value } from './value.js';
+import { Value, VK } from './value.js';
 
 export function assertKeys(keys: unknown): asserts keys is any[] {
   if (!Array.isArray(keys) || keys.length === 0) {
@@ -24,7 +24,7 @@ export function iterate(
   map.forEach((value, key) => {
     const nextKey = keyStack.concat(key);
     if (value instanceof Value) {
-      callbackfn.call(thisArg, value.v, nextKey, map);
+      callbackfn.call(thisArg, value[VK], nextKey, map);
     } else if (value instanceof Map) {
       iterate(value, callbackfn, thisArg, nextKey);
     }
@@ -36,7 +36,7 @@ export function entries(map: Map<any, any>, keyStack: any[] = []): [any[], any][
   map.forEach((value, key) => {
     const nextKey = keyStack.concat(key);
     if (value instanceof Value) {
-      result.push([nextKey, value.v]);
+      result.push([nextKey, value[VK]]);
     } else if (value instanceof Map) {
       result.push(...entries(value, nextKey));
     }

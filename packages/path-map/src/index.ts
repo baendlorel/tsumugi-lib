@@ -1,5 +1,5 @@
 import { assertKeys, clear, entries, iterate } from './core.js';
-import { Value } from './value.js';
+import { Value, VK } from './value.js';
 
 type DeepMap = Map<any, Value<any> | DeepMap>;
 
@@ -31,17 +31,16 @@ export class PathMap<K extends any[] = any[], V = any, NullType = undefined> {
     let cur = this.map;
     for (let i = 0; i < keys.length; i++) {
       const next = cur.get(keys[i]);
-      if (next === undefined) {
+      if (!next) {
         return this.nullValue;
-      }
-      if (next instanceof Value) {
-        return i === keys.length - 1 ? next.v : this.nullValue;
-      }
-      if (next instanceof Map) {
+      } else if (VK in next) {
+        // & 'VK in next' is far more faster then 'instanceof'
+        return i === keys.length - 1 ? next[VK] : this.nullValue;
+      } else {
         cur = next;
       }
     }
-    return cur instanceof Value ? cur.v : this.nullValue;
+    return cur instanceof Value ? cur[VK] : this.nullValue;
   }
 
   set(keys: K, value: V): this {
@@ -51,7 +50,7 @@ export class PathMap<K extends any[] = any[], V = any, NullType = undefined> {
     for (let i = 0; i < keys.length - 1; i++) {
       let next = cur.get(keys[i]);
       // If it's a Value, then it will be overwritten.
-      if (!(next instanceof Map)) {
+      if (!next || VK in next) {
         next = new Map();
         cur.set(keys[i], next);
       }
@@ -67,13 +66,11 @@ export class PathMap<K extends any[] = any[], V = any, NullType = undefined> {
     let cur = this.map;
     for (let i = 0; i < keys.length; i++) {
       const next = cur.get(keys[i]);
-      if (next === undefined) {
+      if (!next) {
         return false;
-      }
-      if (next instanceof Value) {
+      } else if (VK in next) {
         return i === keys.length - 1;
-      }
-      if (next instanceof Map) {
+      } else {
         cur = next;
       }
     }
