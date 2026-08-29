@@ -1,0 +1,49 @@
+{
+  "name": "path-map",
+  "version": "0.2.3",
+  "author": {
+    "name": "Kasukabe Tsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "purpose": "npm",
+  "description": "A Map that uses an array of keys(path) to map to a value",
+  "description_zh": "使用键数组（路径）映射到值的Map",
+  "type": "module",
+  "bin": {
+    "lines": "./dist/index.mjs"
+  },
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "try": "tsx src/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/tsumugi-lib.git",
+    "directory": "packages/lines"
+  },
+  "keywords": [
+    "cli",
+    "lines",
+    "typescript",
+    "nodenext"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/baendlorel/tsumugi-lib/issues"
+  },
+  "homepage": "https://github.com/baendlorel/tsumugi-lib/tree/main/packages/lines#readme",
+  "dependencies": {
+    "glob": "^13.0.6",
+    "minimatch": "^10.2.5"
+  }
+}
