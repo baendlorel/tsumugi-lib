@@ -8,7 +8,7 @@ export function assertKeys(keys: unknown): asserts keys is any[] {
 
 export function clear(map: Map<any, any>) {
   map.forEach((value) => {
-    if (value instanceof Map) {
+    if (!(VK in value)) {
       clear(value);
     }
   });
@@ -23,9 +23,9 @@ export function iterate(
 ) {
   map.forEach((value, key) => {
     const nextKey = keyStack.concat(key);
-    if (value instanceof Value) {
+    if (VK in value) {
       callbackfn.call(thisArg, value[VK], nextKey, map);
-    } else if (value instanceof Map) {
+    } else {
       iterate(value, callbackfn, thisArg, nextKey);
     }
   });
@@ -35,9 +35,9 @@ export function entries(map: Map<any, any>, keyStack: any[] = []): [any[], any][
   const result: [any[], any][] = [];
   map.forEach((value, key) => {
     const nextKey = keyStack.concat(key);
-    if (value instanceof Value) {
+    if (VK in value) {
       result.push([nextKey, value[VK]]);
-    } else if (value instanceof Map) {
+    } else {
       result.push(...entries(value, nextKey));
     }
   });

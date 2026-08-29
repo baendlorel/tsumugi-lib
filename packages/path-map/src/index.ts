@@ -40,7 +40,7 @@ export class PathMap<K extends any[] = any[], V = any, NullType = undefined> {
         cur = next;
       }
     }
-    return cur instanceof Value ? cur[VK] : this.nullValue;
+    return VK in cur ? (cur as Value<V>)[VK] : this.nullValue;
   }
 
   set(keys: K, value: V): this {
@@ -83,7 +83,7 @@ export class PathMap<K extends any[] = any[], V = any, NullType = undefined> {
     let cur = this.map;
     for (let i = 0; i < keys.length - 1; i++) {
       const next = cur.get(keys[i]);
-      if (!(next instanceof Map)) {
+      if (!next || VK in next) {
         return;
       }
       cur = next;
