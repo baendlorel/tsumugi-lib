@@ -9,16 +9,12 @@ type DeepMap = Map<any, Value<any> | DeepMap>;
  * Internally it builds a tree of `Map` nodes. Only leaf nodes hold user values;
  * intermediate nodes are internal and not exposed as values.
  */
-export class PathMap<K extends any[] = any[], V = any, NullType = undefined> {
+export class PathMap<K extends any[] = any[], V = any> {
   static readonly Null = Symbol('PathMap.Null');
 
   private map: DeepMap = new Map();
 
-  private nullValue: NullType;
-
-  constructor(entries?: Iterable<[K, V]>, nullValue?: any) {
-    this.nullValue = nullValue;
-
+  constructor(entries?: Iterable<[K, V]>) {
     if (entries) {
       for (const [keys, value] of entries) {
         this.set(keys, value);
@@ -26,21 +22,21 @@ export class PathMap<K extends any[] = any[], V = any, NullType = undefined> {
     }
   }
 
-  get(keys: K): V | NullType {
+  get(keys: K): V | undefined {
     assertKeys(keys);
     let cur = this.map;
     for (let i = 0; i < keys.length; i++) {
       const next = cur.get(keys[i]);
       if (!next) {
-        return this.nullValue;
+        return undefined;
       } else if (VK in next) {
         // & 'VK in next' is far more faster then 'instanceof'
-        return i === keys.length - 1 ? next[VK] : this.nullValue;
+        return i === keys.length - 1 ? next[VK] : undefined;
       } else {
         cur = next;
       }
     }
-    return VK in cur ? (cur as Value<V>)[VK] : this.nullValue;
+    return VK in cur ? (cur as Value<V>)[VK] : undefined;
   }
 
   set(keys: K, value: V): this {
@@ -74,7 +70,7 @@ export class PathMap<K extends any[] = any[], V = any, NullType = undefined> {
         cur = next;
       }
     }
-    return cur instanceof Value;
+    return VK in cur;
   }
 
   delete(keys: K): void {
@@ -91,8 +87,8 @@ export class PathMap<K extends any[] = any[], V = any, NullType = undefined> {
     cur.delete(keys[keys.length - 1]);
   }
 
-  forEach(callbackfn: (value: V, keys: K, map: PathMap<K, V>) => void, thisArg?: any): this {
-    iterate(this.map, callbackfn as any, thisArg, []);
+  forEach(callbackfn: (value: V, keys: K, pathMap: PathMap<K, V>) => void, thisArg: any = this): this {
+    iterate(this, this.map, [], thisArg, callbackfn as (value: any, keys: any[], map: PathMap) => void);
     return this;
   }
 

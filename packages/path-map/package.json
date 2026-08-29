@@ -10,6 +10,7 @@
   "description_zh": "使用键数组（路径）映射到值的Map",
   "type": "module",
   "types": "./dist/index.d.ts",
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.d.mts",

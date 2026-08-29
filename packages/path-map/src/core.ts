@@ -1,4 +1,5 @@
-import { Value, VK } from './value.js';
+import type { PathMap } from './index.js';
+import { VK } from './value.js';
 
 export function assertKeys(keys: unknown): asserts keys is any[] {
   if (!Array.isArray(keys) || keys.length === 0) {
@@ -16,17 +17,18 @@ export function clear(map: Map<any, any>) {
 }
 
 export function iterate(
-  map: Map<any, any>,
-  callbackfn: (value: any, keys: any[], map: Map<any, any>) => void,
-  thisArg: any,
+  pathMap: PathMap,
+  node: Map<any, any>,
   keyStack: any[],
+  thisArg: any,
+  callbackfn: (value: any, keys: any[], map: PathMap) => void,
 ) {
-  map.forEach((value, key) => {
+  node.forEach((valueOrMap, key) => {
     const nextKey = keyStack.concat(key);
-    if (VK in value) {
-      callbackfn.call(thisArg, value[VK], nextKey, map);
+    if (VK in valueOrMap) {
+      callbackfn.call(thisArg, valueOrMap[VK], nextKey, pathMap);
     } else {
-      iterate(value, callbackfn, thisArg, nextKey);
+      iterate(pathMap, valueOrMap, nextKey, thisArg, callbackfn);
     }
   });
 }
