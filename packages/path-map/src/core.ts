@@ -1,4 +1,4 @@
-import type { TrieMap } from './index.js';
+import type { PathMap } from './index.js';
 import { VK } from './value.js';
 
 export function assertKeys(keys: unknown): asserts keys is any[] {
@@ -17,11 +17,11 @@ export function clear(map: Map<any, any>) {
 }
 
 export function iterate(
-  pathMap: TrieMap,
+  pathMap: PathMap,
   node: Map<any, any>,
   keyStack: any[],
   thisArg: any,
-  callbackfn: (value: any, keys: any[], map: TrieMap) => void,
+  callbackfn: (value: any, keys: any[], map: PathMap) => void,
 ) {
   node.forEach((valueOrMap, key) => {
     const nextKey = keyStack.concat(key);

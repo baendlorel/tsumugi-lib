@@ -9,7 +9,7 @@ type DeepMap = Map<any, Value<any> | DeepMap>;
  * Internally it builds a tree of `Map` nodes. Only leaf nodes hold user values;
  * intermediate nodes are internal and not exposed as values.
  */
-export class TrieMap<K extends any[] = any[], V = any> {
+export class PathMap<K extends any[] = any[], V = any> {
   private map: DeepMap = new Map();
 
   constructor(entries?: Iterable<[K, V]>) {
@@ -85,8 +85,8 @@ export class TrieMap<K extends any[] = any[], V = any> {
     cur.delete(keys[keys.length - 1]);
   }
 
-  forEach(callbackfn: (value: V, keys: K, pathMap: TrieMap<K, V>) => void, thisArg: any = this): this {
-    iterate(this, this.map, [], thisArg, callbackfn as (value: any, keys: any[], map: TrieMap) => void);
+  forEach(callbackfn: (value: V, keys: K, pathMap: PathMap<K, V>) => void, thisArg: any = this): this {
+    iterate(this, this.map, [], thisArg, callbackfn as (value: any, keys: any[], map: PathMap) => void);
     return this;
   }
 
