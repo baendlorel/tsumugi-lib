@@ -1,4 +1,7 @@
 import { assertKeys, clear, entries, iterate } from './core.js';
+import { ValueWrapper } from './value.js';
+
+type DeepMap = Map<any, ValueWrapper<any> | DeepMap>;
 
 /**
  * A Map that uses an array of keys (a path) to map to a value.
@@ -9,12 +12,7 @@ import { assertKeys, clear, entries, iterate } from './core.js';
 export class PathMap<K extends any[] = any[], V = any, NullType = undefined> {
   static readonly Null = Symbol('PathMap.Null');
 
-  private map = new Map<any, any>();
-
-  /**
-   * Marks whether a map is created by this PathMap instance.
-   */
-  private internalMaps = new WeakSet<Map<any, any>>();
+  private map: DeepMap = new Map();
 
   private nullValue: NullType;
 
@@ -30,15 +28,21 @@ export class PathMap<K extends any[] = any[], V = any, NullType = undefined> {
 
   get(keys: K): V | NullType {
     assertKeys(keys);
-
     let cur = this.map;
     for (let i = 0; i < keys.length; i++) {
-      cur = cur.get(keys[i]);
-      if (!this.internalMaps.has(cur)) {
-        return i === keys.length - 1 ? (cur as V) : this.nullValue;
+      const next = cur.get(keys[i]);
+      if (next === undefined) {
+        return this.nullValue;
+      }
+      if (next instanceof ValueWrapper) {
+        return i === keys.length - 1 ? next.v : this.nullValue;
+      }
+
+      if (next instanceof Map) {
+        cur = next;
       }
     }
-    return cur as V;
+    return cur instanceof ValueWrapper ? cur.v : this.nullValue;
   }
 
   set(keys: K, value: V): this {
