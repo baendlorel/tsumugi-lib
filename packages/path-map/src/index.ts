@@ -1,7 +1,13 @@
-function clear(map: Map<any, any>, interalMaps: WeakSet<Map<any, any>>) {
+function assertKeys(keys: any[]): asserts keys is any[] {
+  if (!Array.isArray(keys) || keys.length === 0) {
+    throw new TypeError('PathMap cannot operate with an empty key path');
+  }
+}
+
+function clear(map: Map<any, any>, internalMaps: WeakSet<Map<any, any>>) {
   map.forEach((value) => {
-    if (interalMaps.has(value)) {
-      clear(value, interalMaps);
+    if (internalMaps.has(value)) {
+      clear(value, internalMaps);
     }
   });
   map.clear();
@@ -10,25 +16,25 @@ function clear(map: Map<any, any>, interalMaps: WeakSet<Map<any, any>>) {
 function iterate(
   map: Map<any, any>,
   callbackfn: (value: any, keys: any[], map: Map<any, any>) => void,
-  thisArg: any = map,
-  keyStack: any[] = [],
-  interalMaps: WeakSet<Map<any, any>>,
+  thisArg: any,
+  keyStack: any[],
+  internalMaps: WeakSet<Map<any, any>>,
 ) {
   map.forEach((value, key) => {
     const nextKey = keyStack.concat(key);
     callbackfn.call(thisArg, value, nextKey, map);
-    if (interalMaps.has(value)) {
-      iterate(value, callbackfn, thisArg, nextKey, interalMaps);
+    if (internalMaps.has(value)) {
+      iterate(value, callbackfn, thisArg, nextKey, internalMaps);
     }
   });
 }
 
-function entries(map: Map<any, any>, interalMaps: WeakSet<Map<any, any>>, keyStack: any[] = []): [any[], any][] {
+function entries(map: Map<any, any>, internalMaps: WeakSet<Map<any, any>>, keyStack: any[] = []): [any[], any][] {
   const result: [any[], any][] = [];
   map.forEach((value, key) => {
     const nextKey = keyStack.concat(key);
-    if (interalMaps.has(value)) {
-      result.push(...entries(value, interalMaps, nextKey));
+    if (internalMaps.has(value)) {
+      result.push(...entries(value, internalMaps, nextKey));
     } else {
       result.push([nextKey, value]);
     }
@@ -37,9 +43,14 @@ function entries(map: Map<any, any>, interalMaps: WeakSet<Map<any, any>>, keySta
 }
 
 /**
- * This is a Map that use an array of keys to map to a value.
+ * A Map that uses an array of keys (a path) to map to a value.
+ *
+ * Internally it builds a tree of `Map` nodes. Only leaf nodes hold user values;
+ * intermediate nodes are internal and not exposed as values.
  */
-export class PathMap<K extends any[] = any[], V extends any = any> {
+export class PathMap<K extends any[] = any[], V = any, NullType = undefined> {
+  static readonly Null = Symbol('PathMap.Null');
+
   private map = new Map<any, any>();
 
   /**
@@ -47,22 +58,38 @@ export class PathMap<K extends any[] = any[], V extends any = any> {
    */
   private internalMaps = new WeakSet<Map<any, any>>();
 
-  get<V = any>(keys: K): V | undefined {
+  private nullValue: NullType;
+
+  constructor(entries?: Iterable<[K, V]>, nullValue?: any) {
+    this.nullValue = nullValue;
+
+    if (entries) {
+      for (const [keys, value] of entries) {
+        this.set(keys, value);
+      }
+    }
+  }
+
+  get(keys: K): V | NullType {
+    assertKeys(keys);
+
     let cur = this.map;
     for (let i = 0; i < keys.length; i++) {
       cur = cur.get(keys[i]);
-      if (cur instanceof Map === false) {
-        return i === keys.length - 1 ? (cur as V) : undefined;
+      if (!(cur instanceof Map)) {
+        return i === keys.length - 1 ? (cur as V) : this.nullValue;
       }
     }
     return cur as V;
   }
 
   set(keys: K, value: V): this {
+    assertKeys(keys);
+
     let cur = this.map;
     for (let i = 0; i < keys.length - 1; i++) {
       let next = cur.get(keys[i]);
-      if (next instanceof Map === false) {
+      if (!(next instanceof Map)) {
         this.internalMaps.add((next = new Map()));
         cur.set(keys[i], next);
       }
@@ -72,11 +99,29 @@ export class PathMap<K extends any[] = any[], V extends any = any> {
     return this;
   }
 
-  delete(keys: K) {
+  has(keys: K): boolean {
+    assertKeys(keys);
+
+    let cur = this.map;
+    for (let i = 0; i < keys.length; i++) {
+      cur = cur.get(keys[i]);
+      if (cur === undefined) {
+        return false;
+      }
+      if (!this.internalMaps.has(cur)) {
+        return i === keys.length - 1;
+      }
+    }
+    return true;
+  }
+
+  delete(keys: K): void {
+    assertKeys(keys);
+
     let cur = this.map;
     for (let i = 0; i < keys.length - 1; i++) {
-      let next = cur.get(keys[i]);
-      if (next instanceof Map === false) {
+      const next = cur.get(keys[i]);
+      if (!this.internalMaps.has(next)) {
         return;
       }
       cur = next;
@@ -106,11 +151,11 @@ export class PathMap<K extends any[] = any[], V extends any = any> {
     return this.entries().map((e) => e[0]);
   }
 
-  [Symbol.iterator](): IterableIterator<[K, V]> {
-    return this.entries()[Symbol.iterator]();
+  *[Symbol.iterator](): IterableIterator<[K, V]> {
+    yield* this.entries();
   }
 
-  [Symbol.toStringTag]() {
+  get [Symbol.toStringTag](): string {
     return 'PathMap';
   }
 }

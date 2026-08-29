@@ -1,67 +1,102 @@
-# total-lines
+# path-map
 
-A lightweight CLI tool to count lines of code in your project.
+A `Map` that uses an array of keys (a **path**) to map to a value. Think of it as a nested `Map` with a flat API.
 
 ## Installation
 
 ```bash
-npm i -g total-lines
+npm i path-map
 ```
 
 ## Usage
 
-```bash
-# Count lines in current directory
-lines .
+```ts
+import { PathMap } from 'path-map';
 
-# Count lines in a specific path
-lines /path/to/project
+const map = new PathMap<string[], number>();
 
-# Count with verbose output (shows individual files)
-lines -v /path/to/project
+// Set values using an array of keys
+map.set(['a', 'b', 'c'], 42);
 
-# Count with worker threads
-lines --threads 4 /path/to/project
+// Get values
+map.get(['a', 'b', 'c']); // 42
+map.get(['a', 'b']); // undefined — intermediate nodes are internal
 
-# Show version
-lines -V
+// Check if a path exists
+map.has(['a', 'b', 'c']); // true
 
-# Show help
-lines -h
-```
+// Delete a path
+map.delete(['a', 'b', 'c']);
 
-## Configuration
+// Iteration
+map.set(['x', 'y'], 1);
+map.set(['x', 'z'], 2);
 
-Create `~/.total-lines.json` to customize:
-
-```json
-{
-  "suffix": [".ts", ".js", ".py", "go"],
-  "exclude": ["**/node_modules", "**/dist", "**/*.md"]
+for (const [keys, value] of map) {
+  console.log(keys, value);
 }
+// ['x', 'y'] 1
+// ['x', 'z'] 2
+
+// All entries
+map.entries(); // [[['x', 'y'], 1], [['x', 'z'], 2]]
+map.keys();    // [['x', 'y'], ['x', 'z']]
+map.values();  // [1, 2]
+
+// forEach
+map.forEach((value, keys) => {
+  console.log(keys, value);
+});
+
+// Clear everything
+map.clear();
 ```
 
-### View Current Config
+## API
 
-```bash
-# Show supported file suffixes
-lines config suffix
+### `new PathMap<K extends any[], V>()`
 
-# Show exclusion patterns
-lines config exclude
+Creates a new PathMap instance.
 
-# Show config file format
-lines config
-```
+### `.get(keys: K): V | undefined`
 
-## Features
+Returns the value at the given key path, or `undefined` if not found.
 
-- **Multi-language support**: 40+ file extensions supported by default
-- **Smart exclusion**: Automatically excludes node_modules, dist, .git, etc.
-- **Configurable**: Customize via config file
-- **Verbose mode**: See per-file breakdown
-- **Optional threading**: Enable worker threads when scanning many files
-- **Detailed output**: Lines grouped by file extension
+### `.set(keys: K, value: V): this`
+
+Sets the value at the given key path. Intermediate Maps are created automatically.
+
+### `.has(keys: K): boolean`
+
+Returns `true` if the given key path exists in the map.
+
+### `.delete(keys: K): void`
+
+Deletes the value at the given key path.
+
+### `.clear(): this`
+
+Removes all entries.
+
+### `.entries(): [K, V][]`
+
+Returns an array of `[keys, value]` pairs.
+
+### `.keys(): K[]`
+
+Returns an array of all key paths.
+
+### `.values(): V[]`
+
+Returns an array of all values.
+
+### `.forEach(callbackfn, thisArg?): this`
+
+Invokes `callbackfn` for each `(value, keys, map)` entry.
+
+### `[Symbol.iterator](): IterableIterator<[K, V]>`
+
+Makes the map iterable. Yields `[keys, value]` tuples.
 
 ## License
 
