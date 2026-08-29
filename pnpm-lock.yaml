@@ -73,12 +73,6 @@ importers:
         specifier: ^25.2.3
         version: 25.2.3
 
-  packages/jsonpc:
-    dependencies:
-      reflect-deep:
-        specifier: ^2.0.1
-        version: 2.0.1
-
   packages/lines:
     dependencies:
       glob:
@@ -99,6 +93,8 @@ importers:
   packages/minimal-event-bus: {}
 
   packages/n-base-integer: {}
+
+  packages/path-map: {}
 
   packages/probability-branch: {}
 
@@ -1450,9 +1446,6 @@ packages:
   quansync@1.0.0:
     resolution: {integrity: sha512-5xZacEEufv3HSTPQuchrvV6soaiACMFnq1H8wkVioctoH3TRha9Sz66lOxRwPK/qZj7HPiSveih9yAyh98gvqA==}
 
-  reflect-deep@2.0.1:
-    resolution: {integrity: sha512-FUQYBAoLEnXX7JuoaUr6Mn+Jd0ijY8zjFVkohWltvK7JO8pFw3MQjtoQfpNDw5V+svjx5mdNyDNIfWqtBrGaOA==}
-
   resolve-pkg-maps@1.0.0:
     resolution: {integrity: sha512-seS2Tj26TBVOC2NIc2rOe2y2ZO7efxITtLZcGSOnHHNOQ7CkiUBfw0Iw2ck6xkIhPwLhKNLS8BO+hEpngQlqzw==}
 
@@ -2596,8 +2589,6 @@ snapshots:
   prettier@3.8.3: {}
 
   quansync@1.0.0: {}
-
-  reflect-deep@2.0.1: {}
 
   resolve-pkg-maps@1.0.0: {}
 

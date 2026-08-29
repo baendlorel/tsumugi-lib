@@ -20,7 +20,7 @@ map.set(['a', 'b', 'c'], 42);
 
 // Get values
 map.get(['a', 'b', 'c']); // 42
-map.get(['a', 'b']); // undefined — intermediate nodes are internal
+map.get(['a', 'b']);      // undefined — intermediate nodes are internal
 
 // Check if a path exists
 map.has(['a', 'b', 'c']); // true
@@ -43,10 +43,17 @@ map.entries(); // [[['x', 'y'], 1], [['x', 'z'], 2]]
 map.keys();    // [['x', 'y'], ['x', 'z']]
 map.values();  // [1, 2]
 
-// forEach
-map.forEach((value, keys) => {
-  console.log(keys, value);
+// forEach — third argument is the PathMap instance itself
+map.forEach((value, keys, pathMap) => {
+  console.log(keys, value, pathMap === map); // true
 });
+
+const m = new PathMap<string[], string>();
+m.set(['a'], 'hello');
+
+const v1 = m.get(['a']);     // 'hello'
+const v2 = m.get(['b']);     // undefined (not found)
+const v3 = m.get(['a', 'b']); // undefined (intermediate node, no value stored)
 
 // Clear everything
 map.clear();
@@ -54,21 +61,25 @@ map.clear();
 
 ## API
 
-### `new PathMap<K extends any[], V>()`
+### `new PathMap<K extends any[], V>(entries?)`
 
 Creates a new PathMap instance.
 
+- `entries` — optional `Iterable<[K, V]>` to populate the map on construction.
+
 ### `.get(keys: K): V | undefined`
 
-Returns the value at the given key path, or `undefined` if not found.
+Returns the value at the given key path, or `undefined` if:
+- the path does not exist, or
+- an intermediate node along the path does not exist.
 
 ### `.set(keys: K, value: V): this`
 
-Sets the value at the given key path. Intermediate Maps are created automatically.
+Sets the value at the given key path. Intermediate `Map` nodes are created automatically. If an existing value sits on an intermediate key, it is overwritten by a new `Map` node.
 
 ### `.has(keys: K): boolean`
 
-Returns `true` if the given key path exists in the map.
+Returns `true` if a value exists at the given key path.
 
 ### `.delete(keys: K): void`
 
@@ -92,11 +103,30 @@ Returns an array of all values.
 
 ### `.forEach(callbackfn, thisArg?): this`
 
-Invokes `callbackfn` for each `(value, keys, map)` entry.
+Invokes `callbackfn` for each entry. The callback receives:
+
+```ts
+(value: V, keys: K, pathMap: PathMap<K, V>) => void
+```
+
+The third argument is the `PathMap` instance itself (consistent with `Map.prototype.forEach`).
 
 ### `[Symbol.iterator](): IterableIterator<[K, V]>`
 
-Makes the map iterable. Yields `[keys, value]` tuples.
+Makes the map iterable. Yields `[keys, value]` tuples. Enables `for...of` and spread.
+
+### `[Symbol.toStringTag]`
+
+Returns `'PathMap'`.
+
+## Differences from native `Map`
+
+| Feature            | `Map`          | `PathMap`                               |
+| ------------------ | -------------- | --------------------------------------- |
+| Key type           | single value   | array of values (a path)                |
+| Intermediate nodes | —              | auto-created, hidden                    |
+| `forEach` 3rd arg  | `Map` instance | `PathMap` instance                      |
+| `.size`            | O(1)           | not provided (O(n) would be misleading) |
 
 ## License
 

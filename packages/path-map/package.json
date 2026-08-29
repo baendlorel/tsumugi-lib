@@ -1,13 +1,13 @@
 {
-  "name": "path-map",
+  "name": "trie-map",
   "version": "0.1.0",
   "author": {
     "name": "Kasukabe Tsumugi",
     "email": "futami16237@gmail.com"
   },
   "purpose": "npm",
-  "description": "A Map that uses an array of keys (path) to map to a value",
-  "description_zh": "使用键数组（路径）映射到值的Map",
+  "description": "A Map that uses an array of keys (path) to map to a value. A generic prefix tree map.",
+  "description_zh": "使用键数组（路径）映射到值的Map，通用型前缀树映射",
   "type": "module",
   "types": "./dist/index.d.ts",
   "sideEffects": false,
