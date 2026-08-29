@@ -37,7 +37,6 @@ export class PathMap<K extends any[] = any[], V = any, NullType = undefined> {
       if (next instanceof ValueWrapper) {
         return i === keys.length - 1 ? next.v : this.nullValue;
       }
-
       if (next instanceof Map) {
         cur = next;
       }
@@ -52,12 +51,12 @@ export class PathMap<K extends any[] = any[], V = any, NullType = undefined> {
     for (let i = 0; i < keys.length - 1; i++) {
       let next = cur.get(keys[i]);
       if (!(next instanceof Map)) {
-        this.internalMaps.add((next = new Map()));
+        next = new Map();
         cur.set(keys[i], next);
       }
       cur = next;
     }
-    cur.set(keys[keys.length - 1], value);
+    cur.set(keys[keys.length - 1], new ValueWrapper(value));
     return this;
   }
 
@@ -66,15 +65,18 @@ export class PathMap<K extends any[] = any[], V = any, NullType = undefined> {
 
     let cur = this.map;
     for (let i = 0; i < keys.length; i++) {
-      cur = cur.get(keys[i]);
-      if (cur === undefined) {
+      const next = cur.get(keys[i]);
+      if (next === undefined) {
         return false;
       }
-      if (!this.internalMaps.has(cur)) {
+      if (next instanceof ValueWrapper) {
         return i === keys.length - 1;
       }
+      if (next instanceof Map) {
+        cur = next;
+      }
     }
-    return true;
+    return cur instanceof ValueWrapper;
   }
 
   delete(keys: K): void {
@@ -83,7 +85,7 @@ export class PathMap<K extends any[] = any[], V = any, NullType = undefined> {
     let cur = this.map;
     for (let i = 0; i < keys.length - 1; i++) {
       const next = cur.get(keys[i]);
-      if (!this.internalMaps.has(next)) {
+      if (!(next instanceof Map)) {
         return;
       }
       cur = next;
@@ -92,17 +94,17 @@ export class PathMap<K extends any[] = any[], V = any, NullType = undefined> {
   }
 
   forEach(callbackfn: (value: V, keys: K, map: PathMap<K, V>) => void, thisArg?: any): this {
-    iterate(this.map, callbackfn as any, thisArg, [], this.internalMaps);
+    iterate(this.map, callbackfn as any, thisArg, []);
     return this;
   }
 
   clear(): this {
-    clear(this.map, this.internalMaps);
+    clear(this.map);
     return this;
   }
 
   entries(): [K, V][] {
-    return entries(this.map, this.internalMaps) as [K, V][];
+    return entries(this.map) as [K, V][];
   }
 
   values(): V[] {
