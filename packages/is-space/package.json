@@ -1,20 +1,17 @@
 {
-  "name": "telecomjs-tokenhub-checker",
-  "version": "0.1.0",
+  "name": "is-space",
+  "version": "1.0.0",
   "author": {
     "name": "KasukabeTsumugi",
     "email": "futami16237@gmail.com"
   },
-  "description": "Check if your TokenHub Key is valid.",
-  "description_zh": "测试你的TokenHub Key是否有效。",
+  "description": "Check if a character is considered a space by JavaScript.",
+  "description_zh": "检查一个字符是否被JavaScript认为是空格。",
   "type": "module",
   "exports": {
     "import": "./dist/index.mjs",
     "default": "./dist/index.mjs",
     "types": "./dist/index.d.ts"
-  },
-  "bin": {
-    "ttc": "./dist/index.mjs"
   },
   "files": [
     "dist"
@@ -26,10 +23,14 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/baendlorel/kt-packages.git",
-    "directory": "packages/telecomjs-tokenhub-checker"
+    "directory": "packages/is-space"
   },
   "keywords": [
-    "concat",
+    "space",
+    "string",
+    "whitespace",
+    "character",
+    "validation",
     "utility",
     "javascript",
     "npm"
@@ -38,6 +39,6 @@
   "bugs": {
     "url": "https://github.com/baendlorel/kt-packages/issues"
   },
-  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/to-assigned#readme",
+  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/is-space#readme",
   "devDependencies": {}
 }

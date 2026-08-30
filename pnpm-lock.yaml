@@ -67,6 +67,8 @@ importers:
 
   packages/flat-pair: {}
 
+  packages/is-space: {}
+
   packages/jansible:
     devDependencies:
       '@types/node':
