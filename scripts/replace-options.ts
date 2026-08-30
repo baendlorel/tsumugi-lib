@@ -43,11 +43,21 @@ export function replaceOpts(packagePath: string | undefined) {
   const __NAME__ = __KEBAB_NAME__.replace(/(^|-)(\w)/g, (_, __, c) => c.toUpperCase());
   const __AUTHOR__ = `@author ${pkg.author.name} <${pkg.author.email}>`;
 
+  // ! Liscence will make the __PKG_INFO__ unminifiable for tsdown!
   const __PKG_INFO__ = `## About
  * @package ${__NAME__}
  * @author ${pkg.author.name} <${pkg.author.email}>
  * @version ${pkg.version} (Last Update: ${formatDateFull()})
  * @license ${pkg.license}
+ * @link ${pkg.repository.url}
+ * @link https://baendlorel.github.io/ Welcome to my site!
+ * @description ${pkg.description.replace(/\n/g, '\n * \n * ')}
+ * @copyright Copyright (c) ${new Date().getFullYear()} ${pkg.author.name}. All rights reserved.`;
+
+  const __PKG_INFO_SIMPLE__ = `## About
+ * @package ${__NAME__} ${pkg.license}
+ * @author ${pkg.author.name} <${pkg.author.email}>
+ * @version ${pkg.version} (Last Update: ${formatDateFull()})
  * @link ${pkg.repository.url}
  * @link https://baendlorel.github.io/ Welcome to my site!
  * @description ${pkg.description.replace(/\n/g, '\n * \n * ')}
@@ -61,6 +71,7 @@ export function replaceOpts(packagePath: string | undefined) {
       __NAME__,
       __KEBAB_NAME__,
       __PKG_INFO__,
+      __PKG_INFO_SIMPLE__,
       __VERSION__,
       __AUTHOR__,
 

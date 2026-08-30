@@ -229,7 +229,7 @@ export function _groupedKeys<T extends object>(target: T): GroupedKey[] {
 /**
  * This is the `ReflectDeep` namespace without runtime strict type checks.
  *
- * __PKG_INFO__
+ * __PKG_INFO_SIMPLE__
  */
 export namespace ReflectDeep {
   /**

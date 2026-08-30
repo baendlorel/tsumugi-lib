@@ -14,7 +14,7 @@ export default defineConfig({
   dts: true,
   clean: true,
   sourcemap: true,
-  minify: !isDev,
+  minify: true, // !isDev,
   target: 'node24',
   treeshake: !isDev,
   plugins: [replace(replaceOpts(lib)), funcMacro()],

@@ -42,11 +42,10 @@ export interface GroupedKey {
 }
 
 /**
- * `ReflectDeep` namespace with strict runtime type checks.
+ * This is the `ReflectDeep` namespace without runtime strict type checks.
  *
- * __PKG_INFO__
+ * __PKG_INFO_SIMPLE__
  */
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export namespace ReflectDeep {
   /**
    * Checks if a nested property exists at the given path.
