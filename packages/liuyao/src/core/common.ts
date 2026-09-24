@@ -124,7 +124,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = [
     palace: '坤',
     generation: 0,
     yangs: [2, 2, 2, 2, 2, 2],
-    name: '地',
+    name: '坤',
   },
   {
     binary: '100000',
@@ -214,7 +214,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = [
     palace: '震',
     generation: 0,
     yangs: [1, 2, 2, 1, 2, 2],
-    name: '雷',
+    name: '震',
   },
   {
     binary: '010100',
@@ -304,7 +304,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = [
     palace: '坎',
     generation: 0,
     yangs: [2, 1, 2, 2, 1, 2],
-    name: '水',
+    name: '坎',
   },
   {
     binary: '110010',
@@ -394,7 +394,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = [
     palace: '兑',
     generation: 0,
     yangs: [1, 1, 2, 1, 1, 2],
-    name: '泽',
+    name: '兑',
   },
   {
     binary: '001110',
@@ -484,7 +484,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = [
     palace: '艮',
     generation: 0,
     yangs: [2, 2, 1, 2, 2, 1],
-    name: '山',
+    name: '艮',
   },
   {
     binary: '101001',
@@ -574,7 +574,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = [
     palace: '离',
     generation: 0,
     yangs: [1, 2, 1, 1, 2, 1],
-    name: '火',
+    name: '离',
   },
   {
     binary: '011101',
@@ -664,7 +664,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = [
     palace: '巽',
     generation: 0,
     yangs: [2, 1, 1, 2, 1, 1],
-    name: '风',
+    name: '巽',
   },
   {
     binary: '111011',
@@ -754,7 +754,7 @@ export const HexagramInfoTable: readonly HexagramInfo[] = [
     palace: '乾',
     generation: 0,
     yangs: [1, 1, 1, 1, 1, 1],
-    name: '天',
+    name: '乾',
   },
 ];
 
