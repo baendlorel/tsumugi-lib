@@ -1,6 +1,6 @@
 interface Operation<T> {
-  operation: 'get' | 'clear';
-  resolve: (value: T) => void;
+  oper: 'get' | 'clear';
+  resolve: (data: { value: T; cached: boolean }) => void;
   reject: (value: any) => void;
 }
 
@@ -18,9 +18,6 @@ export class Cacher<T = any> {
   private readonly getter: () => Promise<T>;
   private readonly ttl: number;
 
-  private readonly children = new Set<Cacher<any>>();
-  private parent: Cacher<any> | null = null;
-
   private lastGetTime: number = NaN;
   private cache: T | null = null;
 
@@ -32,7 +29,8 @@ export class Cacher<T = any> {
     this.ttl = ttl;
   }
 
-  private async exec() {
+  private async exec(o: Operation<T>) {
+    this.queue.push(o);
     if (this.executing) {
       return;
     }
@@ -40,24 +38,24 @@ export class Cacher<T = any> {
     this.executing = true;
     let item: Operation<T> | undefined;
     while ((item = this.queue.shift())) {
-      if (item.operation === 'get') {
+      if (item.oper === 'get') {
         const now = Date.now();
         if (isNaN(this.lastGetTime) || now - this.lastGetTime > this.ttl) {
           try {
             this.cache = await this.getter();
             this.lastGetTime = now;
-            item.resolve(this.cache);
+            item.resolve({ value: this.cache, cached: false });
           } catch (e) {
             item.reject(e);
           }
         } else {
-          item.resolve(this.cache!);
+          item.resolve({ value: this.cache!, cached: true });
         }
-      } else if (item.operation === 'clear') {
+      } else if (item.oper === 'clear') {
         this.cache = null;
         this.lastGetTime = NaN;
-        item.resolve(null as any);
-        this.children.forEach((child) => child.clear());
+        // @ts-expect-error does not need any value to resolve
+        item.resolve();
       }
     }
     this.executing = false;
@@ -68,9 +66,9 @@ export class Cacher<T = any> {
    */
   async get(): Promise<T> {
     const { resolve, promise, reject } = createPromise();
-    this.queue.push({ operation: 'get', resolve, reject });
-    this.exec();
-    return promise;
+    this.exec({ oper: 'get', resolve, reject });
+    const { value } = await promise;
+    return value;
   }
 
   /**
@@ -79,8 +77,7 @@ export class Cacher<T = any> {
    */
   clear(): Promise<void> {
     const { resolve, promise, reject } = createPromise();
-    this.queue.push({ operation: 'clear', resolve, reject });
-    this.exec();
+    this.exec({ oper: 'clear', resolve, reject });
     return promise;
   }
 
@@ -90,32 +87,6 @@ export class Cacher<T = any> {
    * @returns A new cacher that holds the mapped value.
    */
   derive<TSub = any>(mapFn: (value: T) => TSub): Cacher<TSub> {
-    const child = new Cacher(() => this.get().then(mapFn), this.ttl);
-    this.children.add(child);
-
-    child.parent = this;
-    child.lastGetTime = this.lastGetTime;
-
-    return child;
-  }
-
-  destroy(): void {
-    this.children.forEach((child) => child.destroy());
-    if (this.parent) {
-      this.parent.children.delete(this);
-    }
-
-    const queue = this.queue.splice(0);
-    for (let i = 0; i < queue.length; i++) {
-      const item = queue[i];
-      if (item.operation === 'get') {
-        item.reject(new Error('[Cacher] Destroyed'));
-      } else if (item.operation === 'clear') {
-        item.resolve(null as any);
-      }
-    }
-
-    this.cache = null;
-    this.lastGetTime = NaN;
+    return new Cacher(() => this.get().then(mapFn), this.ttl);
   }
 }
