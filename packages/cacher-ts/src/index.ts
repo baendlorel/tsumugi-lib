@@ -1,10 +1,10 @@
 interface Operation<T> {
   oper: 'get' | 'clear';
-  resolve: (data: { value: T; cached: boolean }) => void;
+  resolve: (data: T) => void;
   reject: (value: any) => void;
 }
 
-function createPromise() {
+const _prom = () => {
   let resolve!: (value: any) => void;
   let reject!: (value: any) => void;
   const promise = new Promise<any>((res, rej) => {
@@ -12,16 +12,17 @@ function createPromise() {
     reject = rej;
   });
   return { promise, resolve, reject };
-}
+};
 
-const Empty = Symbol('Empty');
+const _null = Symbol();
+const _is = Object.is;
 
 export class Cacher<T = any> {
   private readonly getter: () => Promise<T>;
   private readonly ttl: number;
 
   private lastGetTime: number = NaN;
-  private cache: T | typeof Empty = Empty;
+  private cache: T | typeof _null = _null;
 
   private queue: Operation<T>[] = [];
   private executing: boolean = false;
@@ -42,19 +43,19 @@ export class Cacher<T = any> {
     while ((item = this.queue.shift())) {
       if (item.oper === 'get') {
         const now = Date.now();
-        if (isNaN(this.lastGetTime) || now - this.lastGetTime > this.ttl || this.cache === Empty) {
+        if (isNaN(this.lastGetTime) || now - this.lastGetTime > this.ttl || this.cache === _null) {
           try {
             this.cache = await this.getter();
             this.lastGetTime = now;
-            item.resolve({ value: this.cache, cached: false });
+            item.resolve(this.cache);
           } catch (e) {
             item.reject(e);
           }
         } else {
-          item.resolve({ value: this.cache as T, cached: true });
+          item.resolve(this.cache as T);
         }
       } else if (item.oper === 'clear') {
-        this.cache = Empty;
+        this.cache = _null;
         this.lastGetTime = NaN;
         // @ts-expect-error does not need any value to resolve
         item.resolve();
@@ -67,17 +68,7 @@ export class Cacher<T = any> {
    * Getter of the value.
    */
   async get(): Promise<T> {
-    const { resolve, promise, reject } = createPromise();
-    this.exec({ oper: 'get', resolve, reject });
-    const { value } = await promise;
-    return value;
-  }
-
-  /**
-   * Getter of the value.
-   */
-  async getDetail(): Promise<{ value: T; cached: boolean }> {
-    const { resolve, promise, reject } = createPromise();
+    const { resolve, promise, reject } = _prom();
     this.exec({ oper: 'get', resolve, reject });
     return promise;
   }
@@ -87,7 +78,7 @@ export class Cacher<T = any> {
    * @returns The current cacher instance.
    */
   clear(): Promise<void> {
-    const { resolve, promise, reject } = createPromise();
+    const { resolve, promise, reject } = _prom();
     this.exec({ oper: 'clear', resolve, reject });
     return promise;
   }
@@ -103,7 +94,8 @@ export class Cacher<T = any> {
 }
 
 export class SubCacher<TSub = any> {
-  private cache: TSub | typeof Empty = Empty;
+  private parentCache: any = _null;
+  private cache: TSub | typeof _null = _null;
 
   constructor(
     private readonly parent: Cacher,
@@ -111,10 +103,13 @@ export class SubCacher<TSub = any> {
   ) {}
 
   async get(): Promise<TSub> {
-    const result = await this.parent.getDetail();
-    if (!result.cached || this.cache === Empty) {
-      this.cache = await this.mapFn(result.value);
+    const result = await this.parent.get();
+    if (_is(this.parentCache, result)) {
+      return this.cache as TSub;
     }
+
+    this.parentCache = result;
+    this.cache = await this.mapFn(result);
     return this.cache as TSub;
   }
 }

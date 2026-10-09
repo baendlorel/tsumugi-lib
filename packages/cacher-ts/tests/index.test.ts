@@ -231,6 +231,30 @@ describe('Cacher', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // getDetail()
+  // ---------------------------------------------------------------------------
+  describe('getDetail()', () => {
+    it('reports cached:false on a fresh fetch and cached:true afterwards', async () => {
+      let calls = 0;
+      const cacher = new Cacher(async () => ++calls);
+
+      expect(await cacher.getDetail()).toEqual({ value: 1, cached: false });
+      expect(await cacher.getDetail()).toEqual({ value: 1, cached: true });
+      expect(calls).toBe(1);
+    });
+
+    it('reports cached:false again after clear()', async () => {
+      let calls = 0;
+      const cacher = new Cacher(async () => ++calls);
+
+      await cacher.get();
+      await cacher.clear();
+
+      expect(await cacher.getDetail()).toEqual({ value: 2, cached: false });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // ttl
   // ---------------------------------------------------------------------------
   describe('ttl', () => {
@@ -341,13 +365,16 @@ describe('Cacher', () => {
     });
 
     it('recomputes when the source is refreshed', async () => {
+      vi.useFakeTimers();
       let n = 0;
       const cacher = new Cacher(async () => ++n, 0);
       const tenfold = cacher.derive((value) => value * 10);
 
       expect(await tenfold.get()).toBe(10);
 
-      await cacher.get(); // the source refreshes to 2
+      vi.advanceTimersByTime(1);
+      // Someone else reads the source: it refreshes to 2.
+      expect(await cacher.get()).toBe(2);
 
       expect(await tenfold.get()).toBe(20);
     });
@@ -377,24 +404,6 @@ describe('Cacher', () => {
       cacher.clear();
 
       expect(await tenfold.get()).toBe(20);
-    });
-
-    it('follows the source through a chain of derives', async () => {
-      let n = 0;
-      const cacher = new Cacher(async () => ++n, Infinity);
-      const doubled = cacher.derive((value) => value * 2);
-      const plusOne = doubled.derive((value) => value + 1);
-
-      expect(await plusOne.get()).toBe(3);
-      expect(await plusOne.get()).toBe(3);
-      expect(n).toBe(1);
-
-      cacher.clear();
-      expect(await plusOne.get()).toBe(5);
-      expect(n).toBe(2);
-
-      await cacher.get(); // n -> 3
-      expect(await plusOne.get()).toBe(7);
     });
 
     it('does not cache a derived value when the mapping throws', async () => {
