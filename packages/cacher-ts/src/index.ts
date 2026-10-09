@@ -1,15 +1,65 @@
-// TODO 改用队列模式
+interface Operation<T> {
+  operation: 'get' | 'clear';
+  timestamp: number;
+  resolve: (value: T) => void;
+  reject: (value: any) => void;
+}
+
+function createPromise() {
+  let resolve: (value: any) => void;
+  let reject: (value: any) => void;
+  const promise = new Promise<any>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve: resolve!, reject: reject! };
+}
+
+const noop = () => {};
+
 export class Cacher<T = any> {
   private readonly getter: () => Promise<T>;
   private readonly ttl: number;
 
-  private pendingPromise: Promise<T> | null = null;
+  private queue: Operation<T>[] = [];
+
   private lastGetTime: number = NaN;
   private cache: T | null = null;
+
+  private executing: boolean = false;
 
   constructor(getter: () => Promise<T>, ttl: number = 86400_000) {
     this.getter = getter;
     this.ttl = ttl;
+  }
+
+  private async exec() {
+    if (this.executing) {
+      return;
+    }
+
+    this.executing = true;
+    let item: Operation<T> | undefined;
+    while ((item = this.queue.shift())) {
+      if (item.operation === 'get') {
+        if (this.dirty || item.timestamp - this.lastGetTime > this.ttl) {
+          try {
+            this.cache = await this.getter();
+            this.lastGetTime = item.timestamp;
+            item.resolve(this.cache);
+          } catch (e) {
+            item.reject(e);
+          }
+        } else {
+          item.resolve(this.cache!);
+        }
+      } else if (item.operation === 'clear') {
+        this.cache = null;
+        this.lastGetTime = NaN;
+        item.resolve(null as any);
+      }
+    }
+    this.executing = false;
   }
 
   /**
@@ -17,18 +67,11 @@ export class Cacher<T = any> {
    */
   async get(): Promise<T> {
     const now = Date.now();
-    if (this.dirty || now - this.lastGetTime > this.ttl) {
-      if (!this.pendingPromise) {
-        this.pendingPromise = this.getter();
-      }
 
-      this.cache = await this.pendingPromise;
-
-      this.lastGetTime = now;
-      this.pendingPromise = null;
-    }
-
-    return this.cache!;
+    const { resolve, promise, reject } = createPromise();
+    this.queue.push({ operation: 'get', timestamp: now, resolve, reject });
+    this.exec();
+    return promise;
   }
 
   /**
@@ -44,9 +87,8 @@ export class Cacher<T = any> {
    * @returns The current cacher instance.
    */
   clear(): this {
-    this.pendingPromise = null;
-    this.cache = null;
-    this.lastGetTime = NaN;
+    this.queue.push({ operation: 'clear', timestamp: Date.now(), resolve: noop, reject: noop });
+    this.exec();
     return this;
   }
 
