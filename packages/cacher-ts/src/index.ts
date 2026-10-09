@@ -6,16 +6,14 @@ interface Operation<T> {
 }
 
 function createPromise() {
-  let resolve: (value: any) => void;
-  let reject: (value: any) => void;
+  let resolve!: (value: any) => void;
+  let reject!: (value: any) => void;
   const promise = new Promise<any>((res, rej) => {
     resolve = res;
     reject = rej;
   });
-  return { promise, resolve: resolve!, reject: reject! };
+  return { promise, resolve, reject };
 }
-
-const noop = () => {};
 
 export class Cacher<T = any> {
   private readonly getter: () => Promise<T>;
@@ -42,7 +40,7 @@ export class Cacher<T = any> {
     let item: Operation<T> | undefined;
     while ((item = this.queue.shift())) {
       if (item.operation === 'get') {
-        if (this.dirty || item.timestamp - this.lastGetTime > this.ttl) {
+        if (isNaN(this.lastGetTime) || item.timestamp - this.lastGetTime > this.ttl) {
           try {
             this.cache = await this.getter();
             this.lastGetTime = item.timestamp;
@@ -75,21 +73,14 @@ export class Cacher<T = any> {
   }
 
   /**
-   * Indicates whether the cacher is dirty (i.e., has never been populated).
-   * @returns `true` if the cacher is dirty, otherwise `false`.
-   */
-  get dirty() {
-    return Number.isNaN(this.lastGetTime);
-  }
-
-  /**
    * Clears the cached value and marks the cacher as dirty.
    * @returns The current cacher instance.
    */
-  clear(): this {
-    this.queue.push({ operation: 'clear', timestamp: Date.now(), resolve: noop, reject: noop });
+  clear(): Promise<void> {
+    const { resolve, promise, reject } = createPromise();
+    this.queue.push({ operation: 'clear', timestamp: Date.now(), resolve, reject });
     this.exec();
-    return this;
+    return promise;
   }
 
   /**
