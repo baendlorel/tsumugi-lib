@@ -108,7 +108,11 @@ export class Cacher<T = any> {
     const queue = this.queue.splice(0);
     for (let i = 0; i < queue.length; i++) {
       const item = queue[i];
-      item.reject(new Error('[Cacher] Destroyed'));
+      if (item.operation === 'get') {
+        item.reject(new Error('[Cacher] Destroyed'));
+      } else if (item.operation === 'clear') {
+        item.resolve(null as any);
+      }
     }
 
     this.cache = null;
