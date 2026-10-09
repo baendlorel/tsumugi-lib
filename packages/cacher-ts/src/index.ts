@@ -1,6 +1,5 @@
 interface Operation<T> {
   operation: 'get' | 'clear';
-  timestamp: number;
   resolve: (value: T) => void;
   reject: (value: any) => void;
 }
@@ -20,7 +19,7 @@ export class Cacher<T = any> {
   private readonly ttl: number;
 
   private readonly children = new Set<Cacher<any>>();
-  private readonly parent: Cacher<any> | null = null;
+  private parent: Cacher<any> | null = null;
 
   private lastGetTime: number = NaN;
   private cache: T | null = null;
@@ -42,10 +41,11 @@ export class Cacher<T = any> {
     let item: Operation<T> | undefined;
     while ((item = this.queue.shift())) {
       if (item.operation === 'get') {
-        if (isNaN(this.lastGetTime) || item.timestamp - this.lastGetTime > this.ttl) {
+        const now = Date.now();
+        if (isNaN(this.lastGetTime) || now - this.lastGetTime > this.ttl) {
           try {
             this.cache = await this.getter();
-            this.lastGetTime = item.timestamp;
+            this.lastGetTime = now;
             item.resolve(this.cache);
           } catch (e) {
             item.reject(e);
@@ -57,6 +57,7 @@ export class Cacher<T = any> {
         this.cache = null;
         this.lastGetTime = NaN;
         item.resolve(null as any);
+        this.children.forEach((child) => child.clear());
       }
     }
     this.executing = false;
@@ -66,10 +67,8 @@ export class Cacher<T = any> {
    * Getter of the value.
    */
   async get(): Promise<T> {
-    const now = Date.now();
-
     const { resolve, promise, reject } = createPromise();
-    this.queue.push({ operation: 'get', timestamp: now, resolve, reject });
+    this.queue.push({ operation: 'get', resolve, reject });
     this.exec();
     return promise;
   }
@@ -80,9 +79,8 @@ export class Cacher<T = any> {
    */
   clear(): Promise<void> {
     const { resolve, promise, reject } = createPromise();
-    this.queue.push({ operation: 'clear', timestamp: Date.now(), resolve, reject });
+    this.queue.push({ operation: 'clear', resolve, reject });
     this.exec();
-    this.children.forEach((child) => child.clear());
     return promise;
   }
 
@@ -92,11 +90,11 @@ export class Cacher<T = any> {
    * @returns A new cacher that holds the mapped value.
    */
   derive<TSub = any>(mapFn: (value: T) => TSub): Cacher<TSub> {
-    const child = new Cacher(async () => this.get().then(mapFn), Infinity);
+    const child = new Cacher(() => this.get().then(mapFn), this.ttl);
     this.children.add(child);
 
-    // @ts-expect-error: parent is readonly, but we need to set it here.
     child.parent = this;
+    child.lastGetTime = this.lastGetTime;
 
     return child;
   }
