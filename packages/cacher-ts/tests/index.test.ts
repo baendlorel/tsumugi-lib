@@ -308,10 +308,10 @@ describe('Cacher', () => {
     });
 
     it('caches the derived value without reading the source again', async () => {
+      vi.useFakeTimers();
       let sourceCalls = 0;
       let mapCalls = 0;
-      // The source refreshes on every read, so only the derived cache can keep it down to one call.
-      const cacher = new Cacher(async () => ++sourceCalls, 0);
+      const cacher = new Cacher(async () => ++sourceCalls, 1000);
       const doubled = cacher.derive((value) => {
         mapCalls++;
         return value * 2;
@@ -343,16 +343,17 @@ describe('Cacher', () => {
     it('recomputes when the source is refreshed', async () => {
       vi.useFakeTimers();
       let n = 0;
-      const cacher = new Cacher(async () => ++n, 0);
+      const cacher = new Cacher(async () => ++n, 1000);
       const tenfold = cacher.derive((value) => value * 10);
 
       expect(await tenfold.get()).toBe(10);
 
-      vi.advanceTimersByTime(1);
+      vi.advanceTimersByTime(1000);
       // Someone else reads the source: it refreshes to 2.
       expect(await cacher.get()).toBe(2);
 
       expect(await tenfold.get()).toBe(20);
+      expect(n).toBe(2);
     });
 
     it('recomputes when the source expires', async () => {
