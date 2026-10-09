@@ -51,6 +51,8 @@ importers:
 
   packages/bind-params: {}
 
+  packages/cacher-ts: {}
+
   packages/clautcher: {}
 
   packages/codexs:

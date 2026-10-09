@@ -1,7 +1,9 @@
+// TODO 改用队列模式
 export class Cacher<T = any> {
   private readonly getter: () => Promise<T>;
   private readonly ttl: number;
 
+  private pendingPromise: Promise<T> | null = null;
   private lastGetTime: number = NaN;
   private cache: T | null = null;
 
@@ -16,8 +18,14 @@ export class Cacher<T = any> {
   async get(): Promise<T> {
     const now = Date.now();
     if (this.dirty || now - this.lastGetTime > this.ttl) {
-      this.cache = await this.getter();
+      if (!this.pendingPromise) {
+        this.pendingPromise = this.getter();
+      }
+
+      this.cache = await this.pendingPromise;
+
       this.lastGetTime = now;
+      this.pendingPromise = null;
     }
 
     return this.cache!;
@@ -36,6 +44,7 @@ export class Cacher<T = any> {
    * @returns The current cacher instance.
    */
   clear(): this {
+    this.pendingPromise = null;
     this.cache = null;
     this.lastGetTime = NaN;
     return this;
