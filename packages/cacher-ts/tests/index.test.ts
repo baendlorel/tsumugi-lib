@@ -40,16 +40,6 @@ describe('Cacher', () => {
       expect(calls).toBe(1);
     });
 
-    it('reports dirty before the first get() and clean afterwards', async () => {
-      const cacher = new Cacher(async () => 1);
-
-      expect(cacher.dirty).toBe(true);
-
-      await cacher.get();
-
-      expect(cacher.dirty).toBe(false);
-    });
-
     it('caches an undefined value like any other', async () => {
       let calls = 0;
       const cacher = new Cacher<number | undefined>(async () => {
@@ -61,7 +51,6 @@ describe('Cacher', () => {
       expect(await cacher.get()).toBeUndefined();
 
       expect(calls).toBe(1);
-      expect(cacher.dirty).toBe(false);
     });
 
     it('returns the very same reference it cached (no defensive copy)', async () => {
@@ -90,7 +79,6 @@ describe('Cacher', () => {
       });
 
       await expect(cacher.get()).rejects.toThrow('boom');
-      expect(cacher.dirty).toBe(true);
 
       expect(await cacher.get()).toBe(2);
       expect(calls).toBe(2);
@@ -185,15 +173,34 @@ describe('Cacher', () => {
       await cacher.get();
       cacher.clear();
 
-      expect(cacher.dirty).toBe(true);
       expect(await cacher.get()).toBe(2);
       expect(calls).toBe(2);
     });
 
-    it('returns the cacher instance', () => {
-      const cacher = new Cacher(async () => 1);
+    it('resolves clear() only after the in-flight request ahead of it settles', async () => {
+      const gate = deferred<number>();
+      let calls = 0;
+      const cacher = new Cacher(() => {
+        calls++;
+        return calls === 1 ? gate.promise : Promise.resolve(calls);
+      });
 
-      expect(cacher.clear()).toBe(cacher);
+      const inFlight = cacher.get();
+      const cleared = cacher.clear();
+
+      let clearedYet = false;
+      void cleared.then(() => (clearedYet = true));
+
+      // clear() is still queued behind the in-flight get.
+      expect(clearedYet).toBe(false);
+
+      gate.resolve(1);
+      expect(await inFlight).toBe(1);
+
+      // Once clear() settles, the cached value is gone: the next get() refetches.
+      await cleared;
+      expect(await cacher.get()).toBe(2);
+      expect(calls).toBe(2);
     });
 
     it('discards a request that was in flight when cleared', async () => {
@@ -213,9 +220,8 @@ describe('Cacher', () => {
 
       // The caller still receives the value it asked for...
       expect(await inFlight).toBe(1);
-      // ...but clear() wins: nothing was cached.
-      expect(cacher.dirty).toBe(true);
 
+      // ...but clear() wins: the value was not cached, so the retry refetches.
       const retry = cacher.get();
       settle(2);
 
@@ -400,7 +406,6 @@ describe('Cacher', () => {
       });
 
       await expect(derived.get()).rejects.toThrow('map boom');
-      expect(derived.dirty).toBe(true);
 
       await expect(derived.get()).rejects.toThrow('map boom');
       expect(mapCalls).toBe(2);

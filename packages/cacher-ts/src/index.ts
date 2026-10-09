@@ -19,11 +19,13 @@ export class Cacher<T = any> {
   private readonly getter: () => Promise<T>;
   private readonly ttl: number;
 
-  private queue: Operation<T>[] = [];
+  private readonly children = new Set<Cacher<any>>();
+  private readonly parent: Cacher<any> | null = null;
 
   private lastGetTime: number = NaN;
   private cache: T | null = null;
 
+  private queue: Operation<T>[] = [];
   private executing: boolean = false;
 
   constructor(getter: () => Promise<T>, ttl: number = 86400_000) {
@@ -80,6 +82,7 @@ export class Cacher<T = any> {
     const { resolve, promise, reject } = createPromise();
     this.queue.push({ operation: 'clear', timestamp: Date.now(), resolve, reject });
     this.exec();
+    this.children.forEach((child) => child.clear());
     return promise;
   }
 
@@ -89,10 +92,28 @@ export class Cacher<T = any> {
    * @returns A new cacher that holds the mapped value.
    */
   derive<TSub = any>(mapFn: (value: T) => TSub): Cacher<TSub> {
-    return new Cacher(async () => {
-      const value = await this.get();
-      return mapFn(value);
-      // Infinity means it will follow the parent cacher's updates.
-    }, Infinity);
+    const child = new Cacher(async () => this.get().then(mapFn), Infinity);
+    this.children.add(child);
+
+    // @ts-expect-error: parent is readonly, but we need to set it here.
+    child.parent = this;
+
+    return child;
+  }
+
+  destroy(): void {
+    this.children.forEach((child) => child.destroy());
+    if (this.parent) {
+      this.parent.children.delete(this);
+    }
+
+    const queue = this.queue.splice(0);
+    for (let i = 0; i < queue.length; i++) {
+      const item = queue[i];
+      item.reject(new Error('[Cacher] Destroyed'));
+    }
+
+    this.cache = null;
+    this.lastGetTime = NaN;
   }
 }
