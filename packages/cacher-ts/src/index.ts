@@ -43,7 +43,7 @@ export class Cacher<T = any> {
     while ((item = this.queue.shift())) {
       if (item.oper === 'get') {
         const now = Date.now();
-        if (isNaN(this.lastGetTime) || now - this.lastGetTime > this.ttl || this.cache === _null) {
+        if (isNaN(this.lastGetTime) || now - this.lastGetTime >= this.ttl || this.cache === _null) {
           try {
             this.cache = await this.getter();
             this.lastGetTime = now;
@@ -108,8 +108,8 @@ export class SubCacher<TSub = any> {
       return this.cache as TSub;
     }
 
-    this.parentCache = result;
     this.cache = await this.mapFn(result);
+    this.parentCache = result;
     return this.cache as TSub;
   }
 }

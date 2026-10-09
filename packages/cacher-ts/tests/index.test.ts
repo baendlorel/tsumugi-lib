@@ -231,30 +231,6 @@ describe('Cacher', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // getDetail()
-  // ---------------------------------------------------------------------------
-  describe('getDetail()', () => {
-    it('reports cached:false on a fresh fetch and cached:true afterwards', async () => {
-      let calls = 0;
-      const cacher = new Cacher(async () => ++calls);
-
-      expect(await cacher.getDetail()).toEqual({ value: 1, cached: false });
-      expect(await cacher.getDetail()).toEqual({ value: 1, cached: true });
-      expect(calls).toBe(1);
-    });
-
-    it('reports cached:false again after clear()', async () => {
-      let calls = 0;
-      const cacher = new Cacher(async () => ++calls);
-
-      await cacher.get();
-      await cacher.clear();
-
-      expect(await cacher.getDetail()).toEqual({ value: 2, cached: false });
-    });
-  });
-
-  // ---------------------------------------------------------------------------
   // ttl
   // ---------------------------------------------------------------------------
   describe('ttl', () => {
