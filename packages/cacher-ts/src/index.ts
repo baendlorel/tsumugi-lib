@@ -25,10 +25,15 @@ export class Cacher<T = any> {
       return this.pendingPromise;
     }
     if (isNaN(this.lastGetTime) || Date.now() - this.lastGetTime >= this.ttl || Date.now() < this.lastGetTime) {
+      const old = this.cache;
       try {
         this.pendingPromise = this.getter();
         this.cache = await this.pendingPromise;
         this.lastGetTime = Date.now();
+      } catch (e) {
+        this.cache = old;
+        console.error(`[Catcher] getter failed, cache restored to ${old === _null ? 'null symbol' : 'old value'}.`);
+        throw e;
       } finally {
         this.pendingPromise = null;
       }
@@ -36,7 +41,12 @@ export class Cacher<T = any> {
     return this.cache as T;
   }
 
-  async clear() {
+  /**
+   * Set the cache value to null symbol(an internal value that means null, not to be confused with JavaScript's `null`).
+   * - **Will lose current cache**
+   * - It will waits the pending getter to settle before clearing.
+   */
+  async clear(): Promise<void> {
     if (this.pendingPromise) {
       try {
         await this.pendingPromise;
