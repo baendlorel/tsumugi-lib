@@ -16,6 +16,7 @@ const _prom = () => {
 
 const _null = Symbol();
 const _is = Object.is;
+const _now = Date.now;
 
 export class Cacher<T = any> {
   private readonly getter: () => Promise<T>;
@@ -42,11 +43,10 @@ export class Cacher<T = any> {
     let item: Operation<T> | undefined;
     while ((item = this.queue.shift())) {
       if (item.oper === 'get') {
-        const now = Date.now();
-        if (isNaN(this.lastGetTime) || now - this.lastGetTime >= this.ttl || this.cache === _null) {
+        if (isNaN(this.lastGetTime) || _now() - this.lastGetTime >= this.ttl || this.cache === _null) {
           try {
             this.cache = await this.getter();
-            this.lastGetTime = now;
+            this.lastGetTime = _now(); // In case that getter takes too much time but ttl is small.
             item.resolve(this.cache);
           } catch (e) {
             item.reject(e);
@@ -99,6 +99,10 @@ export class SubCacher<TSub = any> {
 
   constructor(
     private readonly parent: Cacher,
+    /**
+     * Must be a pure sync function.
+     * It will be called without await.
+     */
     private readonly mapFn: (value: any) => TSub,
   ) {}
 
@@ -108,7 +112,11 @@ export class SubCacher<TSub = any> {
       return this.cache as TSub;
     }
 
-    this.cache = await this.mapFn(result);
+    const v = this.mapFn(result) as any;
+    if (typeof v?.then === 'function') {
+      console.warn('mapFn is called without await, so this thenable result will be kept.');
+    }
+    this.cache = v;
     this.parentCache = result;
     return this.cache as TSub;
   }
