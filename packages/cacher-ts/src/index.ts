@@ -2,20 +2,50 @@ const empty = Symbol();
 type empty = typeof empty;
 
 interface SubCacheEntry<T, TSub = any> {
+  /**
+   * Current cache
+   */
   cache: TSub | empty;
+
+  /**
+   * Parent Cache
+   */
   parent: T | empty;
-  mapper: (value: T) => TSub;
+
+  /**
+   * Mapping function. Must be pure.
+   */
+  fn: (value: T) => TSub;
 }
 
 export class Cacher<T = any> {
+  /**
+   * @internal
+   */
   private readonly getter: () => Promise<T>;
+  /**
+   * @internal
+   */
   private readonly ttl: number;
 
-  private lastGetTime: number = 0;
+  /**
+   * Last get time
+   * @internal
+   */
+  private last: number = 0;
+  /**
+   * @internal
+   */
   private cache: T | empty = empty;
-  private getterPromise: Promise<T> | false = false;
+  /**
+   * @internal
+   */
+  private pending: Promise<T> | false = false;
 
-  private subCache = new Map<string, SubCacheEntry<T, any>>();
+  /**
+   * @internal
+   */
+  private sub = new Map<string, SubCacheEntry<T, any>>();
 
   /**
    * Create a cacher instance.
@@ -25,8 +55,6 @@ export class Cacher<T = any> {
   constructor(getter: () => Promise<T>, ttl: number = 86400_000) {
     this.getter = getter;
     this.ttl = ttl;
-    // no longer automatically loading the cache upon construction.
-    // users should load the cache manually by calling `load()`.
   }
 
   /**
@@ -35,18 +63,18 @@ export class Cacher<T = any> {
   async load(): Promise<void> {
     // # Not fetching immediately at the cache's expiration, only start the reloading process.
 
-    if (this.getterPromise) {
+    if (this.pending) {
       // already pending
-      await this.getterPromise;
+      await this.pending;
       return;
     }
 
     try {
-      this.getterPromise = this.getter();
-      this.cache = await this.getterPromise;
-      this.lastGetTime = performance.now();
+      this.pending = this.getter();
+      this.cache = await this.pending;
+      this.last = performance.now();
     } finally {
-      this.getterPromise = false;
+      this.pending = false;
     }
   }
 
@@ -54,7 +82,7 @@ export class Cacher<T = any> {
    * Returns the current loading promise for the cached value, or `false` if no reload is in progress.
    */
   get loading(): Promise<T> | false {
-    return this.getterPromise;
+    return this.pending;
   }
 
   /**
@@ -66,7 +94,7 @@ export class Cacher<T = any> {
       throw new Error('Cache is empty and has not been initialized yet.');
     }
 
-    if (this.lastGetTime === 0 || performance.now() - this.lastGetTime >= this.ttl) {
+    if (this.last === 0 || performance.now() - this.last >= this.ttl) {
       this.load();
     }
     return this.cache as T;
@@ -77,28 +105,28 @@ export class Cacher<T = any> {
    * @param pureMapper Must be a pure sync function. It will be called without `await`.
    */
   derive<TSub = any>(name: string, pureMapper: (value: T) => TSub): void {
-    this.subCache.set(name, { cache: empty, parent: empty, mapper: pureMapper });
+    this.sub.set(name, { cache: empty, parent: empty, fn: pureMapper });
   }
 
   remove(name: string): boolean {
-    return this.subCache.delete(name);
+    return this.sub.delete(name);
   }
 
   getSub<TSub = any>(name: string): TSub {
-    const sub = this.subCache.get(name);
+    const sub = this.sub.get(name);
     if (!sub) {
-      throw new Error(`Derived cache with name "${name}" does not exist.`);
+      throw new Error(`No derived cache with name "${name}".`);
     }
 
     if (Object.is(sub.parent, this.cache)) {
       if (sub.parent === empty) {
-        throw new Error('Cache is empty and has not been initialized yet.');
+        throw new Error('Cache is not initialized yet.');
       }
       return sub.cache as TSub;
     }
 
     const parent = this.cache as T;
-    const cache = sub.mapper(parent); // ! This makes parent and cache consistent even the mapper throws
+    const cache = sub.fn(parent); // ! This makes parent and cache consistent even the mapper throws
 
     sub.parent = parent;
     sub.cache = cache;
@@ -108,13 +136,28 @@ export class Cacher<T = any> {
 }
 
 export class CacherSync<T = any> {
+  /**
+   * @internal
+   */
   private readonly getter: () => T;
+  /**
+   * @internal
+   */
   private readonly ttl: number;
 
+  /**
+   * @internal
+   */
   private lastGetTime: number = 0;
+  /**
+   * @internal
+   */
   private cache: T | empty = empty;
 
-  private subCache = new Map<string, SubCacheEntry<T, any>>();
+  /**
+   * @internal
+   */
+  private sub = new Map<string, SubCacheEntry<T, any>>();
 
   /**
    * Create a cacher instance.
@@ -147,15 +190,15 @@ export class CacherSync<T = any> {
    * @param pureMapper Must be a pure sync function. It will be called without `await`.
    */
   derive<TSub = any>(name: string, pureMapper: (value: T) => TSub): void {
-    this.subCache.set(name, { cache: empty, parent: empty, mapper: pureMapper });
+    this.sub.set(name, { cache: empty, parent: empty, fn: pureMapper });
   }
 
   remove(name: string): boolean {
-    return this.subCache.delete(name);
+    return this.sub.delete(name);
   }
 
   getSub<TSub = any>(name: string): TSub {
-    const sub = this.subCache.get(name);
+    const sub = this.sub.get(name);
     if (!sub) {
       throw new Error(`Derived cache with name "${name}" does not exist.`);
     }
@@ -168,7 +211,7 @@ export class CacherSync<T = any> {
     }
 
     const parent = this.cache as T;
-    const cache = sub.mapper(parent); // ! This makes parent and cache consistent even the mapper throws
+    const cache = sub.fn(parent); // ! This makes parent and cache consistent even the mapper throws
 
     sub.parent = parent;
     sub.cache = cache;
