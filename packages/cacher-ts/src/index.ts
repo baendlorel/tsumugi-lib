@@ -30,7 +30,7 @@ export class Cacher<T = any> {
   }
 
   /**
-   * Always awaits the pending getter to be settled.
+   * Always awaits the loading getter to be settled.
    */
   async load(): Promise<void> {
     // # Not fetching immediately at the cache's expiration, only start the reloading process.
@@ -51,9 +51,9 @@ export class Cacher<T = any> {
   }
 
   /**
-   * Returns the current pending promise for the cached value, or `false` if no reload is in progress.
+   * Returns the current loading promise for the cached value, or `false` if no reload is in progress.
    */
-  get pending(): Promise<T> | false {
+  get loading(): Promise<T> | false {
     return this.getterPromise;
   }
 
