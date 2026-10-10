@@ -1,0 +1,45 @@
+{
+  "name": "unplugin-real-private",
+  "version": "0.0.1",
+  "author": {
+    "name": "Kasukabe Tsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "description": "Transform private class members into true #private members",
+  "description_zh": "可以将private声明的变量成员变成真正的#私有成员",
+  "purpose": "rollup-plugin",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.mjs",
+    "require": "./dist/index.cjs",
+    "default": "./dist/index.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/unplugin-real-private#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "directory": "packages/unplugin-real-private"
+  },
+  "keywords": [
+    "plugin",
+    "typescript",
+    "javascript",
+    "private",
+    "class",
+    "members"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "magic-string": "^0.30.21"
+  },
+  "bugs": {
+    "url": "https://github.com/baendlorel/kt-packages/issues"
+  }
+}
