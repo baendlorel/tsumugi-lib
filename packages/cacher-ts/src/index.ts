@@ -1,23 +1,21 @@
-const _null = Symbol();
+const empty = Symbol();
+type empty = typeof empty;
 
-const wrapAndThrow: (msg: string, e: unknown) => never = (msg, e) => {
-  msg += e instanceof Error ? e.message : String(e);
-  const err = new Error(msg);
-  if ((e as Error)?.stack) {
-    err.stack = (e as Error).stack;
-  }
-  throw err;
-};
+interface SubCacheEntry<T, TSub = any> {
+  cache: TSub | empty;
+  parent: T | empty;
+  mapper: (value: T) => TSub;
+}
 
-// TODO 依然存在深层的竞态条件，clear无法等待当前整个get完成，只是在等待pendingPromise结束。为此，要用version方法
 export class Cacher<T = any> {
   private readonly getter: () => Promise<T>;
   private readonly ttl: number;
 
-  private lastGetTime: number = NaN;
-  private cache: T | typeof _null = _null;
-  private pendingPromise: Promise<T> | null = null;
-  private clearAfterGet = false;
+  private lastGetTime: number = 0;
+  private cache: T | empty = empty;
+  private getterPromise!: Promise<T>;
+
+  private subCache = new Map<string, SubCacheEntry<T, any>>();
 
   /**
    * Create a cacher instance.
@@ -27,92 +25,65 @@ export class Cacher<T = any> {
   constructor(getter: () => Promise<T>, ttl: number = 86400_000) {
     this.getter = getter;
     this.ttl = ttl;
+    this.reload();
+  }
+
+  async reload(): Promise<void> {
+    this.getterPromise = this.getter();
+    this.cache = await this.getterPromise;
+    this.lastGetTime = performance.now();
+  }
+
+  /**
+   * This is the promise returned from `getter`.
+   * Await it to make sure the cache is initialized.
+   */
+  get ready(): Promise<T> {
+    return this.getterPromise;
   }
 
   /**
    * Getter of the value.
+   * If the cached value is outdated, it will trigger the initialization.
    */
-  async get(): Promise<T> {
-    if (this.pendingPromise) {
-      return this.pendingPromise;
+  get(): T {
+    if (this.cache === empty) {
+      throw new Error('Cache is empty and has not been initialized yet.');
     }
 
-    let cache = this.cache;
-
-    if (isNaN(this.lastGetTime) || performance.now() - this.lastGetTime >= this.ttl) {
-      try {
-        this.pendingPromise = this.getter();
-        cache = await this.pendingPromise;
-      } catch (e) {
-        wrapAndThrow(`Getter failed, cache restored to ${cache === _null ? 'null symbol' : 'old value'}.`, e);
-      } finally {
-        this.pendingPromise = null;
-      }
+    if (this.lastGetTime === 0 || performance.now() - this.lastGetTime >= this.ttl) {
+      this.reload();
     }
-
-    this.cache = cache;
-    this.lastGetTime = performance.now();
-    if (this.clearAfterGet) {
-      this.clearAfterGet = false;
-      this.clear();
-    }
-
-    return cache as T;
-  }
-
-  /**
-   * Set the cache value to null symbol(an internal value that means null, not to be confused with JavaScript's `null`).
-   * - **Will lose current cache**
-   * - If there is a pending getter, the cache will be cleared after it settles.
-   */
-  clear(): void {
-    if (this.pendingPromise) {
-      this.clearAfterGet = true;
-      return;
-    }
-    this.cache = _null;
-    this.lastGetTime = NaN;
+    return this.cache as T;
   }
 
   /**
    * Derives a sub-cacher from the current one by applying a mapping function to its value.
    * @param pureMapper Must be a pure sync function. It will be called without `await`.
    */
-  derive<TSub = any>(pureMapper: (value: T) => TSub): SubCacher<TSub> {
-    return new SubCacher<TSub>(this, pureMapper);
-  }
-}
-
-export class SubCacher<TSub = any> {
-  private parentCache: any = _null;
-  private cache: TSub | typeof _null = _null;
-
-  private readonly map: (value: any) => TSub;
-  private readonly parent: Cacher;
-
-  /**
-   * Must be a pure sync function.
-   * It will be called without await.
-   * @param parent Cacher that this sub-cacher is derived from
-   * @param pureMapper Must be a pure sync function. It will be called without `await`.
-   */
-  constructor(parent: Cacher, pureMapper: (value: any) => TSub) {
-    this.parent = parent;
-    this.map = pureMapper;
+  derive<TSub = any>(name: string, pureMapper: (value: T) => TSub): void {
+    this.subCache.set(name, { cache: empty, parent: empty, mapper: pureMapper });
   }
 
-  async get(): Promise<TSub> {
-    const result = await this.parent.get();
-    if (Object.is(this.parentCache, result)) {
-      return this.cache as TSub;
+  remove(name: string): boolean {
+    return this.subCache.delete(name);
+  }
+
+  getSub<TSub = any>(name: string): TSub | typeof empty {
+    const sub = this.subCache.get(name);
+    if (!sub) {
+      throw new Error(`Derived cache with name "${name}" does not exist.`);
     }
 
-    const v = this.map(result) as any;
-    if (typeof v?.then === 'function') {
-      console.warn('mapFn is called without await, so this thenable result will be kept.');
+    if (sub.parent === this.cache) {
+      if (sub.parent === empty) {
+        throw new Error('Cache is empty and has not been initialized yet.');
+      }
+      return sub.cache as TSub;
     }
-    this.cache = v;
-    this.parentCache = result;
-    return this.cache as TSub;
+
+    // now sub.parent is not empty and not equal to this.cache, so we need to update it
+    sub.parent = this.cache as T;
+    return (sub.cache = sub.mapper(sub.parent));
   }
 }
