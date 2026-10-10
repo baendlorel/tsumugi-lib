@@ -24,12 +24,14 @@ export class Cacher<T = any> {
     if (this.pendingPromise) {
       return this.pendingPromise;
     }
-    if (isNaN(this.lastGetTime) || Date.now() - this.lastGetTime >= this.ttl || Date.now() < this.lastGetTime) {
+
+    if (isNaN(this.lastGetTime) || performance.now() - this.lastGetTime >= this.ttl) {
+      // || Date.now() < this.lastGetTime
       const old = this.cache;
       try {
         this.pendingPromise = this.getter();
         this.cache = await this.pendingPromise;
-        this.lastGetTime = Date.now();
+        this.lastGetTime = performance.now();
       } catch (e) {
         this.cache = old;
         console.error(`[Catcher] getter failed, cache restored to ${old === _null ? 'null symbol' : 'old value'}.`);
