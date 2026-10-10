@@ -15,8 +15,6 @@ const _prom = () => {
 };
 
 const _null = Symbol();
-const _is = Object.is;
-const _now = Date.now;
 
 export class Cacher<T = any> {
   private readonly getter: () => Promise<T>;
@@ -43,10 +41,10 @@ export class Cacher<T = any> {
     let item: Operation<T> | undefined;
     while ((item = this.queue.shift())) {
       if (item.oper === 'get') {
-        if (isNaN(this.lastGetTime) || _now() - this.lastGetTime >= this.ttl || this.cache === _null) {
+        if (isNaN(this.lastGetTime) || Date.now() - this.lastGetTime >= this.ttl || this.cache === _null) {
           try {
             this.cache = await this.getter();
-            this.lastGetTime = _now(); // In case that getter takes too much time but ttl is small.
+            this.lastGetTime = Date.now(); // In case that getter takes too much time but ttl is small.
             item.resolve(this.cache);
           } catch (e) {
             item.reject(e);
@@ -108,7 +106,7 @@ export class SubCacher<TSub = any> {
 
   async get(): Promise<TSub> {
     const result = await this.parent.get();
-    if (_is(this.parentCache, result)) {
+    if (Object.is(this.parentCache, result)) {
       return this.cache as TSub;
     }
 
