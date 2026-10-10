@@ -449,16 +449,22 @@ describe('Cacher', () => {
       expect(calls).toBe(1);
     });
 
-    it('refreshes when ttl elapses even if the clock jumped backwards', async () => {
+    it('ignores wall-clock jumps, because the ttl runs on a monotonic clock', async () => {
+      vi.useFakeTimers();
       let calls = 0;
       const cacher = new Cacher(async () => ++calls, 1000);
 
       await cacher.get();
 
-      // An NTP correction drags the clock before the last fetch time.
-      vi.useFakeTimers();
+      // An NTP correction drags the wall clock 10 years before the last fetch
+      // time. performance.now() is unaffected, so the value stays fresh.
       vi.setSystemTime(-10 * 365 * 24 * 3600 * 1000);
 
+      expect(await cacher.get()).toBe(1);
+      expect(calls).toBe(1);
+
+      // Only real elapsed time expires the entry.
+      vi.advanceTimersByTime(1000);
       expect(await cacher.get()).toBe(2);
       expect(calls).toBe(2);
     });

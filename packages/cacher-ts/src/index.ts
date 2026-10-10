@@ -1,4 +1,5 @@
 const _null = Symbol();
+// TODO 依然存在深层的竞态条件，clear无法等待当前整个get完成，只是在等待pendingPromise结束。为此，要用version方法
 export class Cacher<T = any> {
   private readonly getter: () => Promise<T>;
   private readonly ttl: number;
