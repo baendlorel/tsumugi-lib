@@ -1,21 +1,4 @@
-interface Operation<T> {
-  oper: 'get' | 'clear';
-  resolve: (data: T) => void;
-  reject: (value: any) => void;
-}
-
-const _prom = () => {
-  let resolve!: (value: any) => void;
-  let reject!: (value: any) => void;
-  const promise = new Promise<any>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return { promise, resolve, reject };
-};
-
 const _null = Symbol();
-
 export class Cacher<T = any> {
   private readonly getter: () => Promise<T>;
   private readonly ttl: number;
@@ -24,6 +7,11 @@ export class Cacher<T = any> {
   private cache: T | typeof _null = _null;
   private pendingPromise: Promise<T> | null = null;
 
+  /**
+   * Create a cacher instance.
+   * @param getter Must contain a promise-returning function that eventually settles.
+   * @param ttl Time-to-live for the cached value in milliseconds.
+   */
   constructor(getter: () => Promise<T>, ttl: number = 86400_000) {
     this.getter = getter;
     this.ttl = ttl;
@@ -36,13 +24,24 @@ export class Cacher<T = any> {
     if (this.pendingPromise) {
       return this.pendingPromise;
     }
-    if (isNaN(this.lastGetTime) || Date.now() - this.lastGetTime >= this.ttl) {
-      this.pendingPromise = this.getter();
-      this.cache = await this.pendingPromise;
-      this.lastGetTime = Date.now();
-      this.pendingPromise = null;
+    if (isNaN(this.lastGetTime) || Date.now() - this.lastGetTime >= this.ttl || Date.now() < this.lastGetTime) {
+      try {
+        this.pendingPromise = this.getter();
+        this.cache = await this.pendingPromise;
+        this.lastGetTime = Date.now();
+      } finally {
+        this.pendingPromise = null;
+      }
     }
     return this.cache as T;
+  }
+
+  async clear() {
+    if (this.pendingPromise) {
+      await this.pendingPromise;
+    }
+    this.cache = _null;
+    this.lastGetTime = NaN;
   }
 
   /**

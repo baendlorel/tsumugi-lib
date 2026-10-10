@@ -12,6 +12,11 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 
+/** Swallows the rejection of a promise we only keep around to observe. */
+function observe(p: Promise<unknown>): Promise<unknown> {
+  return p.catch(() => undefined);
+}
+
 describe('Cacher', () => {
   afterEach(() => {
     vi.useRealTimers();
@@ -83,6 +88,39 @@ describe('Cacher', () => {
       expect(await cacher.get()).toBe(2);
       expect(calls).toBe(2);
     });
+
+    it('keeps retrying a persistently failing getter', async () => {
+      let calls = 0;
+      const cacher = new Cacher(async () => {
+        calls++;
+        throw new Error(`boom-${calls}`);
+      });
+
+      await expect(cacher.get()).rejects.toThrow('boom-1');
+      await expect(cacher.get()).rejects.toThrow('boom-2');
+      await expect(cacher.get()).rejects.toThrow('boom-3');
+
+      expect(calls).toBe(3);
+    });
+
+    it('recovers once the getter starts succeeding again', async () => {
+      let calls = 0;
+      const cacher = new Cacher(async () => {
+        calls++;
+        if (calls <= 2) {
+          throw new Error('flaky');
+        }
+        return 'ok';
+      });
+
+      await expect(cacher.get()).rejects.toThrow('flaky');
+      await expect(cacher.get()).rejects.toThrow('flaky');
+      expect(await cacher.get()).toBe('ok');
+
+      // The recovered value is cached.
+      expect(await cacher.get()).toBe('ok');
+      expect(calls).toBe(3);
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -113,21 +151,6 @@ describe('Cacher', () => {
       expect(calls).toBe(1);
     });
 
-    it('invokes the getter once for many concurrent callers', async () => {
-      const gate = deferred<string>();
-      let calls = 0;
-      const cacher = new Cacher(() => {
-        calls++;
-        return gate.promise;
-      });
-
-      const all = Promise.all([cacher.get(), cacher.get(), cacher.get()]);
-      gate.resolve('done');
-
-      expect(await all).toEqual(['done', 'done', 'done']);
-      expect(calls).toBe(1);
-    });
-
     it('shares a rejection between concurrent callers', async () => {
       const gate = deferred<number>();
       let calls = 0;
@@ -147,37 +170,22 @@ describe('Cacher', () => {
       expect(calls).toBe(2);
     });
 
-    it('starts a single new request when callers arrive after clear()', async () => {
+    it('starts exactly one request for many concurrent callers', async () => {
+      const gate = deferred<string>();
       let calls = 0;
-      const cacher = new Cacher(async () => ++calls);
+      const cacher = new Cacher(() => {
+        calls++;
+        return gate.promise;
+      });
 
-      expect(await cacher.get()).toBe(1);
+      const all = Array.from({ length: 5 }, () => cacher.get());
+      gate.resolve('done');
 
-      cacher.clear();
-
-      const [a, b] = await Promise.all([cacher.get(), cacher.get()]);
-
-      expect(calls).toBe(2);
-      expect([a, b]).toEqual([2, 2]);
-    });
-  });
-
-  // ---------------------------------------------------------------------------
-  // clear()
-  // ---------------------------------------------------------------------------
-  describe('clear()', () => {
-    it('forces a refresh on the next get()', async () => {
-      let calls = 0;
-      const cacher = new Cacher(async () => ++calls);
-
-      await cacher.get();
-      cacher.clear();
-
-      expect(await cacher.get()).toBe(2);
-      expect(calls).toBe(2);
+      expect(await Promise.all(all)).toEqual(['done', 'done', 'done', 'done', 'done']);
+      expect(calls).toBe(1);
     });
 
-    it('resolves clear() only after the in-flight request ahead of it settles', async () => {
+    it('does not leave a permanent rejection behind after a failure', async () => {
       const gate = deferred<number>();
       let calls = 0;
       const cacher = new Cacher(() => {
@@ -185,48 +193,28 @@ describe('Cacher', () => {
         return calls === 1 ? gate.promise : Promise.resolve(calls);
       });
 
-      const inFlight = cacher.get();
-      const cleared = cacher.clear();
+      const failed = cacher.get();
+      gate.reject(new Error('offline'));
+      await expect(failed).rejects.toThrow('offline');
 
-      let clearedYet = false;
-      void cleared.then(() => (clearedYet = true));
-
-      // clear() is still queued behind the in-flight get.
-      expect(clearedYet).toBe(false);
-
-      gate.resolve(1);
-      expect(await inFlight).toBe(1);
-
-      // Once clear() settles, the cached value is gone: the next get() refetches.
-      await cleared;
+      // The rejected promise must not be handed out forever.
       expect(await cacher.get()).toBe(2);
       expect(calls).toBe(2);
     });
 
-    it('discards a request that was in flight when cleared', async () => {
+    it('does not warn about an unhandled rejection when callers arrive late', async () => {
       let calls = 0;
-      let settle!: (value: number) => void;
-      const cacher = new Cacher(
-        () =>
-          new Promise<number>((resolve) => {
-            calls++;
-            settle = resolve;
-          }),
-      );
+      const cacher = new Cacher(async () => {
+        calls++;
+        throw new Error('boom');
+      });
 
-      const inFlight = cacher.get();
-      cacher.clear();
-      settle(1);
+      // A second caller attaches to the pending promise before it settles.
+      const first = observe(cacher.get());
+      const second = observe(cacher.get());
 
-      // The caller still receives the value it asked for...
-      expect(await inFlight).toBe(1);
-
-      // ...but clear() wins: the value was not cached, so the retry refetches.
-      const retry = cacher.get();
-      settle(2);
-
-      expect(await retry).toBe(2);
-      expect(calls).toBe(2);
+      await Promise.all([first, second]);
+      expect(calls).toBe(1);
     });
   });
 
@@ -293,6 +281,40 @@ describe('Cacher', () => {
 
       expect(await cacher.get()).toBe(1);
       expect(calls).toBe(1);
+    });
+
+    it('tracks ttl from the moment the getter settles, not from the moment it starts', async () => {
+      vi.useFakeTimers();
+      let calls = 0;
+      const gate = deferred<number>();
+      const cacher = new Cacher(() => {
+        calls++;
+        return gate.promise;
+      }, 1000);
+
+      const inFlight = cacher.get();
+      vi.advanceTimersByTime(900); // the getter is slow: 900ms of the ttl budget spent fetching
+      gate.resolve(1);
+      await inFlight;
+
+      // 900ms elapsed since the fetch *started*; the window must still be full.
+      vi.advanceTimersByTime(900);
+      expect(await cacher.get()).toBe(1);
+      expect(calls).toBe(1);
+    });
+
+    it('refreshes when ttl elapses even if the clock jumped backwards', async () => {
+      let calls = 0;
+      const cacher = new Cacher(async () => ++calls, 1000);
+
+      await cacher.get();
+
+      // An NTP correction drags the clock before the last fetch time.
+      vi.useFakeTimers();
+      vi.setSystemTime(-10 * 365 * 24 * 3600 * 1000);
+
+      expect(await cacher.get()).toBe(2);
+      expect(calls).toBe(2);
     });
   });
 
@@ -371,19 +393,43 @@ describe('Cacher', () => {
       expect(n).toBe(2);
     });
 
-    it('recomputes when the source is cleared', async () => {
-      let n = 0;
-      const cacher = new Cacher(async () => ++n);
-      const tenfold = cacher.derive((value) => value * 10);
+    it('maps concurrently exactly once when the source is still in flight', async () => {
+      const gate = deferred<number>();
+      let calls = 0;
+      let mapCalls = 0;
+      const cacher = new Cacher(() => {
+        calls++;
+        return gate.promise;
+      });
+      const doubled = cacher.derive((value) => {
+        mapCalls++;
+        return value * 2;
+      });
 
-      expect(await tenfold.get()).toBe(10);
+      const all = [doubled.get(), doubled.get(), doubled.get()];
+      gate.resolve(21);
 
-      cacher.clear();
-
-      expect(await tenfold.get()).toBe(20);
+      expect(await Promise.all(all)).toEqual([42, 42, 42]);
+      expect(calls).toBe(1);
+      expect(mapCalls).toBe(1);
     });
 
-    it('does not cache a derived value when the mapping throws', async () => {
+    it('re-maps after the source failed and recovered', async () => {
+      let calls = 0;
+      const cacher = new Cacher(async () => {
+        calls++;
+        if (calls === 1) {
+          throw new Error('boom');
+        }
+        return calls;
+      });
+      const doubled = cacher.derive((value) => value * 2);
+
+      await expect(doubled.get()).rejects.toThrow('boom');
+      expect(await doubled.get()).toBe(4);
+    });
+
+    it('propagates a mapping failure and retries the mapping next time', async () => {
       let mapCalls = 0;
       const cacher = new Cacher(async () => 1, Infinity);
       const derived = cacher.derive<number>(() => {
@@ -392,7 +438,6 @@ describe('Cacher', () => {
       });
 
       await expect(derived.get()).rejects.toThrow('map boom');
-
       await expect(derived.get()).rejects.toThrow('map boom');
       expect(mapCalls).toBe(2);
     });
