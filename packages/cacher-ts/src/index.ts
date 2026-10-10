@@ -124,7 +124,6 @@ export class CacherSync<T = any> {
   constructor(getter: () => T, ttl: number = 86400_000) {
     this.getter = getter;
     this.ttl = ttl;
-    this.load();
   }
 
   load(): void {
