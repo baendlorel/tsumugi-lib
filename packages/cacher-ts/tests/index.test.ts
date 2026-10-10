@@ -219,6 +219,152 @@ describe('Cacher', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // clear()
+  // ---------------------------------------------------------------------------
+  describe('clear()', () => {
+    it('resolves to undefined', async () => {
+      const cacher = new Cacher(async () => 1);
+
+      await expect(cacher.clear()).resolves.toBeUndefined();
+    });
+
+    it('is a no-op when nothing has been cached yet', async () => {
+      let calls = 0;
+      const cacher = new Cacher(async () => ++calls);
+
+      await cacher.clear();
+
+      expect(await cacher.get()).toBe(1);
+      expect(calls).toBe(1);
+    });
+
+    it('forces a refresh on the next get()', async () => {
+      let calls = 0;
+      const cacher = new Cacher(async () => ++calls);
+
+      expect(await cacher.get()).toBe(1);
+      await cacher.clear();
+
+      expect(await cacher.get()).toBe(2);
+      expect(calls).toBe(2);
+    });
+
+    it('does not let a caller read a stale value through the cleared window', async () => {
+      let calls = 0;
+      const cacher = new Cacher(async () => ++calls, 0);
+
+      await cacher.get();
+      await cacher.clear();
+
+      expect(await cacher.get()).toBe(2);
+      expect(calls).toBe(2);
+    });
+
+    describe('with a request in flight', () => {
+      it('waits for the in-flight request before clearing', async () => {
+        const gate = deferred<number>();
+        let calls = 0;
+        const cacher = new Cacher(() => {
+          calls++;
+          return gate.promise;
+        });
+
+        const inFlight = cacher.get();
+        const clearing = cacher.clear();
+
+        let clearedYet = false;
+        void clearing.then(() => (clearedYet = true));
+        await Promise.resolve();
+        expect(clearedYet).toBe(false);
+
+        gate.resolve(1);
+        await inFlight;
+        await clearing;
+        expect(clearedYet).toBe(true);
+      });
+
+      it('completes the cleanup even when the in-flight request fails', async () => {
+        const gates: ReturnType<typeof deferred<number>>[] = [];
+        let calls = 0;
+        const cacher = new Cacher(() => {
+          calls++;
+          const gate = deferred<number>();
+          gates.push(gate);
+          return gate.promise;
+        }, 0);
+
+        const first = cacher.get();
+        gates[0].resolve(1);
+        expect(await first).toBe(1);
+
+        const second = cacher.get(); // fetch #2, in flight
+        const clearing = cacher.clear();
+        gates[1].reject(new Error('down'));
+
+        // clear() must swallow the failure and still drop the cache.
+        await expect(clearing).resolves.toBeUndefined();
+        await expect(second).rejects.toThrow('down');
+
+        const third = cacher.get();
+        gates[2].resolve(3);
+        expect(await third).toBe(3);
+        expect(calls).toBe(3);
+      });
+
+      it('never rejects, so a bare clear() raises no unhandled rejection', async () => {
+        let fail!: (reason?: unknown) => void;
+        const cacher = new Cacher(
+          () =>
+            new Promise<number>((_, reject) => {
+              fail = reject;
+            }),
+        );
+
+        const inFlight = cacher.get();
+        inFlight.catch(() => undefined); // the in-flight caller owns its rejection
+
+        const seen: unknown[] = [];
+        const onUnhandled = (reason: unknown) => seen.push(reason);
+        process.on('unhandledRejection', onUnhandled);
+
+        void cacher.clear(); // deliberately neither awaited nor caught
+        fail(new Error('down'));
+
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        process.off('unhandledRejection', onUnhandled);
+
+        expect(seen).toEqual([]);
+      });
+
+      it('still hands the pre-clear value to callers that arrive during the clear', async () => {
+        const gates: ReturnType<typeof deferred<number>>[] = [];
+        let calls = 0;
+        const cacher = new Cacher(() => {
+          calls++;
+          const gate = deferred<number>();
+          gates.push(gate);
+          return gate.promise;
+        });
+
+        const inFlight = cacher.get();
+        const clearing = cacher.clear();
+        const during = cacher.get(); // joins the request that is already in flight
+
+        gates[0].resolve(1);
+        expect(await inFlight).toBe(1);
+        expect(await during).toBe(1);
+        await clearing;
+
+        // The cache is gone, so a later caller refetches.
+        const after = cacher.get();
+        gates[1].resolve(2);
+        expect(await after).toBe(2);
+        expect(calls).toBe(2);
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // ttl
   // ---------------------------------------------------------------------------
   describe('ttl', () => {
@@ -391,6 +537,49 @@ describe('Cacher', () => {
       // Reading the derived cacher refreshes the source it depends on.
       expect(await tenfold.get()).toBe(20);
       expect(n).toBe(2);
+    });
+
+    it('recomputes when the source is cleared', async () => {
+      let n = 0;
+      const cacher = new Cacher(async () => ++n, Infinity);
+      const tenfold = cacher.derive((value) => value * 10);
+
+      expect(await tenfold.get()).toBe(10);
+
+      await cacher.clear();
+
+      expect(await tenfold.get()).toBe(20);
+      expect(n).toBe(2);
+    });
+
+    it('recomputes after a parent clear even when nothing reads the parent directly', async () => {
+      let n = 0;
+      const cacher = new Cacher(async () => ({ n: ++n }), Infinity);
+      const derived = cacher.derive((value) => value.n * 10);
+
+      expect(await derived.get()).toBe(10);
+
+      await cacher.clear();
+
+      expect(await derived.get()).toBe(20);
+    });
+
+    it('keeps the derived value when the re-fetched source is identical', async () => {
+      // The sub-cacher invalidates on identity change; an equal re-fetch of a
+      // pure value does not re-run the (contractually pure) mapping.
+      let mapCalls = 0;
+      const cacher = new Cacher(async () => 'prod', Infinity);
+      const derived = cacher.derive((value) => {
+        mapCalls++;
+        return `${value}-mapped`;
+      });
+
+      expect(await derived.get()).toBe('prod-mapped');
+
+      await cacher.clear();
+
+      expect(await derived.get()).toBe('prod-mapped');
+      expect(mapCalls).toBe(1);
     });
 
     it('maps concurrently exactly once when the source is still in flight', async () => {

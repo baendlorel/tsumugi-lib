@@ -38,19 +38,20 @@ export class Cacher<T = any> {
 
   async clear() {
     if (this.pendingPromise) {
-      await this.pendingPromise;
+      try {
+        await this.pendingPromise;
+      } catch {}
     }
     this.cache = _null;
     this.lastGetTime = NaN;
   }
 
   /**
-   * Derives a new cacher from the current one by applying a mapping function to its value.
-   * @param mapFn The mapping function to apply to the current cacher's value.
-   * @returns A new cacher that holds the mapped value.
+   * Derives a sub-cacher from the current one by applying a mapping function to its value.
+   * @param pureMapper Must be a pure sync function. It will be called without `await`.
    */
-  derive<TSub = any>(mapFn: (value: T) => TSub): SubCacher<TSub> {
-    return new SubCacher<TSub>(this, mapFn);
+  derive<TSub = any>(pureMapper: (value: T) => TSub): SubCacher<TSub> {
+    return new SubCacher<TSub>(this, pureMapper);
   }
 }
 
@@ -58,14 +59,19 @@ export class SubCacher<TSub = any> {
   private parentCache: any = _null;
   private cache: TSub | typeof _null = _null;
 
-  constructor(
-    private readonly parent: Cacher,
-    /**
-     * Must be a pure sync function.
-     * It will be called without await.
-     */
-    private readonly mapFn: (value: any) => TSub,
-  ) {}
+  private readonly map: (value: any) => TSub;
+  private readonly parent: Cacher;
+
+  /**
+   * Must be a pure sync function.
+   * It will be called without await.
+   * @param parent Cacher that this sub-cacher is derived from
+   * @param pureMapper Must be a pure sync function. It will be called without `await`.
+   */
+  constructor(parent: Cacher, pureMapper: (value: any) => TSub) {
+    this.parent = parent;
+    this.map = pureMapper;
+  }
 
   async get(): Promise<TSub> {
     const result = await this.parent.get();
@@ -73,7 +79,7 @@ export class SubCacher<TSub = any> {
       return this.cache as TSub;
     }
 
-    const v = this.mapFn(result) as any;
+    const v = this.map(result) as any;
     if (typeof v?.then === 'function') {
       console.warn('mapFn is called without await, so this thenable result will be kept.');
     }
