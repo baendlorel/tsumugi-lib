@@ -19,22 +19,25 @@ export class Cacher<T = any> {
 
   /**
    * Create a cacher instance.
-   * @param getter Must contain a promise-returning function that eventually settles.
+   * @param getter An async value getter. **We trust you to handle the errors**.
    * @param ttl Time-to-live for the cached value in milliseconds.
    */
   constructor(getter: () => Promise<T>, ttl: number = 86400_000) {
     this.getter = getter;
     this.ttl = ttl;
-    this.reload();
+    // no longer automatically loading the cache upon construction.
+    // users should load the cache manually by calling `load()`.
   }
 
-  async reload(): Promise<void> {
-    // # This is a brand new implementation.
-    // Not aiming at fetch the value immediately at its expiration,
-    // but only start the reloading process.
+  /**
+   * Always awaits the pending getter to be settled.
+   */
+  async load(): Promise<void> {
+    // # Not fetching immediately at the cache's expiration, only start the reloading process.
 
     if (this.getterPromise) {
       // already pending
+      await this.getterPromise;
       return;
     }
 
@@ -64,7 +67,7 @@ export class Cacher<T = any> {
     }
 
     if (this.lastGetTime === 0 || performance.now() - this.lastGetTime >= this.ttl) {
-      this.reload();
+      this.load();
     }
     return this.cache as T;
   }
@@ -87,15 +90,90 @@ export class Cacher<T = any> {
       throw new Error(`Derived cache with name "${name}" does not exist.`);
     }
 
-    if (sub.parent === this.cache) {
+    if (Object.is(sub.parent, this.cache)) {
       if (sub.parent === empty) {
         throw new Error('Cache is empty and has not been initialized yet.');
       }
       return sub.cache as TSub;
     }
 
-    // now sub.parent is not empty and not equal to this.cache, so we need to update it
-    sub.parent = this.cache as T;
-    return (sub.cache = sub.mapper(sub.parent));
+    const parent = this.cache as T;
+    const cache = sub.mapper(parent); // ! This makes parent and cache consistent even the mapper throws
+
+    sub.parent = parent;
+    sub.cache = cache;
+
+    return cache;
+  }
+}
+
+export class CacherSync<T = any> {
+  private readonly getter: () => T;
+  private readonly ttl: number;
+
+  private lastGetTime: number = 0;
+  private cache: T | empty = empty;
+
+  private subCache = new Map<string, SubCacheEntry<T, any>>();
+
+  /**
+   * Create a cacher instance.
+   * @param getter Value getter.
+   * @param ttl Time-to-live for the cached value in milliseconds.
+   */
+  constructor(getter: () => T, ttl: number = 86400_000) {
+    this.getter = getter;
+    this.ttl = ttl;
+    this.load();
+  }
+
+  load(): void {
+    this.cache = this.getter();
+    this.lastGetTime = performance.now();
+  }
+
+  /**
+   * Getter of the value.
+   * If the cached value is outdated, it will trigger the initialization.
+   */
+  get(): T {
+    if (this.lastGetTime === 0 || performance.now() - this.lastGetTime >= this.ttl) {
+      this.load();
+    }
+    return this.cache as T;
+  }
+
+  /**
+   * Derives a sub-cacher from the current one by applying a mapping function to its value.
+   * @param pureMapper Must be a pure sync function. It will be called without `await`.
+   */
+  derive<TSub = any>(name: string, pureMapper: (value: T) => TSub): void {
+    this.subCache.set(name, { cache: empty, parent: empty, mapper: pureMapper });
+  }
+
+  remove(name: string): boolean {
+    return this.subCache.delete(name);
+  }
+
+  getSub<TSub = any>(name: string): TSub {
+    const sub = this.subCache.get(name);
+    if (!sub) {
+      throw new Error(`Derived cache with name "${name}" does not exist.`);
+    }
+
+    if (Object.is(sub.parent, this.cache)) {
+      if (sub.parent === empty) {
+        throw new Error('Cache is empty and has not been initialized yet.');
+      }
+      return sub.cache as TSub;
+    }
+
+    const parent = this.cache as T;
+    const cache = sub.mapper(parent); // ! This makes parent and cache consistent even the mapper throws
+
+    sub.parent = parent;
+    sub.cache = cache;
+
+    return cache;
   }
 }
