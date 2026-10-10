@@ -13,7 +13,7 @@ export class Cacher<T = any> {
 
   private lastGetTime: number = 0;
   private cache: T | empty = empty;
-  private getterPromise!: Promise<T>;
+  private getterPromise: Promise<T> | false = false;
 
   private subCache = new Map<string, SubCacheEntry<T, any>>();
 
@@ -29,16 +29,28 @@ export class Cacher<T = any> {
   }
 
   async reload(): Promise<void> {
-    this.getterPromise = this.getter();
-    this.cache = await this.getterPromise;
-    this.lastGetTime = performance.now();
+    // # This is a brand new implementation.
+    // Not aiming at fetch the value immediately at its expiration,
+    // but only start the reloading process.
+
+    if (this.getterPromise) {
+      // already pending
+      return;
+    }
+
+    try {
+      this.getterPromise = this.getter();
+      this.cache = await this.getterPromise;
+      this.lastGetTime = performance.now();
+    } finally {
+      this.getterPromise = false;
+    }
   }
 
   /**
-   * This is the promise returned from `getter`.
-   * Await it to make sure the cache is initialized.
+   * Returns the current pending promise for the cached value, or `false` if no reload is in progress.
    */
-  get ready(): Promise<T> {
+  get pending(): Promise<T> | false {
     return this.getterPromise;
   }
 
@@ -69,7 +81,7 @@ export class Cacher<T = any> {
     return this.subCache.delete(name);
   }
 
-  getSub<TSub = any>(name: string): TSub | typeof empty {
+  getSub<TSub = any>(name: string): TSub {
     const sub = this.subCache.get(name);
     if (!sub) {
       throw new Error(`Derived cache with name "${name}" does not exist.`);
