@@ -10,6 +10,12 @@ function isPromiseLike<T>(value: any): value is PromiseLike<T> {
   return value && typeof value.then === 'function';
 }
 
+/**
+ * Any getter a `Cacher` accepts: one that returns the value directly, or one
+ * that returns a thenable for it.
+ */
+type GetterLike<T> = (() => T) | (() => PromiseLike<T>);
+
 interface SubCacheEntry<T, TSub = any> {
   /**
    * Current cache
@@ -27,7 +33,10 @@ interface SubCacheEntry<T, TSub = any> {
   fn: (value: T) => TSub;
 }
 
-export class Cacher<T = any, Getter extends (() => PromiseLike<T>) | (() => T) = () => PromiseLike<T>> {
+export class Cacher<
+  Getter extends GetterLike<any> = () => PromiseLike<any>,
+  T = Awaited<ReturnType<Getter>>,
+> {
   /**
    * @internal
    */
@@ -58,17 +67,9 @@ export class Cacher<T = any, Getter extends (() => PromiseLike<T>) | (() => T) =
 
   /**
    * Create a cacher instance.
-   * @param getter An async value getter. **Remember to handle errors in your getter**.
+   * @param getter A value getter, sync or async (`load()` mirrors it: it returns a promise for an async getter and the value itself for a sync one). **Remember to handle errors in your getter**.
    * @param ttl Time-to-live for the cached value in milliseconds.
    */
-  constructor(getter: () => PromiseLike<T>, ttl: number);
-
-  /**
-   * Create a cacher instance.
-   * @param getter A sync value getter. **Remember to handle errors in your getter**.
-   * @param ttl Time-to-live for the cached value in milliseconds.
-   */
-  constructor(getter: () => T, ttl: number);
   constructor(getter: Getter, ttl: number) {
     this.getter = getter;
     this.ttl = ttl;
@@ -87,7 +88,7 @@ export class Cacher<T = any, Getter extends (() => PromiseLike<T>) | (() => T) =
 
     try {
       const result = this.getter();
-      if (isPromiseLike(result)) {
+      if (isPromiseLike<T>(result)) {
         this.pending = result;
         this.pending.then((v) => (this.cache = v)).finally(() => (this.pending = empty));
       } else {
