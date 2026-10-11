@@ -58,10 +58,18 @@ export class Cacher<T = any, Getter extends (() => PromiseLike<T>) | (() => T) =
 
   /**
    * Create a cacher instance.
-   * @param getter An async value getter. **We trust you to handle the errors**.
+   * @param getter An async value getter. **Remember to handle errors in your getter**.
    * @param ttl Time-to-live for the cached value in milliseconds.
    */
-  constructor(getter: Getter, ttl: number = 86400_000) {
+  constructor(getter: () => PromiseLike<T>, ttl: number);
+
+  /**
+   * Create a cacher instance.
+   * @param getter A sync value getter. **Remember to handle errors in your getter**.
+   * @param ttl Time-to-live for the cached value in milliseconds.
+   */
+  constructor(getter: () => T, ttl: number);
+  constructor(getter: Getter, ttl: number) {
     this.getter = getter;
     this.ttl = ttl;
   }
@@ -148,3 +156,8 @@ export class Cacher<T = any, Getter extends (() => PromiseLike<T>) | (() => T) =
     return cache;
   }
 }
+const a = new Cacher(() => 3, 1000);
+const b = a.load();
+
+const a1 = new Cacher(async () => 3, 1000);
+const b1 = a1.load();
