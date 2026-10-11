@@ -49,7 +49,7 @@ export class Cacher<T = any, Getter extends (() => PromiseLike<T>) | (() => T) =
   /**
    * @internal
    */
-  private pending: ReturnType<Getter> | empty = empty;
+  private pending: PromiseLike<T> | empty = empty;
 
   /**
    * @internal
@@ -82,14 +82,14 @@ export class Cacher<T = any, Getter extends (() => PromiseLike<T>) | (() => T) =
 
     if (this.pending !== empty) {
       // already pending
-      return this.pending;
+      return this.pending as ReturnType<Getter>;
     }
 
     try {
       const result = this.getter();
       if (isPromiseLike(result)) {
-        this.pending = result as ReturnType<Getter>;
-        (this.pending as PromiseLike<T>).then((v) => (this.cache = v)).finally(() => (this.pending = empty));
+        this.pending = result;
+        this.pending.then((v) => (this.cache = v)).finally(() => (this.pending = empty));
       } else {
         this.cache = result;
       }
