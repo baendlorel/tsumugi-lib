@@ -5,18 +5,22 @@
     "name": "Kasukabe Tsumugi",
     "email": "futami16237@gmail.com"
   },
-  "description": "Transform private class members into true #private members",
-  "description_zh": "可以将private声明的变量成员变成真正的#私有成员",
-  "purpose": "rollup-plugin",
+  "description": "Turn TypeScript private class members into real ECMAScript #private members, for Vite, Rollup, Webpack, Rspack, esbuild and more.",
+  "description_zh": "把 TypeScript 的 private 类成员变成真正的 #私有成员，支持 Vite / Rollup / Webpack / Rspack / esbuild 等所有 unplugin 适配的打包工具。",
+  "purpose": "unplugin",
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
   "exports": {
-    "types": "./dist/index.d.ts",
-    "import": "./dist/index.mjs",
-    "require": "./dist/index.cjs",
-    "default": "./dist/index.mjs"
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      },
+      "default": "./dist/index.mjs"
+    }
   },
   "files": [
     "dist"
@@ -28,6 +32,12 @@
     "directory": "packages/unplugin-real-private"
   },
   "keywords": [
+    "unplugin",
+    "vite",
+    "rollup",
+    "webpack",
+    "rspack",
+    "esbuild",
     "plugin",
     "typescript",
     "javascript",
@@ -37,7 +47,11 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "magic-string": "^0.30.21"
+    "magic-string": "^0.30.21",
+    "unplugin": "^3.4.0"
+  },
+  "peerDependencies": {
+    "typescript": ">=4.5.0"
   },
   "bugs": {
     "url": "https://github.com/baendlorel/kt-packages/issues"
