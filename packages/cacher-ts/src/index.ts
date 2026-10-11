@@ -27,11 +27,11 @@ interface SubCacheEntry<T, TSub = any> {
   fn: (value: T) => TSub;
 }
 
-export class Cacher<T = any> {
+export class Cacher<T = any, Getter extends (() => PromiseLike<T>) | (() => T) = () => PromiseLike<T>> {
   /**
    * @internal
    */
-  private readonly getter: (() => PromiseLike<T>) | (() => T);
+  private readonly getter: Getter;
   /**
    * @internal
    */
@@ -49,7 +49,7 @@ export class Cacher<T = any> {
   /**
    * @internal
    */
-  private pending: PromiseLike<T> | empty = empty;
+  private pending: ReturnType<Getter> | empty = empty;
 
   /**
    * @internal
@@ -61,7 +61,7 @@ export class Cacher<T = any> {
    * @param getter An async value getter. **We trust you to handle the errors**.
    * @param ttl Time-to-live for the cached value in milliseconds.
    */
-  constructor(getter: () => PromiseLike<T>, ttl: number = 86400_000) {
+  constructor(getter: Getter, ttl: number = 86400_000) {
     this.getter = getter;
     this.ttl = ttl;
   }
@@ -69,24 +69,24 @@ export class Cacher<T = any> {
   /**
    * Always awaits the loading getter to be settled.
    */
-  async load(): Promise<void> {
+  load(): ReturnType<Getter> {
     // # Not fetching immediately at the cache's expiration, only start the reloading process.
 
     if (this.pending !== empty) {
       // already pending
-      await this.pending;
-      return;
+      return this.pending;
     }
 
     try {
       const result = this.getter();
       if (isPromiseLike(result)) {
-        this.pending = result;
-        this.cache = await this.pending;
+        this.pending = result as ReturnType<Getter>;
+        (this.pending as PromiseLike<T>).then((v) => (this.cache = v)).finally(() => (this.pending = empty));
       } else {
         this.cache = result;
       }
       this.last = performance.now();
+      return result as ReturnType<Getter>;
     } finally {
       this.pending = empty;
     }
@@ -96,7 +96,7 @@ export class Cacher<T = any> {
    * Returns the current loading promise for the cached value, or `false` if no reload is in progress.
    */
   get loading(): PromiseLike<T> | false {
-    return this.pending === empty ? false : this.pending;
+    return this.pending === empty ? false : (this.pending as PromiseLike<T>);
   }
 
   /**
