@@ -86,28 +86,30 @@ export function Cache(...args: any[]) {
   };
 }
 
+/**
+ * Derive sub-cacher from `@Cache(key,ttl?)`
+ * - **`@Cache` must be initialized before `@SubCache` does**.
+ * @param key used in `@Cache(key,ttl?)`.
+ */
 export function SubCache(key: string | symbol) {
   return function (target: (...args: any[]) => any, context: Context) {
     let cacher: Cacher | empty = empty;
-
     const uniqueKey = Symbol() as any;
+
     return function (this: any) {
       if (cacher === empty) {
         cacher = context.metadata?.[methodSym].map.get(this)?.get(key) ?? empty;
         if (cacher === empty) {
           throw new Error(`@SubCache cannot find Cacher instance for key "${String(key)}".`);
         }
+        if (!cacher.isInitialized) {
+          throw new Error(`@Cache('${String(key)}',...) is not initialized, so @SubCache cannot be used yet.`);
+        }
 
         // Initialize the sub-cache with a unique key.
         cacher.derive(uniqueKey, target);
-        if (cacher.isInitialized) {
-          return cacher.reload(uniqueKey);
-        }
-        return cacher.getSub(uniqueKey);
       }
-
-      const v = cacher.reload();
-      return isPromiseLike(v) ? v.then(() => cacher.getSub(uniqueKey)) : cacher.getSub(uniqueKey);
+      return cacher.getSub(uniqueKey);
     };
   };
 }
