@@ -1,2 +1,2 @@
 export { Cacher } from './cacher.js';
-export { Cache } from './decorator.js';
+export { Cache, SubCache } from './decorator.js';

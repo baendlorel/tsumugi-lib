@@ -17,6 +17,8 @@ interface SubCacheEntry<T, TSub = any> {
    */
   parent: T | empty;
 
+  pending: PromiseLike<TSub> | empty;
+
   /**
    * Mapping function. Must be pure.
    */
@@ -153,7 +155,7 @@ export class Cacher<
    * @param pureMapper Must be a pure sync function. It will be called without `await`.
    */
   derive<SubKey extends keyof Subs>(name: SubKey, pureMapper: (value: T) => Subs[SubKey]): void {
-    this.sub.set(name, { cache: empty, parent: empty, fn: pureMapper });
+    this.sub.set(name, { cache: empty, parent: empty, pending: empty, fn: pureMapper });
   }
 
   /**
@@ -181,10 +183,35 @@ export class Cacher<
     }
 
     if (Object.is(sub.parent, this.cache)) {
-      if (sub.parent === empty) {
-        throw new Error('Cache is not initialized yet.');
+      if (sub.parent !== empty) {
+        return sub.cache as Subs[SubKey];
       }
-      return sub.cache as Subs[SubKey];
+
+      // They are both empty
+      this.reload();
+      if (this.pending === empty) {
+        // means loading is finished
+        const v = sub.fn.call(this.thisArg, this.cache as T);
+        sub.parent = this.cache;
+        return (sub.cache = v);
+      }
+
+      if (sub.pending !== empty) {
+        return sub.pending as PromiseLike<Subs[SubKey]>;
+      }
+
+      sub.pending = this.pending.then(
+        (value) => {
+          const v = sub.fn.call(this.thisArg, value);
+          sub.parent = this.cache;
+          sub.pending = empty;
+          return (sub.cache = v);
+        },
+        (e) => {
+          sub.pending = empty;
+          throw e;
+        },
+      );
     }
 
     const parent = this.cache as T;
