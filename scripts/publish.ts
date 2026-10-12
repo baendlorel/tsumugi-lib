@@ -1,6 +1,5 @@
 import { execSync } from 'node:child_process';
-import { existsSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { writeFileSync } from 'node:fs';
 
 import { askYesNo } from './common/ask.js';
 import { getPackageInfo } from './common/package-info.js';
@@ -15,11 +14,14 @@ export async function publish(who: string | undefined) {
   console.log(`Build and publish:${info.name}@${currentVersionStr}`);
   console.log(`After publish, bump version to v${nextVersionStr}`);
 
-  const goon = await askYesNo(`Publish ${info.name}@${currentVersionStr} and then bump to ${nextVersionStr}?`);
-
-  if (!goon) {
-    console.log('Aborted.');
-    return;
+  if (!process.argv.includes('-y')) {
+    const goon = await askYesNo(`Publish ${info.name}@${currentVersionStr} and then bump to ${nextVersionStr}?`);
+    if (!goon) {
+      console.log('Aborted.');
+      return;
+    }
+  } else {
+    console.log(`Publish ${info.name}@${currentVersionStr} and then bump to ${nextVersionStr}`);
   }
 
   build(who);
