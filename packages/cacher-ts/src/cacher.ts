@@ -47,10 +47,10 @@ export class Cacher<
    */
   private readonly ttl: number;
 
-  private inited: boolean;
-
-  private thisArg: any;
-
+  /**
+   * @internal
+   */
+  private thisArg: any = null;
   /**
    * Last load time, or `-Infinity` before the first one.
    *
@@ -67,22 +67,24 @@ export class Cacher<
    * @internal
    */
   private pending: PromiseLike<T> | empty = empty;
-
   /**
    * @internal
    */
-  private sub = new Map<keyof Subs, SubCacheEntry<T, any>>();
+  private inited: boolean = false;
+  /**
+   * @internal
+   */
+  private readonly sub = new Map<keyof Subs, SubCacheEntry<T, any>>();
 
   /**
    * Create a cacher instance.
    * @param getter A value getter, sync or async (`load()` mirrors it: it returns a promise for an async getter and the value itself for a sync one). **Remember to handle errors in your getter**.
    * @param ttl Time-to-live for the cached value in milliseconds.
    */
-  constructor(getter: Getter, ttl: number, defaultValue: T = empty as any) {
+  constructor(getter: Getter, ttl: number) {
     this.getter = getter;
     this.ttl = ttl;
     this.thisArg = null;
-    this.cache = defaultValue;
     this.inited = false;
   }
 
@@ -97,8 +99,9 @@ export class Cacher<
    * Initializes the cacher with the given `this` context.
    * If the cache is empty, it will trigger a reload.
    */
-  setThis(thisArg: any) {
+  setThis(thisArg: any): this {
     this.thisArg = thisArg;
+    return this;
   }
 
   /**
@@ -155,8 +158,8 @@ export class Cacher<
 
   /**
    * Derives a sub-cacher from the current one by applying a mapping function to its value.
+   * - pure sync mapper will be called with `cacher.thisArg`
    * - You may get it by `cacher.getSub(name)`
-   *
    * @param pureMapper Must be a pure sync function. It will be called without `await`.
    */
   derive<SubKey extends keyof Subs>(name: SubKey, pureMapper: (value: T) => Subs[SubKey]): void {
@@ -165,17 +168,26 @@ export class Cacher<
 
   /**
    * Removes a derived sub-cache by its name.
-   * @param name The name of the derived sub-cache to remove.
    * @returns `true` if the sub-cache existed and was removed, `false` otherwise.
    */
-  removeSub(name: keyof Subs): boolean {
-    return this.sub.delete(name);
+  deleteSub(key: keyof Subs): boolean {
+    return this.sub.delete(key);
   }
 
-  getSub<SubKey extends keyof Subs>(name: SubKey): Subs[SubKey] {
-    const sub = this.sub.get(name);
+  /**
+   * Checks if a derived sub-cache exists by its name.
+   */
+  hasSub(key: keyof Subs): boolean {
+    return this.sub.has(key);
+  }
+
+  /**
+   * Get the cached value derived by the mapper.
+   */
+  getSub<SubKey extends keyof Subs>(key: SubKey): Subs[SubKey] {
+    const sub = this.sub.get(key);
     if (!sub) {
-      throw new Error(`No derived cache with name "${String(name)}".`);
+      throw new Error(`No derived cache with name "${String(key)}".`);
     }
 
     if (Object.is(sub.parent, this.cache)) {
@@ -186,7 +198,7 @@ export class Cacher<
     }
 
     const parent = this.cache as T;
-    const cache = sub.fn(parent); // ! This makes parent and cache consistent even the mapper throws
+    const cache = sub.fn.call(this.thisArg, parent); // ! This makes parent and cache consistent even the mapper throws
 
     sub.parent = parent;
     sub.cache = cache;

@@ -4,6 +4,7 @@
     "module": "preserve",
     "moduleResolution": "bundler",
     "types": ["node"],
+    "stripInternal": true,
     "declaration": false,
     "esModuleInterop": true,
     "strict": true,
