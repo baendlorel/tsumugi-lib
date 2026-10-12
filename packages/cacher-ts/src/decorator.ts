@@ -7,7 +7,7 @@ import { Cacher } from './cacher.js';
  *
  * @param ttl Time-to-live for the cached value in milliseconds. `Infinity` never expires.
  */
-export function Cache(ttl: number) {
+export function Cache(ttl: number, defaultValue?: any) {
   return function (target: (...args: any[]) => any, context: ClassMethodDecoratorContext) {
     if (target.length !== 0) {
       throw new TypeError(
@@ -19,7 +19,7 @@ export function Cache(ttl: number) {
     return function (this: any) {
       let c = map.get(this);
       if (!c) {
-        map.set(this, (c = new Cacher(target, ttl)));
+        map.set(this, (c = new Cacher(target, ttl, defaultValue)));
         c.setThis(this);
       }
       return c.isInitialized ? c.get() : c.reload();
