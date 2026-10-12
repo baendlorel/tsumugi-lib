@@ -19,10 +19,10 @@
   "files": [
     "dist"
   ],
-  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/defered-branch#readme",
+  "homepage": "https://github.com/baendlorel/tsumugi-lib/tree/main/packages/defered-branch#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "url": "git+https://github.com/baendlorel/tsumugi-lib.git",
     "directory": "packages/defered-branch"
   },
   "keywords": [
@@ -33,6 +33,6 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/baendlorel/kt-packages/issues"
+    "url": "https://github.com/baendlorel/tsumugi-lib/issues"
   }
 }

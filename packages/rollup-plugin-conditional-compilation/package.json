@@ -21,10 +21,10 @@
   "files": [
     "dist"
   ],
-  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/rollup-plugin-conditional-compilation#readme",
+  "homepage": "https://github.com/baendlorel/tsumugi-lib/tree/main/packages/rollup-plugin-conditional-compilation#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "url": "git+https://github.com/baendlorel/tsumugi-lib.git",
     "directory": "packages/rollup-plugin-conditional-compilation"
   },
   "keywords": [
@@ -40,6 +40,6 @@
     "magic-string": "^0.30.21"
   },
   "bugs": {
-    "url": "https://github.com/baendlorel/kt-packages/issues"
+    "url": "https://github.com/baendlorel/tsumugi-lib/issues"
   }
 }

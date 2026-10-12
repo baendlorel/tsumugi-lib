@@ -21,7 +21,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "url": "git+https://github.com/baendlorel/tsumugi-lib.git",
     "directory": "packages/composition-ts"
   },
   "keywords": [
@@ -30,7 +30,7 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/baendlorel/kt-packages/issues"
+    "url": "https://github.com/baendlorel/tsumugi-lib/issues"
   },
-  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/composition-ts#readme"
+  "homepage": "https://github.com/baendlorel/tsumugi-lib/tree/main/packages/composition-ts#readme"
 }

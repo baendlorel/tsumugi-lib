@@ -21,10 +21,10 @@
   "files": [
     "dist"
   ],
-  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/rollup-plugin-func-macro#readme",
+  "homepage": "https://github.com/baendlorel/tsumugi-lib/tree/main/packages/rollup-plugin-func-macro#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "url": "git+https://github.com/baendlorel/tsumugi-lib.git",
     "directory": "packages/rollup-plugin-func-macro"
   },
   "keywords": [
@@ -44,6 +44,6 @@
     "acorn-walk": "^8.3.4"
   },
   "bugs": {
-    "url": "https://github.com/baendlorel/kt-packages/issues"
+    "url": "https://github.com/baendlorel/tsumugi-lib/issues"
   }
 }

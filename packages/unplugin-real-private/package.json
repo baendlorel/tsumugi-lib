@@ -25,10 +25,10 @@
   "files": [
     "dist"
   ],
-  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/unplugin-real-private#readme",
+  "homepage": "https://github.com/baendlorel/tsumugi-lib/tree/main/packages/unplugin-real-private#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "url": "git+https://github.com/baendlorel/tsumugi-lib.git",
     "directory": "packages/unplugin-real-private"
   },
   "keywords": [
@@ -54,6 +54,6 @@
     "typescript": ">=4.5.0"
   },
   "bugs": {
-    "url": "https://github.com/baendlorel/kt-packages/issues"
+    "url": "https://github.com/baendlorel/tsumugi-lib/issues"
   }
 }

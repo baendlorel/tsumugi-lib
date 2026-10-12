@@ -21,10 +21,10 @@
   "files": [
     "dist"
   ],
-  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/rollup-plugin-typescript-privatify#readme",
+  "homepage": "https://github.com/baendlorel/tsumugi-lib/tree/main/packages/rollup-plugin-typescript-privatify#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "url": "git+https://github.com/baendlorel/tsumugi-lib.git",
     "directory": "packages/rollup-plugin-typescript-privatify"
   },
   "keywords": [
@@ -41,6 +41,6 @@
     "typescript": ">=5.0.0"
   },
   "bugs": {
-    "url": "https://github.com/baendlorel/kt-packages/issues"
+    "url": "https://github.com/baendlorel/tsumugi-lib/issues"
   }
 }

@@ -19,10 +19,10 @@
   "files": [
     "dist"
   ],
-  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/pseudo-json#readme",
+  "homepage": "https://github.com/baendlorel/tsumugi-lib/tree/main/packages/pseudo-json#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "url": "git+https://github.com/baendlorel/tsumugi-lib.git",
     "directory": "packages/pseudo-json"
   },
   "keywords": [
@@ -37,6 +37,6 @@
   "license": "MIT",
   "devDependencies": {},
   "bugs": {
-    "url": "https://github.com/baendlorel/kt-packages/issues"
+    "url": "https://github.com/baendlorel/tsumugi-lib/issues"
   }
 }

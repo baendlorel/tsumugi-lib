@@ -22,7 +22,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/baendlorel/kt-packages.git",
+    "url": "git+https://github.com/baendlorel/tsumugi-lib.git",
     "directory": "packages/to-assigned"
   },
   "keywords": [
@@ -33,8 +33,8 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/baendlorel/kt-packages/issues"
+    "url": "https://github.com/baendlorel/tsumugi-lib/issues"
   },
-  "homepage": "https://github.com/baendlorel/kt-packages/tree/main/packages/to-assigned#readme",
+  "homepage": "https://github.com/baendlorel/tsumugi-lib/tree/main/packages/to-assigned#readme",
   "devDependencies": {}
 }
