@@ -155,6 +155,8 @@ export class Cacher<
 
   /**
    * Derives a sub-cacher from the current one by applying a mapping function to its value.
+   * - You may get it by `cacher.getSub(name)`
+   *
    * @param pureMapper Must be a pure sync function. It will be called without `await`.
    */
   derive<SubKey extends keyof Subs>(name: SubKey, pureMapper: (value: T) => Subs[SubKey]): void {

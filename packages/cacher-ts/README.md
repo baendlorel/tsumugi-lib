@@ -39,42 +39,20 @@ import { Cacher } from 'cacher-ts';
 const user = new Cacher(async () => (await fetch('/api/me')).json(), 60_000);
 
 await user.reload(); // the constructor does not fetch — load once, at startup
-
 user.get();          // → the cached user, synchronously
-user.isInitialized;  // → true, once a load has succeeded
 ```
 
-`ttl` is required, in milliseconds. `Infinity` never expires; `0` expires immediately, so every read refreshes.
+`ttl` is required, in milliseconds. `Infinity` never expires; `0` expires immediately, so every read refreshes. `get()` throws until a first load has succeeded — guard it with the `isInitialized` flag, which turns true only after a load has **succeeded**, not merely been attempted.
 
 ### The getter receives the previous value
 
-The getter is always called with what is currently cached — `undefined` on the first load — so a refresh can build on it:
+The getter is always called with what is currently cached — `undefined` on the first load. It is the cache itself, not a copy, and it is the same reference `get()` hands out, so mutating it in place is the cheapest way to carry state forward. Nothing merges your return value back in: whatever the getter returns *becomes* the new cache. A failed load leaves the previous value untouched, so the next attempt starts from the same place.
 
-```ts
-const cacher = new Cacher(async (last?: string) => last ?? (await fetchNewestId()), 60_000);
+### `defaultValue` and `setThis`
 
-await cacher.reload(); // getter receives undefined → fetches "a1"
-await cacher.reload(); // getter receives "a1"     → returns it as-is
-```
+An optional third constructor argument seeds the getter's first argument, exactly like a previous value would — but does *not* count as a load, so `get()` still throws until a real one succeeds.
 
-It is the cache itself, not a copy — the same reference `get()` hands out — so mutating it in place is the cheapest way to carry state forward. Nothing merges your return value back in: whatever the getter returns *becomes* the new cache. A failed load leaves the previous value untouched, so the next attempt starts from the same place.
-
-### `isInitialized` and `defaultValue`
-
-`isInitialized` is true only after a load has **succeeded**, which makes it the guard for a first read. The optional third constructor argument seeds the getter's first argument, exactly like a previous value — but does *not* count as a load, so `get()` still throws until a real one succeeds:
-
-```ts
-const cacher = new Cacher(async (last?: Config) => last ?? (await fetchConfig()), 10_000, builtInDefaults);
-
-cacher.isInitialized; // → false
-cacher.get();         // ✗ throws
-await cacher.reload(); // getter receives `builtInDefaults`
-cacher.isInitialized; // → true
-```
-
-### Passing `this` to the getter
-
-`setThis()` stores the receiver for a method-style getter, called as `getter.call(thisArg, lastValue)`. It is the only way to bind it, and it matters because an expiry-triggered refresh runs from `get()` — where there is nothing to pass:
+`setThis()` binds the receiver for a method-style getter, which is then called as `getter.call(thisArg, lastValue)`. It is the only way to bind it, and it matters because an expiry-triggered refresh runs from `get()`, where there is nothing to pass:
 
 ```ts
 class Api {
@@ -94,23 +72,11 @@ class Api {
 
 ### Reading is sync, refreshing is not
 
-Past the TTL, `get()` **returns the stale value on that call** and starts a refresh — so a burst of callers reads instantly while one request is in flight:
-
-```ts
-await config.reload(); // fetch #1
-config.get();          // → value #1
-
-await sleep(1000);     // ttl elapsed
-config.get();          // → value #1, fetch #2 starts in the background
-await config.loading;  // the in-flight promise, or false when idle
-config.get();          // → value #2
-```
-
-When you need a guaranteed-fresh value, join the refresh `get()` started with `await config.loading`, or drive one with `await config.reload()`. `loading` doubles as an "is a reload running?" probe.
+Past the TTL, `get()` returns the current value on that call and starts a refresh in the background, so a burst of callers reads instantly while one request is in flight. The `loading` property is the in-flight promise, or `false` when idle — `await` it to join a refresh, or `await cacher.reload()` to drive one yourself when you need a guaranteed-fresh value.
 
 ### Derived sub-caches
 
-`derive()` registers a named, computed view. The mapper runs inline, so it must be pure and synchronous. Declaring the names and types once with the `Subs` generic makes both `derive()` and `getSub()` checked against it:
+`derive()` registers a named, computed view of the cached value. The mapper runs inline, so it must be pure and synchronous. Declaring the names and types once with the `Subs` generic makes both `derive()` and `getSub()` checked against it:
 
 ```ts
 interface ConfigSubs {
@@ -126,29 +92,15 @@ config.derive('adminCount', (cfg) => cfg.users.filter((u) => u.admin).length);
 await config.reload();
 config.getSub('names'); // → string[]   the mapper runs, the result is remembered
 config.getSub('names'); // → string[]   memoized: same source reference
-
-config.getSub('nmaes');                   // ✗ type error
-const n: number = config.getSub('names'); // ✗ type error: string[] is not number
 ```
 
 A sub-cache re-maps when the parent changes **by identity** (`Object.is`), so a re-fetch returning a new object re-maps while one returning the same reference does not. `getSub()` throws on an unregistered name and reads the parent's *current* value without triggering a reload; `removeSub(name)` drops an entry.
 
-Pass the getter's type too — `new Cacher<ConfigSubs>(...)` alone still checks the names but quietly makes `get()` and the mapper parameter `any`.
+Pass the getter's type alongside `Subs` — `new Cacher<ConfigSubs>(...)` alone still checks the names but quietly makes `get()` and the mapper parameter `any`.
 
 ### Sync and async getters
 
-One class — the getter you hand it decides the behavior:
-
-```ts
-// Sync: reload() returns the value itself, and expiry recomputes in place.
-const env = new Cacher(() => process.env.NODE_ENV ?? 'development', Infinity);
-
-// Async: reload() returns the thenable, and expiry triggers a background
-// refresh that get() reads through on the next call.
-const user = new Cacher(async () => (await fetch('/api/me')).json(), 60_000);
-```
-
-`reload()` mirrors the getter's own type: a plain value for a sync getter, the promise for an async one.
+One class — the getter you hand it decides the behavior. A sync getter recomputes in place when the entry expires, and `reload()` returns its value directly. An async getter is awaited in the background, which is what enables stale-while-revalidate, and `reload()` returns the thenable; either way `reload()` mirrors the getter's own type.
 
 ### `@Cache()`
 
@@ -158,35 +110,20 @@ When the thing worth caching is already a method, `@Cache(ttl)` wraps it — sam
 import { Cache } from 'cacher-ts';
 
 class UserStore {
-  private calls = 0;
-
   @Cache(60_000)
   async me() {
-    this.calls++;
     return (await fetch('/api/me')).json();
   }
 }
 
 const store = new UserStore();
 await store.me(); // → fetches, caches
-await store.me(); // → cached, this.calls is still 1
+await store.me(); // → cached
 ```
 
-**One cache per instance, per method** — keyed on the receiver, so instances and sibling methods never share. **The method must take no parameters**, enforced at class-definition time:
+There is one cache per instance, per method — keyed on the receiver, so instances and sibling methods never share. The method must take no parameters, enforced at class-definition time with a `TypeError`; because the entry is keyed on the instance alone, do not use it on a method whose result depends on other mutable state. A default parameter slips past the check and is then ignored, and the optional second argument seeds it, like the constructor's third does for a getter.
 
-```ts
-class Bad {
-  @Cache(1000)
-  find(id: number) { /* ... */ }
-}
-// TypeError: @Cache() only decorates a method that takes no parameters, but "find" declares 1.
-```
-
-Because the entry is keyed on the instance alone, do not use it on a method whose result depends on other mutable state — a default parameter slips past the check and is then ignored. The optional second argument seeds that default parameter, like the constructor's third does for a getter.
-
-Errors are yours, as everywhere else: a throwing method propagates, nothing is cached, and the next call retries. Awaiting the call is the safe habit — an `async` method returns the promise on the first call and the settled value on later ones.
-
-The decorator uses standard (TC39) decorator semantics, so keep `experimentalDecorators` **off** — the default in modern TypeScript and in tsdown/esbuild.
+Errors are yours, as everywhere else: a throwing method propagates, nothing is cached, and the next call retries. The decorator uses standard (TC39) decorator semantics, so keep `experimentalDecorators` **off** — the default in modern TypeScript and in tsdown/esbuild.
 
 ## ⚠️ Good to know
 
