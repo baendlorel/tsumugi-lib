@@ -1,4 +1,5 @@
 import { Cacher } from './cacher.js';
+import { empty, isPromiseLike } from './common.js';
 
 type MethodDecorator = (target: (...args: any[]) => any, context: ClassMethodDecoratorContext) => (this: any) => any;
 
@@ -55,7 +56,7 @@ export function Cache(...args: any[]) {
       let cMap = map.get(this);
       if (!cMap) {
         map.set(this, (cMap = new Map<string | symbol, Cacher>()));
-        cMap.set(key, new Cacher(target, ttl));
+        cMap.set(key, new Cacher(target, ttl).setThis(this));
         cacheMap.set(this, map);
       }
 
@@ -76,7 +77,12 @@ export function SubCache(key: string) {
         c.derive(key, target);
       }
 
-      return c.isInitialized ? c.getSub(key) : c.reload().then(() => c.getSub(key));
+      if (c.isInitialized) {
+        return c.getSub(key);
+      }
+
+      const v = c.reload();
+      return isPromiseLike(v) ? v.then(() => c.getSub(key)) : c.getSub(key);
     };
   };
 }

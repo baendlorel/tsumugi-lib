@@ -1,14 +1,4 @@
-const empty = Symbol();
-type empty = typeof empty;
-
-/**
- * A thenable type. Usually a `Promise` object.
- */
-type PromiseLike<T> = { then: (onfulfilled: (value: T) => any) => any };
-
-function isPromiseLike<T>(value: any): value is PromiseLike<T> {
-  return value && typeof value.then === 'function';
-}
+import { empty, isPromiseLike } from './common.js';
 
 /**
  * Any getter a `Cacher` accepts: one that returns the value directly, or one
