@@ -20,8 +20,9 @@ export function Cache(ttl: number) {
       let c = map.get(this);
       if (!c) {
         map.set(this, (c = new Cacher(target, ttl)));
+        c.setThis(this);
       }
-      return c.isInitialized ? c.get() : c.reload(this);
+      return c.isInitialized ? c.get() : c.reload();
     };
   };
 }

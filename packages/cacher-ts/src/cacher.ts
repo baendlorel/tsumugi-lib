@@ -104,7 +104,7 @@ export class Cacher<
   /**
    * Always awaits the loading getter to be settled.
    */
-  reload(thisArg?: any): ReturnType<Getter> {
+  reload(thisArg: any = this.thisArg): ReturnType<Getter> {
     // # Not fetching immediately at the cache's expiration, only start the reloading process.
 
     if (this.pending !== empty) {
@@ -112,7 +112,7 @@ export class Cacher<
       return this.pending as ReturnType<Getter>;
     }
 
-    const result = this.getter.call(thisArg ?? this.thisArg, this.cache === empty ? undefined : this.cache);
+    const result = this.getter.call(thisArg, this.cache === empty ? undefined : this.cache);
     if (isPromiseLike<T>(result)) {
       this.pending = result;
       Promise.resolve(result).then(
