@@ -14,7 +14,7 @@ function isPromiseLike<T>(value: any): value is PromiseLike<T> {
  * Any getter a `Cacher` accepts: one that returns the value directly, or one
  * that returns a thenable for it.
  */
-type GetterLike<T> = (() => T) | (() => PromiseLike<T>);
+type GetterLike<T> = ((lastValue?: T) => T) | ((lastValue?: T) => PromiseLike<T>);
 
 interface SubCacheEntry<T, TSub = any> {
   /**
@@ -34,6 +34,7 @@ interface SubCacheEntry<T, TSub = any> {
 }
 
 export class Cacher<
+  Subs extends Record<string, any> = Record<string, any>,
   Getter extends GetterLike<any> = () => PromiseLike<any>,
   T = Awaited<ReturnType<Getter>>,
 > {
@@ -63,7 +64,7 @@ export class Cacher<
   /**
    * @internal
    */
-  private sub = new Map<string, SubCacheEntry<T, any>>();
+  private sub = new Map<keyof Subs, SubCacheEntry<T, any>>();
 
   /**
    * Create a cacher instance.
@@ -87,7 +88,7 @@ export class Cacher<
     }
 
     try {
-      const result = this.getter();
+      const result = this.getter(this.cache === empty ? undefined : this.cache);
       if (isPromiseLike<T>(result)) {
         this.pending = result;
         this.pending.then((v) => (this.cache = v)).finally(() => (this.pending = empty));
@@ -127,25 +128,30 @@ export class Cacher<
    * Derives a sub-cacher from the current one by applying a mapping function to its value.
    * @param pureMapper Must be a pure sync function. It will be called without `await`.
    */
-  derive<TSub = any>(name: string, pureMapper: (value: T) => TSub): void {
+  derive<SubKey extends keyof Subs>(name: SubKey, pureMapper: (value: T) => Subs[SubKey]): void {
     this.sub.set(name, { cache: empty, parent: empty, fn: pureMapper });
   }
 
-  remove(name: string): boolean {
+  /**
+   * Removes a derived sub-cache by its name.
+   * @param name The name of the derived sub-cache to remove.
+   * @returns `true` if the sub-cache existed and was removed, `false` otherwise.
+   */
+  removeSub(name: keyof Subs): boolean {
     return this.sub.delete(name);
   }
 
-  getSub<TSub = any>(name: string): TSub {
+  getSub<SubKey extends keyof Subs>(name: SubKey): Subs[SubKey] {
     const sub = this.sub.get(name);
     if (!sub) {
-      throw new Error(`No derived cache with name "${name}".`);
+      throw new Error(`No derived cache with name "${String(name)}".`);
     }
 
     if (Object.is(sub.parent, this.cache)) {
       if (sub.parent === empty) {
         throw new Error('Cache is not initialized yet.');
       }
-      return sub.cache as TSub;
+      return sub.cache as Subs[SubKey];
     }
 
     const parent = this.cache as T;
@@ -157,6 +163,7 @@ export class Cacher<
     return cache;
   }
 }
+
 const a = new Cacher(() => 3, 1000);
 const b = a.load();
 
