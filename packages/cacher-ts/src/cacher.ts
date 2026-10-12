@@ -47,6 +47,8 @@ export class Cacher<
    */
   private readonly ttl: number;
 
+  private thisArg: any;
+
   /**
    * Last load time, or `-Infinity` before the first one.
    *
@@ -77,12 +79,29 @@ export class Cacher<
   constructor(getter: Getter, ttl: number) {
     this.getter = getter;
     this.ttl = ttl;
+    this.thisArg = null;
+  }
+
+  /**
+   * Checks if the cache is empty.
+   * - We uses an internal empty symbol to represent an uninitialized cache.
+   */
+  get isEmpty(): boolean {
+    return this.cache === empty;
+  }
+
+  /**
+   * Initializes the cacher with the given `this` context.
+   * If the cache is empty, it will trigger a reload.
+   */
+  setThis(thisArg: any) {
+    this.thisArg = thisArg;
   }
 
   /**
    * Always awaits the loading getter to be settled.
    */
-  load(): ReturnType<Getter> {
+  reload(thisArg?: any): ReturnType<Getter> {
     // # Not fetching immediately at the cache's expiration, only start the reloading process.
 
     if (this.pending !== empty) {
@@ -90,7 +109,7 @@ export class Cacher<
       return this.pending as ReturnType<Getter>;
     }
 
-    const result = this.getter(this.cache === empty ? undefined : this.cache);
+    const result = this.getter.call(thisArg ?? this.thisArg, this.cache === empty ? undefined : this.cache);
     if (isPromiseLike<T>(result)) {
       this.pending = result;
       Promise.resolve(result).then(
@@ -124,7 +143,7 @@ export class Cacher<
     }
 
     if (performance.now() - this.last >= this.ttl) {
-      this.load();
+      this.reload();
     }
     return this.cache as T;
   }
@@ -170,7 +189,7 @@ export class Cacher<
 }
 
 const a = new Cacher(() => 3, 1000);
-const b = a.load();
+const b = a.reload();
 
 const a1 = new Cacher(async () => 3, 1000);
-const b1 = a1.load();
+const b1 = a1.reload();

@@ -40,7 +40,7 @@ describe('Cacher', () => {
     it('hands the loaded value to get()', async () => {
       const cacher = new Cacher(async () => 42, TTL);
 
-      await cacher.load();
+      await cacher.reload();
 
       expect(cacher.get()).toBe(42);
     });
@@ -49,7 +49,7 @@ describe('Cacher', () => {
       let calls = 0;
       const cacher = new Cacher(async () => ++calls, TTL);
 
-      await cacher.load();
+      await cacher.reload();
       cacher.get();
       cacher.get();
 
@@ -61,9 +61,9 @@ describe('Cacher', () => {
       const async_ = new Cacher(async () => 3, TTL);
 
       // Sync getter: load() mirrors it and returns the value, not a promise.
-      expect(sync.load()).toBe(3);
+      expect(sync.reload()).toBe(3);
       // Async getter: load() returns the thenable.
-      await expect(async_.load()).resolves.toBe(3);
+      await expect(async_.reload()).resolves.toBe(3);
     });
 
     it('caches an undefined value like any other', async () => {
@@ -73,7 +73,7 @@ describe('Cacher', () => {
         return undefined;
       }, TTL);
 
-      await cacher.load();
+      await cacher.reload();
 
       expect(cacher.get()).toBeUndefined();
       expect(calls).toBe(1);
@@ -82,7 +82,7 @@ describe('Cacher', () => {
     it('returns the very same reference it cached (no defensive copy)', async () => {
       const cacher = new Cacher(async () => ({ list: [1, 2, 3] }), TTL);
 
-      await cacher.load();
+      await cacher.reload();
       const first = cacher.get();
       first.list.push(4);
 
@@ -101,7 +101,7 @@ describe('Cacher', () => {
         return 1;
       }, TTL);
 
-      cacher.load();
+      cacher.reload();
 
       expect(seen).toEqual([undefined]);
     });
@@ -113,9 +113,9 @@ describe('Cacher', () => {
         return (last ?? 0) + 1;
       }, TTL);
 
-      cacher.load(); // 1
-      cacher.load(); // 2
-      cacher.load(); // 3
+      cacher.reload(); // 1
+      cacher.reload(); // 2
+      cacher.reload(); // 3
 
       expect(seen).toEqual([undefined, 1, 2]);
       expect(cacher.get()).toBe(3);
@@ -128,8 +128,8 @@ describe('Cacher', () => {
         return 7;
       }, TTL);
 
-      await cacher.load();
-      await cacher.load();
+      await cacher.reload();
+      await cacher.reload();
 
       expect(seen).toEqual([undefined, 7]);
     });
@@ -140,9 +140,9 @@ describe('Cacher', () => {
         TTL,
       );
 
-      cacher.load();
+      cacher.reload();
       const value = cacher.get();
-      cacher.load();
+      cacher.reload();
 
       expect(cacher.get()).toBe(value);
       expect(cacher.get().n).toBe(2);
@@ -158,12 +158,12 @@ describe('Cacher', () => {
         return `v${calls}`;
       }, TTL);
 
-      expect(cacher.load()).toBe('v1');
-      expect(() => cacher.load()).toThrow('boom');
+      expect(cacher.reload()).toBe('v1');
+      expect(() => cacher.reload()).toThrow('boom');
 
       // The failed attempt neither cached a value nor cleared the old one.
       expect(cacher.get()).toBe('v1');
-      expect(cacher.load()).toBe('v3');
+      expect(cacher.reload()).toBe('v3');
       expect(seen).toEqual([undefined, 'v1', 'v1']);
     });
   });
@@ -180,9 +180,9 @@ describe('Cacher', () => {
         return calls;
       }, TTL);
 
-      await expect(cacher.load()).rejects.toThrow('boom');
+      await expect(cacher.reload()).rejects.toThrow('boom');
 
-      await cacher.load();
+      await cacher.reload();
       expect(cacher.get()).toBe(2);
       expect(calls).toBe(2);
     });
@@ -194,9 +194,9 @@ describe('Cacher', () => {
         throw new Error(`boom-${calls}`);
       }, TTL);
 
-      await expect(cacher.load()).rejects.toThrow('boom-1');
-      await expect(cacher.load()).rejects.toThrow('boom-2');
-      await expect(cacher.load()).rejects.toThrow('boom-3');
+      await expect(cacher.reload()).rejects.toThrow('boom-1');
+      await expect(cacher.reload()).rejects.toThrow('boom-2');
+      await expect(cacher.reload()).rejects.toThrow('boom-3');
 
       expect(calls).toBe(3);
     });
@@ -206,7 +206,7 @@ describe('Cacher', () => {
         throw new Error('boom');
       }, TTL);
 
-      await expect(cacher.load()).rejects.toThrow('boom');
+      await expect(cacher.reload()).rejects.toThrow('boom');
 
       expect(() => cacher.get()).toThrow(/not been initialized/);
     });
@@ -216,7 +216,7 @@ describe('Cacher', () => {
         throw new Error('sync boom');
       }, TTL);
 
-      expect(() => cacher.load()).toThrow('sync boom');
+      expect(() => cacher.reload()).toThrow('sync boom');
     });
   });
 
@@ -229,7 +229,7 @@ describe('Cacher', () => {
       let calls = 0;
       const cacher = new Cacher(() => ++calls, TTL);
 
-      cacher.load();
+      cacher.reload();
       expect(cacher.get()).toBe(1);
 
       vi.advanceTimersByTime(TTL);
@@ -244,14 +244,14 @@ describe('Cacher', () => {
       let calls = 0;
       const cacher = new Cacher(async () => ++calls, TTL);
 
-      await cacher.load();
+      await cacher.reload();
       expect(cacher.get()).toBe(1);
 
       vi.advanceTimersByTime(TTL);
 
       // The refresh is only *started*; this call still reads value #1.
       expect(cacher.get()).toBe(1);
-      await cacher.load();
+      await cacher.reload();
       expect(cacher.get()).toBe(2);
     });
 
@@ -260,7 +260,7 @@ describe('Cacher', () => {
       let calls = 0;
       const cacher = new Cacher(() => ++calls, 500);
 
-      cacher.load();
+      cacher.reload();
 
       vi.advanceTimersByTime(499);
       expect(cacher.get()).toBe(1);
@@ -273,7 +273,7 @@ describe('Cacher', () => {
       let calls = 0;
       const cacher = new Cacher(() => ++calls, 0);
 
-      cacher.load();
+      cacher.reload();
       expect(cacher.get()).toBe(2);
       expect(cacher.get()).toBe(3);
       expect(calls).toBe(3);
@@ -284,7 +284,7 @@ describe('Cacher', () => {
       let calls = 0;
       const cacher = new Cacher(() => ++calls, Infinity);
 
-      cacher.load();
+      cacher.reload();
 
       vi.advanceTimersByTime(3.15e13); // ~1000 years
 
@@ -297,7 +297,7 @@ describe('Cacher', () => {
       let calls = 0;
       const cacher = new Cacher(() => ++calls, TTL);
 
-      cacher.load();
+      cacher.reload();
 
       // An NTP correction drags the wall clock 10 years back; performance.now()
       // is unaffected, so the entry stays fresh.
@@ -324,7 +324,7 @@ describe('Cacher', () => {
       const gate = deferred<number>();
       const cacher = new Cacher(() => gate.promise, TTL);
 
-      const inFlight = cacher.load();
+      const inFlight = cacher.reload();
 
       expect(cacher.loading).toBe(inFlight);
 
@@ -342,8 +342,8 @@ describe('Cacher', () => {
         return gate.promise;
       }, TTL);
 
-      const first = cacher.load();
-      const second = cacher.load();
+      const first = cacher.reload();
+      const second = cacher.reload();
 
       expect(calls).toBe(1);
       expect(second).toBe(first);
@@ -361,20 +361,20 @@ describe('Cacher', () => {
         return calls === 1 ? gate.promise : Promise.resolve(calls);
       }, TTL);
 
-      const failing = cacher.load();
+      const failing = cacher.reload();
       observe(failing);
       gate.reject(new Error('offline'));
       await expect(failing).rejects.toThrow('offline');
 
       expect(cacher.loading).toBe(false);
-      await expect(cacher.load()).resolves.toBe(2);
+      await expect(cacher.reload()).resolves.toBe(2);
     });
 
     it('lets a caller join the background refresh that get() started', async () => {
       vi.useFakeTimers();
       let calls = 0;
       const cacher = new Cacher(async () => ++calls, TTL);
-      observe(cacher.load());
+      observe(cacher.reload());
       await Promise.resolve();
 
       vi.advanceTimersByTime(TTL);
@@ -400,7 +400,7 @@ describe('Cacher', () => {
       const cacher = new Cacher(() => ++calls, TTL);
 
       expect(performance.now()).toBe(0);
-      cacher.load();
+      cacher.reload();
 
       expect(cacher.get()).toBe(1);
       expect(calls).toBe(1);
@@ -415,7 +415,7 @@ describe('Cacher', () => {
       const cacher = new Cacher(async () => 21, TTL);
       cacher.derive('doubled', (value) => value * 2);
 
-      await cacher.load();
+      await cacher.reload();
 
       expect(cacher.getSub('doubled')).toBe(42);
     });
@@ -428,7 +428,7 @@ describe('Cacher', () => {
         return value.n;
       });
 
-      await cacher.load();
+      await cacher.reload();
 
       expect(cacher.getSub('n')).toBe(7);
       expect(cacher.getSub('n')).toBe(7);
@@ -441,10 +441,10 @@ describe('Cacher', () => {
       const cacher = new Cacher(async () => ({ n: ++n }), Infinity);
       cacher.derive('n', (value) => value.n);
 
-      await cacher.load();
+      await cacher.reload();
       expect(cacher.getSub('n')).toBe(1);
 
-      await cacher.load(); // a brand-new object
+      await cacher.reload(); // a brand-new object
       expect(cacher.getSub('n')).toBe(2);
     });
 
@@ -456,17 +456,17 @@ describe('Cacher', () => {
         return `${value}-mapped`;
       });
 
-      await cacher.load();
+      await cacher.reload();
       expect(cacher.getSub('tag')).toBe('prod-mapped');
 
-      await cacher.load(); // 'prod' again — same primitive
+      await cacher.reload(); // 'prod' again — same primitive
       expect(cacher.getSub('tag')).toBe('prod-mapped');
       expect(mapCalls).toBe(1);
     });
 
     it('throws on an unregistered name rather than returning undefined', async () => {
       const cacher = new Cacher(async () => 1, TTL);
-      await cacher.load();
+      await cacher.reload();
 
       expect(() => cacher.getSub('nope')).toThrow(/No derived cache/);
     });
@@ -486,7 +486,7 @@ describe('Cacher', () => {
         throw new Error('map boom');
       });
 
-      await cacher.load();
+      await cacher.reload();
 
       expect(() => cacher.getSub('boom')).toThrow('map boom');
       expect(() => cacher.getSub('boom')).toThrow('map boom');
@@ -499,7 +499,7 @@ describe('Cacher', () => {
       const cacher = new Cacher(async () => ++calls, TTL);
       cacher.derive('n', (value) => value);
 
-      await cacher.load();
+      await cacher.reload();
       vi.advanceTimersByTime(TTL);
 
       expect(cacher.getSub('n')).toBe(1);
@@ -512,7 +512,7 @@ describe('Cacher', () => {
       const cacher = new Cacher(async () => 1, TTL);
       cacher.derive('n', (value) => value);
 
-      await cacher.load();
+      await cacher.reload();
 
       expect(cacher.removeSub('n')).toBe(true);
       expect(() => cacher.getSub('n')).toThrow(/No derived cache/);
