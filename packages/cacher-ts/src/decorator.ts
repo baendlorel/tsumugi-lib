@@ -1,5 +1,4 @@
 import { Cacher } from './cacher.js';
-import { empty, isPromiseLike } from './common.js';
 
 const methodSym = Symbol('method');
 
@@ -14,8 +13,6 @@ type Context = ClassMethodDecoratorContext & {
     };
   };
 };
-
-const cacheMap = new WeakMap<any, WeakMap<any, Map<string | symbol, Cacher>>>();
 
 function normalizeArgs(args: any[], context: ClassMethodDecoratorContext): { key: string | symbol; ttl: number } {
   let key = context.name;
@@ -66,16 +63,23 @@ export function Cache(...args: any[]) {
 
     const { key, ttl } = normalizeArgs(args, context);
 
-    const instanceToMethodCacheMap = new WeakMap<any, Map<string | symbol, Cacher>>();
-
-    context.metadata[methodSym].map = instanceToMethodCacheMap;
+    let instanceToMethodCacheMap: WeakMap<any, Map<string | symbol, Cacher>>;
+    if (!context.metadata?.[methodSym]?.map) {
+      instanceToMethodCacheMap = new WeakMap<any, Map<string | symbol, Cacher>>();
+      context.metadata = context.metadata ?? {};
+      context.metadata[methodSym] = context.metadata[methodSym] ?? {};
+      context.metadata[methodSym].map = instanceToMethodCacheMap;
+    } else {
+      instanceToMethodCacheMap = context.metadata[methodSym].map;
+    }
 
     context.addInitializer(function (this: any) {
-      /**
-       * methodCache's key is `key` or function name if `key` is not explicitly provided.
-       */
-      const methodCacheMap = new Map<string | symbol, Cacher>();
-      instanceToMethodCacheMap.set(this, methodCacheMap);
+      // methodCache's key is `key` or function name if `key` is not explicitly provided.
+      let methodCacheMap = instanceToMethodCacheMap.get(this);
+      if (!methodCacheMap) {
+        methodCacheMap = new Map<string | symbol, Cacher>();
+        instanceToMethodCacheMap.set(this, methodCacheMap);
+      }
       methodCacheMap.set(key, new Cacher(target, ttl).setThis(this));
     });
 
@@ -93,23 +97,22 @@ export function Cache(...args: any[]) {
  */
 export function SubCache(key: string | symbol) {
   return function (target: (...args: any[]) => any, context: Context) {
-    let cacher: Cacher | empty = empty;
-    const uniqueKey = Symbol() as any;
+    const sk = Symbol() as any;
 
     return function (this: any) {
-      if (cacher === empty) {
-        cacher = context.metadata?.[methodSym].map.get(this)?.get(key) ?? empty;
-        if (cacher === empty) {
-          throw new Error(`@SubCache cannot find Cacher instance for key "${String(key)}".`);
-        }
-        if (!cacher.isInitialized) {
-          throw new Error(`@Cache('${String(key)}',...) is not initialized, so @SubCache cannot be used yet.`);
-        }
-
-        // Initialize the sub-cache with a unique key.
-        cacher.derive(uniqueKey, target);
+      const cacher = context.metadata?.[methodSym].map.get(this)?.get(key);
+      if (!cacher) {
+        throw new Error(`@SubCache cannot find Cacher instance for key "${String(key)}".`);
       }
-      return cacher.getSub(uniqueKey);
+      if (!cacher.isInitialized) {
+        throw new Error(`@Cache('${String(key)}',...) is not initialized, so @SubCache cannot be used yet.`);
+      }
+
+      // Initialize the sub-cache with a unique key.
+      if (!cacher.hasSub(sk)) {
+        cacher.derive(sk, target);
+      }
+      return cacher.getSub(sk);
     };
   };
 }
