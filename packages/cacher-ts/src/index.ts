@@ -48,10 +48,13 @@ export class Cacher<
   private readonly ttl: number;
 
   /**
-   * Last get time
+   * Last load time, or `-Infinity` before the first one.
+   *
+   * `performance.now()` can legitimately return `0` (it starts at 0 on a fresh
+   * clock), so `0` cannot be used as an "unset" sentinel.
    * @internal
    */
-  private last: number = 0;
+  private last: number = -Infinity;
   /**
    * @internal
    */
@@ -87,19 +90,21 @@ export class Cacher<
       return this.pending as ReturnType<Getter>;
     }
 
-    try {
-      const result = this.getter(this.cache === empty ? undefined : this.cache);
-      if (isPromiseLike<T>(result)) {
-        this.pending = result;
-        this.pending.then((v) => (this.cache = v)).finally(() => (this.pending = empty));
-      } else {
-        this.cache = result;
-      }
-      this.last = performance.now();
-      return result as ReturnType<Getter>;
-    } finally {
-      this.pending = empty;
+    const result = this.getter(this.cache === empty ? undefined : this.cache);
+    if (isPromiseLike<T>(result)) {
+      this.pending = result;
+      Promise.resolve(result).then(
+        (v) => {
+          this.cache = v;
+          this.pending = empty;
+        },
+        () => (this.pending = empty),
+      );
+    } else {
+      this.cache = result;
     }
+    this.last = performance.now();
+    return result as ReturnType<Getter>;
   }
 
   /**
@@ -118,7 +123,7 @@ export class Cacher<
       throw new Error('Cache is empty and has not been initialized yet.');
     }
 
-    if (this.last === 0 || performance.now() - this.last >= this.ttl) {
+    if (performance.now() - this.last >= this.ttl) {
       this.load();
     }
     return this.cache as T;

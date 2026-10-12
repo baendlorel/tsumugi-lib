@@ -1,4 +1,4 @@
-# kt-packages
+# tsumugi-lib
 
 A pnpm-based monorepo for all packages in `packages/*`.
 
