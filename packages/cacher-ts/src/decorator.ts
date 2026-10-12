@@ -1,29 +1,27 @@
 import { Cacher } from './cacher.js';
 
 /**
- * The shape `@NoArgCache()` accepts: a method taking no parameters, returning the
- * value itself or a thenable for it.
- */
-type NoArgMethod<T> = (this: any) => T | PromiseLike<T>;
-
-/**
  * Caches the result of a no-argument method.
  *
  * **You must handle errors in your method**.
  *
  * @param ttl Time-to-live for the cached value in milliseconds. `Infinity` never expires.
  */
-export function NoArgCache<T>(ttl: number) {
-  return function (target: NoArgMethod<T>, context: ClassMethodDecoratorContext<unknown, NoArgMethod<T>>) {
+export function Cache(ttl: number) {
+  return function (target: (...args: any[]) => any, context: ClassMethodDecoratorContext) {
     if (target.length !== 0) {
       throw new TypeError(
-        `@NoArgCache() only decorates a method that takes no parameters, but "${String(context.name)}" declares ${target.length}.`,
+        `@Cache() only decorates a method that takes no parameters, but "${String(context.name)}" declares ${target.length}.`,
       );
     }
 
-    const cacher = new Cacher(target, ttl);
+    const map = new WeakMap<any, Cacher>();
     return function (this: any) {
-      return cacher.isEmpty ? cacher.reload(this) : cacher.get();
+      let c = map.get(this);
+      if (!c) {
+        map.set(this, (c = new Cacher(target, ttl)));
+      }
+      return c.isInitialized ? c.get() : c.reload(this);
     };
   };
 }

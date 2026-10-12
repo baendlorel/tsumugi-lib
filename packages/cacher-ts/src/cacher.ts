@@ -47,6 +47,8 @@ export class Cacher<
    */
   private readonly ttl: number;
 
+  private inited: boolean;
+
   private thisArg: any;
 
   /**
@@ -76,18 +78,19 @@ export class Cacher<
    * @param getter A value getter, sync or async (`load()` mirrors it: it returns a promise for an async getter and the value itself for a sync one). **Remember to handle errors in your getter**.
    * @param ttl Time-to-live for the cached value in milliseconds.
    */
-  constructor(getter: Getter, ttl: number) {
+  constructor(getter: Getter, ttl: number, defaultValue: T = empty as any) {
     this.getter = getter;
     this.ttl = ttl;
     this.thisArg = null;
+    this.cache = defaultValue;
+    this.inited = false;
   }
 
   /**
    * Checks if the cache is empty.
-   * - We uses an internal empty symbol to represent an uninitialized cache.
    */
-  get isEmpty(): boolean {
-    return this.cache === empty;
+  get isInitialized(): boolean {
+    return this.inited;
   }
 
   /**
@@ -115,12 +118,14 @@ export class Cacher<
       Promise.resolve(result).then(
         (v) => {
           this.cache = v;
+          this.inited = true;
           this.pending = empty;
         },
         () => (this.pending = empty),
       );
     } else {
       this.cache = result;
+      this.inited = true;
     }
     this.last = performance.now();
     return result as ReturnType<Getter>;
@@ -138,7 +143,7 @@ export class Cacher<
    * If the cached value is outdated, it will trigger the initialization.
    */
   get(): T {
-    if (this.cache === empty) {
+    if (!this.inited) {
       throw new Error('Cache is empty and has not been initialized yet.');
     }
 
