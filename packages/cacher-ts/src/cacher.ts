@@ -150,7 +150,7 @@ export class Cacher<
    * Derives a sub-cacher from the current one by applying a mapping function to its value.
    * - pure sync mapper will be called with `cacher.thisArg`
    * - You may get it by `cacher.getSub(name)`
-   * @param pureMapper Must be a pure sync function. It will be called without `await`.
+   * @param pureMapper Must be a **pure sync function**. It will be called without `await`.
    */
   derive<SubKey extends keyof Subs>(name: SubKey, pureMapper: (value: T) => Subs[SubKey]): void {
     this.sub.set(name, { cache: empty, parent: empty, fn: pureMapper });
@@ -169,6 +169,18 @@ export class Cacher<
    */
   hasSub(key: keyof Subs): boolean {
     return this.sub.has(key);
+  }
+
+  /**
+   * Gets the derived sub-cache by its name, or derives it if it doesn't exist.
+   * @param name The name of the derived sub-cache.
+   * @param pureMapper Must be a **pure sync function**. It will be called without `await`.
+   */
+  getOrDerive<SubKey extends keyof Subs>(name: SubKey, pureMapper: (value: T) => Subs[SubKey]): Subs[SubKey] {
+    if (!this.sub.has(name)) {
+      this.derive(name, pureMapper);
+    }
+    return this.getSub(name);
   }
 
   /**
