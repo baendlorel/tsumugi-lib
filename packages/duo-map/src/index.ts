@@ -1,4 +1,4 @@
-import { _getOrInsertComputed, _getOrInsert } from '@shared';
+import { _getOrInsertComputed, _getOrInsert } from '@shared/std/map.js';
 
 const MapConstruct = () => new Map();
 
