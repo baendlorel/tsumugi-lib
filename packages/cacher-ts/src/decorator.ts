@@ -44,7 +44,7 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodDec
     const meta = context.metadata;
 
     let map: WeakMap<any, Map<string | symbol, Cacher>>;
-    if (meta?.[sym]?.instanceToCacheMap) {
+    if (meta?.[sym].instanceToCacheMap) {
       map = meta[sym].instanceToCacheMap;
     } else {
       map = new WeakMap<any, Map<string | symbol, Cacher>>();
@@ -72,8 +72,10 @@ export function SubCache(formId: string) {
   return function (target: (...args: any[]) => any, context: Context) {
     const sk = Symbol() as any;
 
+    const cacheMap = context.metadata?.[sym].instanceToCacheMap;
+
     return function (this: any) {
-      const c = context.metadata?.[sym].instanceToCacheMap.get(this)?.get(formId);
+      const c = cacheMap?.get(this)?.get(formId);
       if (!c) {
         throw new Error(`@SubCache cannot find Cacher instance for key "${String(formId)}".`);
       }
