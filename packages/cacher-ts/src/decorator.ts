@@ -86,15 +86,18 @@ export function SubCache(formId: string) {
 
     let cacheMap: WeakMap<any, Map<string | symbol, Cacher>> | undefined = undefined;
 
-    return function (this: any) {
+    // ! Although to @Cache, here is settled
+    // ! We cannot assure that @SubCache initializes before @Cache.
+    // ! So we can only get cacheMap for now.
+    context.addInitializer(function (this: any) {
+      cacheMap = (context.metadata as Metadata)?.[sym].instanceToCacheMap;
       if (!cacheMap) {
-        cacheMap = (context.metadata as Metadata)?.[sym].instanceToCacheMap;
-        if (!cacheMap) {
-          throw new Error(`'cacheMap' for "${String(formId)}" not found.`);
-        }
+        throw new Error(`'cacheMap' for "${String(formId)}" not found.`);
       }
+    });
 
-      const c = cacheMap.get(this)?.get(formId);
+    return function (this: any) {
+      const c = cacheMap!.get(this)?.get(formId);
       if (!c) {
         throw new Error(`Cacher "${String(formId)}" not found.`);
       }
