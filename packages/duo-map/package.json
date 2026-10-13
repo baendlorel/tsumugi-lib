@@ -1,0 +1,49 @@
+{
+  "name": "duo-map",
+  "version": "0.0.1",
+  "author": {
+    "name": "KasukabeTsumugi",
+    "email": "futami16237@gmail.com"
+  },
+  "description": "A duo-key map, mapping two keys to a single value.",
+  "description_zh": "双键映射，由两个key映射到一个值",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      },
+      "default": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "clear && vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baendlorel/tsumugi-lib.git",
+    "directory": "packages/duo-map"
+  },
+  "keywords": [
+    "cache",
+    "caching",
+    "typescript",
+    "utility",
+    "javascript",
+    "npm"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/baendlorel/tsumugi-lib/issues"
+  },
+  "homepage": "https://github.com/baendlorel/tsumugi-lib/tree/main/packages/duo-map#readme",
+  "devDependencies": {}
+}

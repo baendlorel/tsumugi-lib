@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "stripInternal": true,
+    "paths": {
+      "@shared": ["../_shared/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "implements/**/*.ts"]
+}
