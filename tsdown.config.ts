@@ -18,7 +18,7 @@ export default defineConfig({
   sourcemap: true,
   minify: true, // !isDev,
   target: 'node24',
-  treeshake: !isDev,
+  treeshake: true,
   plugins: [replace(replaceOpts(lib)), funcMacro()],
   deps: {
     onlyBundle: ['type-narrow', 'fast-json-stable-stringify', 'is-docker', 'is-inside-container', 'is-wsl'],
