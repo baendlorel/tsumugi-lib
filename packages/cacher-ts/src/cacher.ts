@@ -1,10 +1,4 @@
-import { empty, isPromiseLike } from './common.js';
-
-/**
- * Any getter a `Cacher` accepts: one that returns the value directly, or one
- * that returns a thenable for it.
- */
-type GetterLike<T> = ((lastValue?: T) => T) | ((lastValue?: T) => PromiseLike<T>);
+import { empty } from './common.js';
 
 interface SubCacheEntry<T, TSub = any> {
   /**
@@ -23,59 +17,55 @@ interface SubCacheEntry<T, TSub = any> {
   fn: (value: T) => TSub;
 }
 
-export class Cacher<
-  Subs extends Record<string, any> = Record<string, any>,
-  Getter extends GetterLike<any> = () => PromiseLike<any>,
-  T = Awaited<ReturnType<Getter>>,
-> {
-  /**
-   * @internal
-   */
-  private readonly getter: Getter;
-  /**
-   * @internal
-   */
-  private readonly ttl: number;
+export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = any> {
+  // #region pending static
+  private static readonly pending: Set<Promise<any>> = new Set();
+  private static onceAllSettled: (() => void) | null = null;
+  private static deletePending(promise: Promise<any>): void {
+    setTimeout(() => {
+      Cacher.pending.delete(promise);
+      if (Cacher.pending.size === 0) {
+        Cacher.onceAllSettled?.();
+        Cacher.onceAllSettled = null;
+      }
+    }, 1000);
+  }
 
   /**
-   * @internal
+   * This will be called once all pending loadings are settled
+   * @param callback
    */
+  static setOnceAllSettled(callback: (() => void) | null): void {
+    Cacher.onceAllSettled = callback;
+  }
+  // #endregion
+
+  /* @internal */
+  private readonly getter: (lastValue?: T) => Promise<T>;
+  /* @internal */
+  private readonly ttl: number;
+
+  /* @internal */
   private thisArg: any = null;
-  /**
-   * Last load time, or `-Infinity` before the first one.
-   *
-   * `performance.now()` can legitimately return `0` (it starts at 0 on a fresh
-   * clock), so `0` cannot be used as an "unset" sentinel.
-   * @internal
-   */
+  /* @internal */
   private last: number = -Infinity;
-  /**
-   * @internal
-   */
+  /* @internal */
   private cache: T | empty = empty;
-  /**
-   * @internal
-   */
-  private pending: PromiseLike<T> | empty = empty;
-  /**
-   * @internal
-   */
+  /* @internal */
+  private pending: Promise<T> | empty = empty;
+  /* @internal */
   private inited: boolean = false;
-  /**
-   * @internal
-   */
+  /* @internal */
   private readonly sub = new Map<keyof Subs, SubCacheEntry<T, any>>();
 
   /**
    * Create a cacher instance.
-   * @param getter A value getter, sync or async (`load()` mirrors it: it returns a promise for an async getter and the value itself for a sync one). **Remember to handle errors in your getter**.
+   * @param getter An async value getter. **Remember to handle errors in your getter**.
    * @param ttl Time-to-live for the cached value in milliseconds.
    */
-  constructor(getter: Getter, ttl: number) {
+  constructor(getter: (lastValue?: T) => Promise<T>, ttl: number) {
     this.getter = getter;
     this.ttl = ttl;
-    this.thisArg = null;
-    this.inited = false;
   }
 
   /**
@@ -97,38 +87,32 @@ export class Cacher<
   /**
    * Always awaits the loading getter to be settled.
    */
-  reload(): ReturnType<Getter> {
-    // # Not fetching immediately at the cache's expiration, only start the reloading process.
-
+  async reload(): Promise<T> {
     if (this.pending !== empty) {
-      // already pending
-      return this.pending as ReturnType<Getter>;
+      return this.pending as Promise<T>;
     }
 
-    const result = this.getter.call(this.thisArg, this.cache === empty ? undefined : this.cache);
-    if (isPromiseLike<T>(result)) {
-      this.pending = result;
-      Promise.resolve(result).then(
-        (v) => {
-          this.cache = v;
-          this.inited = true;
-          this.pending = empty;
-        },
-        () => (this.pending = empty),
-      );
-    } else {
-      this.cache = result;
+    try {
+      this.pending = this.getter.call(this.thisArg, this.cache === empty ? undefined : this.cache);
+      Cacher.pending.add(this.pending);
+      this.cache = await this.pending;
       this.inited = true;
+      this.last = performance.now();
+    } finally {
+      if (typeof this.pending !== 'symbol') {
+        Cacher.deletePending(this.pending);
+      }
+      this.pending = empty;
     }
-    this.last = performance.now();
-    return result as ReturnType<Getter>;
+
+    return this.cache as T;
   }
 
   /**
    * Returns the current loading promise for the cached value, or `false` if no reload is in progress.
    */
-  get loading(): PromiseLike<T> | false {
-    return this.pending === empty ? false : (this.pending as PromiseLike<T>);
+  get loading(): Promise<T> | false {
+    return this.pending === empty ? false : (this.pending as Promise<T>);
   }
 
   /**
