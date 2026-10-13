@@ -1,527 +1,482 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Cacher } from '../src/index.js';
+import { describe, expect, it, vi } from 'vitest';
+import { DuoMap } from '../src/index.js';
 
-/** A promise whose settlement is controlled by the test. */
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return { promise, resolve, reject };
-}
-
-/** Swallows the rejection of a promise we only keep around to observe. */
-function observe(p: Promise<unknown> | unknown): Promise<unknown> {
-  return Promise.resolve(p).catch(() => undefined);
-}
-
-const TTL = 1000;
-
-describe('Cacher', () => {
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
+describe('DuoMap', () => {
   // ---------------------------------------------------------------------------
-  // Basics
+  // set()
   // ---------------------------------------------------------------------------
-  describe('basics', () => {
-    it('does not invoke the getter until load() is called', () => {
-      let calls = 0;
-      const cacher = new Cacher(() => ++calls, TTL);
+  describe('set()', () => {
+    it('stores a value under two keys and reads it back', () => {
+      const map = new DuoMap<string, number, string>();
 
-      expect(calls).toBe(0);
-      expect(() => cacher.get()).toThrow(/not been initialized/);
-      expect(calls).toBe(0);
+      map.set('users', 1, 'alice');
+
+      expect(map.get('users', 1)).toBe('alice');
+      expect(map.size).toBe(1);
     });
 
-    it('hands the loaded value to get()', async () => {
-      const cacher = new Cacher(async () => 42, TTL);
+    it('returns this, so calls chain', () => {
+      const map = new DuoMap<string, string, number>();
 
-      await cacher.reload();
+      const returned = map.set('a', 'x', 1).set('a', 'y', 2).set('b', 'x', 3);
 
-      expect(cacher.get()).toBe(42);
+      expect(returned).toBe(map);
+      expect(map.size).toBe(3);
     });
 
-    it('serves the cached value without invoking the getter again', async () => {
-      let calls = 0;
-      const cacher = new Cacher(async () => ++calls, TTL);
+    it('keeps the same key2 of different key1 apart', () => {
+      const map = new DuoMap<string, string, number>();
 
-      await cacher.reload();
-      cacher.get();
-      cacher.get();
+      map.set('a', 'shared', 1);
+      map.set('b', 'shared', 2);
 
-      expect(calls).toBe(1);
+      expect(map.get('a', 'shared')).toBe(1);
+      expect(map.get('b', 'shared')).toBe(2);
+      expect(map.size).toBe(2);
     });
 
-    it('returns the getter result itself from load(), sync or async', async () => {
-      const sync = new Cacher(() => 3, TTL);
-      const async_ = new Cacher(async () => 3, TTL);
+    it('overwrites the value of an existing pair', () => {
+      const map = new DuoMap<string, string, number>();
 
-      // Sync getter: load() mirrors it and returns the value, not a promise.
-      expect(sync.reload()).toBe(3);
-      // Async getter: load() returns the thenable.
-      await expect(async_.reload()).resolves.toBe(3);
+      map.set('a', 'x', 1);
+      map.set('a', 'x', 2);
+
+      expect(map.get('a', 'x')).toBe(2);
+      expect(map.size).toBe(1);
     });
 
-    it('caches an undefined value like any other', async () => {
-      let calls = 0;
-      const cacher = new Cacher<Record<string, never>, () => Promise<undefined>>(async () => {
-        calls++;
-        return undefined;
-      }, TTL);
+    it('compares keys by SameValueZero, like Map', () => {
+      const map = new DuoMap<unknown, unknown, string>();
 
-      await cacher.reload();
+      map.set(NaN, -0, 'weird');
 
-      expect(cacher.get()).toBeUndefined();
-      expect(calls).toBe(1);
+      expect(map.get(NaN, 0)).toBe('weird');
+      expect(map.has(NaN, -0)).toBe(true);
+      expect(map.size).toBe(1);
     });
 
-    it('returns the very same reference it cached (no defensive copy)', async () => {
-      const cacher = new Cacher(async () => ({ list: [1, 2, 3] }), TTL);
+    it('stores a value that is itself undefined', () => {
+      const map = new DuoMap<string, string, undefined>();
 
-      await cacher.reload();
-      const first = cacher.get();
-      first.list.push(4);
+      map.set('a', 'x', undefined);
 
-      expect(cacher.get()).toBe(first);
+      expect(map.has('a', 'x')).toBe(true);
+      expect(map.size).toBe(1);
     });
   });
 
   // ---------------------------------------------------------------------------
-  // The getter receives the previous cache
+  // get()
   // ---------------------------------------------------------------------------
-  describe('previous value passed to the getter', () => {
-    it('passes undefined on the first load', async () => {
-      const seen: (number | undefined)[] = [];
-      const cacher = new Cacher((last?: number) => {
-        seen.push(last);
-        return 1;
-      }, TTL);
+  describe('get()', () => {
+    it('returns undefined for an unknown key1, key2, or both', () => {
+      const map = new DuoMap<string, string, number>();
+      map.set('a', 'x', 1);
 
-      cacher.reload();
-
-      expect(seen).toEqual([undefined]);
+      expect(map.get('nope', 'x')).toBeUndefined();
+      expect(map.get('a', 'nope')).toBeUndefined();
+      expect(map.get('nope', 'nope')).toBeUndefined();
     });
 
-    it('passes the cached value to every later load', async () => {
-      const seen: (number | undefined)[] = [];
-      const cacher = new Cacher((last?: number) => {
-        seen.push(last);
-        return (last ?? 0) + 1;
-      }, TTL);
+    it('returns the very same reference it stored', () => {
+      const map = new DuoMap<string, string, { list: number[] }>();
+      const value = { list: [1, 2] };
 
-      cacher.reload(); // 1
-      cacher.reload(); // 2
-      cacher.reload(); // 3
+      map.set('a', 'x', value);
+      map.get('a', 'x')!.list.push(3);
 
-      expect(seen).toEqual([undefined, 1, 2]);
-      expect(cacher.get()).toBe(3);
-    });
-
-    it('passes the previous value to an async getter too', async () => {
-      const seen: (number | undefined)[] = [];
-      const cacher = new Cacher(async (last?: number) => {
-        seen.push(last);
-        return 7;
-      }, TTL);
-
-      await cacher.reload();
-      await cacher.reload();
-
-      expect(seen).toEqual([undefined, 7]);
-    });
-
-    it('passes the same reference get() hands out', async () => {
-      const cacher = new Cacher<Record<string, never>, (last?: { n: number }) => { n: number }>(
-        (last?: { n: number }) => (last ? (last.n++, last) : { n: 1 }),
-        TTL,
-      );
-
-      cacher.reload();
-      const value = cacher.get();
-      cacher.reload();
-
-      expect(cacher.get()).toBe(value);
-      expect(cacher.get().n).toBe(2);
-    });
-
-    it('keeps the previous value when a refresh fails', async () => {
-      const seen: (string | undefined)[] = [];
-      let calls = 0;
-      const cacher = new Cacher((last?: string) => {
-        seen.push(last);
-        calls++;
-        if (calls === 2) throw new Error('boom');
-        return `v${calls}`;
-      }, TTL);
-
-      expect(cacher.reload()).toBe('v1');
-      expect(() => cacher.reload()).toThrow('boom');
-
-      // The failed attempt neither cached a value nor cleared the old one.
-      expect(cacher.get()).toBe('v1');
-      expect(cacher.reload()).toBe('v3');
-      expect(seen).toEqual([undefined, 'v1', 'v1']);
+      expect(map.get('a', 'x')).toBe(value);
+      expect(value.list).toEqual([1, 2, 3]);
     });
   });
 
   // ---------------------------------------------------------------------------
-  // Failures
+  // getOrInsert()
   // ---------------------------------------------------------------------------
-  describe('failures', () => {
-    it('does not cache a rejection and retries on the next load', async () => {
-      let calls = 0;
-      const cacher = new Cacher(async () => {
-        calls++;
-        if (calls === 1) throw new Error('boom');
-        return calls;
-      }, TTL);
+  describe('getOrInsert()', () => {
+    it('inserts and returns the value when the pair is missing', () => {
+      const map = new DuoMap<string, string, number>();
 
-      await expect(cacher.reload()).rejects.toThrow('boom');
-
-      await cacher.reload();
-      expect(cacher.get()).toBe(2);
-      expect(calls).toBe(2);
+      expect(map.getOrInsert('a', 'x', 1)).toBe(1);
+      expect(map.get('a', 'x')).toBe(1);
+      expect(map.size).toBe(1);
     });
 
-    it('keeps retrying a persistently failing getter', async () => {
-      let calls = 0;
-      const cacher = new Cacher(async () => {
-        calls++;
-        throw new Error(`boom-${calls}`);
-      }, TTL);
+    it('returns the existing value without replacing it', () => {
+      const map = new DuoMap<string, string, number>();
+      map.set('a', 'x', 1);
 
-      await expect(cacher.reload()).rejects.toThrow('boom-1');
-      await expect(cacher.reload()).rejects.toThrow('boom-2');
-      await expect(cacher.reload()).rejects.toThrow('boom-3');
-
-      expect(calls).toBe(3);
+      expect(map.getOrInsert('a', 'x', 2)).toBe(1);
+      expect(map.get('a', 'x')).toBe(1);
     });
 
-    it('still throws from get() while nothing has ever loaded', async () => {
-      const cacher = new Cacher(async () => {
-        throw new Error('boom');
-      }, TTL);
+    it('does not overwrite a stored undefined', () => {
+      const map = new DuoMap<string, string, number | undefined>();
+      map.set('a', 'x', undefined);
 
-      await expect(cacher.reload()).rejects.toThrow('boom');
-
-      expect(() => cacher.get()).toThrow(/not been initialized/);
+      expect(map.getOrInsert('a', 'x', 1)).toBeUndefined();
+      expect(map.get('a', 'x')).toBeUndefined();
     });
 
-    it('propagates a synchronous getter error out of load()', () => {
-      const cacher = new Cacher(() => {
-        throw new Error('sync boom');
-      }, TTL);
+    it('does not disturb the other key2 values under the same key1', () => {
+      const map = new DuoMap<string, string, number>();
+      map.set('a', 'x', 1);
 
-      expect(() => cacher.reload()).toThrow('sync boom');
+      map.getOrInsert('a', 'y', 2);
+
+      expect(map.get('a', 'x')).toBe(1);
+      expect(map.get('a', 'y')).toBe(2);
+      expect(map.size).toBe(2);
     });
   });
 
   // ---------------------------------------------------------------------------
-  // ttl
+  // getOrInsertComputed()
   // ---------------------------------------------------------------------------
-  describe('ttl', () => {
-    it('returns the fresh value from get() once the ttl elapses (sync getter)', () => {
-      vi.useFakeTimers();
-      let calls = 0;
-      const cacher = new Cacher(() => ++calls, TTL);
+  describe('getOrInsertComputed()', () => {
+    it('computes, stores and returns the value when the pair is missing', () => {
+      const map = new DuoMap<string, string, string>();
 
-      cacher.reload();
-      expect(cacher.get()).toBe(1);
-
-      vi.advanceTimersByTime(TTL);
-
-      // A sync getter reloads in place, so get() already sees the new value.
-      expect(cacher.get()).toBe(2);
-      expect(calls).toBe(2);
+      expect(map.getOrInsertComputed('a', 'x', () => 'computed')).toBe('computed');
+      expect(map.get('a', 'x')).toBe('computed');
     });
 
-    it('hands back the stale value for one call (async getter, stale-while-revalidate)', async () => {
-      vi.useFakeTimers();
-      let calls = 0;
-      const cacher = new Cacher(async () => ++calls, TTL);
+    it('does not call compute when the pair already exists', () => {
+      const map = new DuoMap<string, string, number>();
+      map.set('a', 'x', 1);
+      const compute = vi.fn(() => 2);
 
-      await cacher.reload();
-      expect(cacher.get()).toBe(1);
-
-      vi.advanceTimersByTime(TTL);
-
-      // The refresh is only *started*; this call still reads value #1.
-      expect(cacher.get()).toBe(1);
-      await cacher.reload();
-      expect(cacher.get()).toBe(2);
+      expect(map.getOrInsertComputed('a', 'x', compute)).toBe(1);
+      expect(compute).not.toHaveBeenCalled();
     });
 
-    it('honors a custom ttl', () => {
-      vi.useFakeTimers();
-      let calls = 0;
-      const cacher = new Cacher(() => ++calls, 500);
+    it('does not call compute when the stored value is undefined', () => {
+      const map = new DuoMap<string, string, number | undefined>();
+      map.set('a', 'x', undefined);
+      const compute = vi.fn(() => 1);
 
-      cacher.reload();
-
-      vi.advanceTimersByTime(499);
-      expect(cacher.get()).toBe(1);
-
-      vi.advanceTimersByTime(1);
-      expect(cacher.get()).toBe(2);
+      expect(map.getOrInsertComputed('a', 'x', compute)).toBeUndefined();
+      expect(compute).not.toHaveBeenCalled();
     });
 
-    it('refreshes on every read when ttl is 0', () => {
-      let calls = 0;
-      const cacher = new Cacher(() => ++calls, 0);
+    it('computes once per missing pair and caches the result', () => {
+      const map = new DuoMap<string, string, number>();
+      const compute = vi.fn(() => 42);
 
-      cacher.reload();
-      expect(cacher.get()).toBe(2);
-      expect(cacher.get()).toBe(3);
-      expect(calls).toBe(3);
+      map.getOrInsertComputed('a', 'x', compute);
+      map.getOrInsertComputed('a', 'x', compute);
+
+      expect(compute).toHaveBeenCalledTimes(1);
     });
 
-    it('never refreshes when ttl is Infinity', () => {
-      vi.useFakeTimers();
-      let calls = 0;
-      const cacher = new Cacher(() => ++calls, Infinity);
+    it('leaves the map unchanged when compute throws', () => {
+      const map = new DuoMap<string, string, number>();
 
-      cacher.reload();
+      expect(() =>
+        map.getOrInsertComputed('a', 'x', () => {
+          throw new Error('compute boom');
+        }),
+      ).toThrow('compute boom');
 
-      vi.advanceTimersByTime(3.15e13); // ~1000 years
-
-      expect(cacher.get()).toBe(1);
-      expect(calls).toBe(1);
-    });
-
-    it('runs the ttl on the monotonic clock, so wall-clock jumps cannot expire it', () => {
-      vi.useFakeTimers();
-      let calls = 0;
-      const cacher = new Cacher(() => ++calls, TTL);
-
-      cacher.reload();
-
-      // An NTP correction drags the wall clock 10 years back; performance.now()
-      // is unaffected, so the entry stays fresh.
-      vi.setSystemTime(-10 * 365 * 24 * 3600 * 1000);
-      expect(cacher.get()).toBe(1);
-
-      vi.advanceTimersByTime(TTL);
-      expect(cacher.get()).toBe(2);
-      expect(calls).toBe(2);
+      expect(map.has('a', 'x')).toBe(false);
+      expect(map.size).toBe(0);
     });
   });
 
   // ---------------------------------------------------------------------------
-  // loading / concurrency
+  // has()
   // ---------------------------------------------------------------------------
-  describe('loading', () => {
-    it('is false before anything has loaded', () => {
-      const cacher = new Cacher(async () => 1, TTL);
+  describe('has()', () => {
+    it('reports whether a pair exists', () => {
+      const map = new DuoMap<string, string, number>();
+      map.set('a', 'x', 1);
 
-      expect(cacher.loading).toBe(false);
+      expect(map.has('a', 'x')).toBe(true);
+      expect(map.has('a', 'y')).toBe(false);
+      expect(map.has('b', 'x')).toBe(false);
     });
 
-    it('is the in-flight promise while an async getter runs', async () => {
-      const gate = deferred<number>();
-      const cacher = new Cacher(() => gate.promise, TTL);
+    it('is true for a pair whose value is undefined', () => {
+      const map = new DuoMap<string, string, undefined>();
+      map.set('a', 'x', undefined);
 
-      const inFlight = cacher.reload();
-
-      expect(cacher.loading).toBe(inFlight);
-
-      gate.resolve(1);
-      await inFlight;
-
-      expect(cacher.loading).toBe(false);
+      expect(map.has('a', 'x')).toBe(true);
     });
 
-    it('lets concurrent load() calls join one request', async () => {
-      const gate = deferred<number>();
-      let calls = 0;
-      const cacher = new Cacher(() => {
-        calls++;
-        return gate.promise;
-      }, TTL);
+    it('does not create the entry when asked about a missing key1', () => {
+      const map = new DuoMap<string, string, number>();
 
-      const first = cacher.reload();
-      const second = cacher.reload();
+      map.has('a', 'x');
 
-      expect(calls).toBe(1);
-      expect(second).toBe(first);
-
-      gate.resolve(5);
-      await expect(first).resolves.toBe(5);
-      expect(cacher.loading).toBe(false);
-    });
-
-    it('clears the in-flight state after a rejection, so the next load retries', async () => {
-      const gate = deferred<number>();
-      let calls = 0;
-      const cacher = new Cacher(() => {
-        calls++;
-        return calls === 1 ? gate.promise : Promise.resolve(calls);
-      }, TTL);
-
-      const failing = cacher.reload();
-      observe(failing);
-      gate.reject(new Error('offline'));
-      await expect(failing).rejects.toThrow('offline');
-
-      expect(cacher.loading).toBe(false);
-      await expect(cacher.reload()).resolves.toBe(2);
-    });
-
-    it('lets a caller join the background refresh that get() started', async () => {
-      vi.useFakeTimers();
-      let calls = 0;
-      const cacher = new Cacher(async () => ++calls, TTL);
-      observe(cacher.reload());
-      await Promise.resolve();
-
-      vi.advanceTimersByTime(TTL);
-      cacher.get(); // starts the refresh, hands back value #1
-
-      expect(cacher.loading).not.toBe(false);
-      await cacher.loading; // join it instead of starting another
-
-      expect(cacher.get()).toBe(2);
-      expect(calls).toBe(2);
+      expect(map.size).toBe(0);
+      expect(map.keys()).toEqual([]);
     });
   });
 
   // ---------------------------------------------------------------------------
-  // Regression: a load at monotonic time 0 is still a load
+  // delete()
   // ---------------------------------------------------------------------------
-  describe('freshness bookkeeping', () => {
-    it('does not treat a load at performance.now() === 0 as never-loaded', () => {
-      // `performance.now()` starts at 0, and fake timers pin it there, so an
-      // `0` sentinel for "never loaded" would make the very first get() reload.
-      vi.useFakeTimers();
-      let calls = 0;
-      const cacher = new Cacher(() => ++calls, TTL);
+  describe('delete()', () => {
+    it('removes a pair and reports whether it existed', () => {
+      const map = new DuoMap<string, string, number>();
+      map.set('a', 'x', 1);
 
-      expect(performance.now()).toBe(0);
-      cacher.reload();
+      expect(map.delete('a', 'x')).toBe(true);
+      expect(map.get('a', 'x')).toBeUndefined();
+      expect(map.has('a', 'x')).toBe(false);
+      expect(map.delete('a', 'x')).toBe(false);
+    });
 
-      expect(cacher.get()).toBe(1);
-      expect(calls).toBe(1);
+    it('returns false for an unknown key1 without throwing', () => {
+      const map = new DuoMap<string, string, number>();
+
+      expect(map.delete('nope', 'x')).toBe(false);
+    });
+
+    it('drops the inner map once its last pair is gone', () => {
+      const map = new DuoMap<string, string, number>();
+      map.set('a', 'x', 1);
+      map.set('a', 'y', 2);
+
+      map.delete('a', 'x');
+
+      // `a` still has `y`, so the group survives with a smaller size.
+      expect(map.size).toBe(1);
+      expect(map.keys()).toEqual([['a', 'y']]);
+
+      map.delete('a', 'y');
+
+      expect(map.size).toBe(0);
+      expect(map.keys()).toEqual([]);
+    });
+
+    it('leaves sibling key1 groups untouched', () => {
+      const map = new DuoMap<string, string, number>();
+      map.set('a', 'x', 1);
+      map.set('b', 'x', 2);
+
+      map.delete('a', 'x');
+
+      expect(map.get('b', 'x')).toBe(2);
+      expect(map.size).toBe(1);
     });
   });
 
   // ---------------------------------------------------------------------------
-  // derive() / getSub() / removeSub()
+  // clear()
   // ---------------------------------------------------------------------------
-  describe('derive()', () => {
-    it('maps the cached value', async () => {
-      const cacher = new Cacher(async () => 21, TTL);
-      cacher.derive('doubled', (value) => value * 2);
+  describe('clear()', () => {
+    it('empties the map', () => {
+      const map = new DuoMap<string, string, number>();
+      map.set('a', 'x', 1).set('a', 'y', 2).set('b', 'z', 3);
 
-      await cacher.reload();
+      map.clear();
 
-      expect(cacher.getSub('doubled')).toBe(42);
+      expect(map.size).toBe(0);
+      expect(map.entries()).toEqual([]);
+      expect(map.get('a', 'x')).toBeUndefined();
     });
 
-    it('memoizes the mapping while the parent reference is unchanged', async () => {
-      let mapCalls = 0;
-      const cacher = new Cacher(async () => ({ n: 7 }), Infinity);
-      cacher.derive('n', (value) => {
-        mapCalls++;
-        return value.n;
-      });
+    it('leaves the map usable afterwards', () => {
+      const map = new DuoMap<string, string, number>();
+      map.set('a', 'x', 1);
+      map.clear();
 
-      await cacher.reload();
+      map.set('a', 'x', 2);
 
-      expect(cacher.getSub('n')).toBe(7);
-      expect(cacher.getSub('n')).toBe(7);
-
-      expect(mapCalls).toBe(1);
-    });
-
-    it('re-maps when the parent value changes by identity', async () => {
-      let n = 0;
-      const cacher = new Cacher(async () => ({ n: ++n }), Infinity);
-      cacher.derive('n', (value) => value.n);
-
-      await cacher.reload();
-      expect(cacher.getSub('n')).toBe(1);
-
-      await cacher.reload(); // a brand-new object
-      expect(cacher.getSub('n')).toBe(2);
-    });
-
-    it('does not re-map an equal-but-same primitive', async () => {
-      let mapCalls = 0;
-      const cacher = new Cacher(async () => 'prod', Infinity);
-      cacher.derive('tag', (value) => {
-        mapCalls++;
-        return `${value}-mapped`;
-      });
-
-      await cacher.reload();
-      expect(cacher.getSub('tag')).toBe('prod-mapped');
-
-      await cacher.reload(); // 'prod' again — same primitive
-      expect(cacher.getSub('tag')).toBe('prod-mapped');
-      expect(mapCalls).toBe(1);
-    });
-
-    it('throws on an unregistered name rather than returning undefined', async () => {
-      const cacher = new Cacher(async () => 1, TTL);
-      await cacher.reload();
-
-      expect(() => cacher.getSub('nope')).toThrow(/No derived cache/);
-    });
-
-    it('throws when read before the parent cache exists', () => {
-      const cacher = new Cacher(async () => 1, TTL);
-      cacher.derive('n', (value) => value);
-
-      expect(() => cacher.getSub('n')).toThrow(/not initialized/);
-    });
-
-    it('propagates a mapping failure and retries the mapping next read', async () => {
-      let mapCalls = 0;
-      const cacher = new Cacher(async () => 1, Infinity);
-      cacher.derive('boom', () => {
-        mapCalls++;
-        throw new Error('map boom');
-      });
-
-      await cacher.reload();
-
-      expect(() => cacher.getSub('boom')).toThrow('map boom');
-      expect(() => cacher.getSub('boom')).toThrow('map boom');
-      expect(mapCalls).toBe(2);
-    });
-
-    it('reads the parent current value without triggering a reload', async () => {
-      vi.useFakeTimers();
-      let calls = 0;
-      const cacher = new Cacher(async () => ++calls, TTL);
-      cacher.derive('n', (value) => value);
-
-      await cacher.reload();
-      vi.advanceTimersByTime(TTL);
-
-      expect(cacher.getSub('n')).toBe(1);
-      expect(calls).toBe(1);
+      expect(map.get('a', 'x')).toBe(2);
+      expect(map.size).toBe(1);
     });
   });
 
-  describe('removeSub()', () => {
-    it('drops a registered sub-cache', async () => {
-      const cacher = new Cacher(async () => 1, TTL);
-      cacher.derive('n', (value) => value);
-
-      await cacher.reload();
-
-      expect(cacher.removeSub('n')).toBe(true);
-      expect(() => cacher.getSub('n')).toThrow(/No derived cache/);
+  // ---------------------------------------------------------------------------
+  // size
+  // ---------------------------------------------------------------------------
+  describe('size', () => {
+    it('is 0 when empty', () => {
+      expect(new DuoMap().size).toBe(0);
     });
 
-    it('returns false for a name that was never registered', () => {
-      const cacher = new Cacher(async () => 1, TTL);
+    it('counts pairs across all key1 groups, not groups', () => {
+      const map = new DuoMap<string, string, number>();
+      map.set('a', 'x', 1).set('a', 'y', 2).set('b', 'x', 3);
 
-      expect(cacher.removeSub('nope')).toBe(false);
+      expect(map.size).toBe(3);
+    });
+
+    it('counts a stored undefined value', () => {
+      const map = new DuoMap<string, string, undefined>();
+      map.set('a', 'x', undefined);
+
+      expect(map.size).toBe(1);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // forEach()
+  // ---------------------------------------------------------------------------
+  describe('forEach()', () => {
+    it('visits every pair with (value, key1, key2)', () => {
+      const map = new DuoMap<string, string, number>();
+      map.set('a', 'x', 1);
+      map.set('a', 'y', 2);
+      map.set('b', 'x', 3);
+
+      const seen: [number, string, string][] = [];
+      map.forEach((value, key1, key2) => seen.push([value, key1, key2]));
+
+      expect(seen).toEqual([
+        [1, 'a', 'x'],
+        [2, 'a', 'y'],
+        [3, 'b', 'x'],
+      ]);
+    });
+
+    it('does not visit an empty map', () => {
+      const map = new DuoMap<string, string, number>();
+      const callback = vi.fn();
+
+      map.forEach(callback);
+
+      expect(callback).not.toHaveBeenCalled();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // keys() / values() / entries()
+  // ---------------------------------------------------------------------------
+  describe('keys(), values() and entries()', () => {
+    it('returns arrays, not Map iterators', () => {
+      const map = new DuoMap<string, string, number>();
+      map.set('a', 'x', 1);
+
+      expect(Array.isArray(map.keys())).toBe(true);
+      expect(Array.isArray(map.values())).toBe(true);
+      expect(Array.isArray(map.entries())).toBe(true);
+    });
+
+    it('exposes keys as [key1, key2] pairs', () => {
+      const map = new DuoMap<string, string, number>();
+      map.set('a', 'x', 1);
+      map.set('b', 'y', 2);
+
+      expect(map.keys()).toEqual([
+        ['a', 'x'],
+        ['b', 'y'],
+      ]);
+    });
+
+    it('exposes values in the same order as keys and entries', () => {
+      const map = new DuoMap<string, string, number>();
+      map.set('a', 'x', 1);
+      map.set('a', 'y', 2);
+
+      expect(map.values()).toEqual([1, 2]);
+      expect(map.entries()).toEqual([
+        ['a', 'x', 1],
+        ['a', 'y', 2],
+      ]);
+    });
+
+    it('returns a fresh array each call, so mutating it is harmless', () => {
+      const map = new DuoMap<string, string, number>();
+      map.set('a', 'x', 1);
+
+      const first = map.keys();
+      first.push(['planted', 'key']);
+
+      expect(map.keys()).toEqual([['a', 'x']]);
+      expect(map.size).toBe(1);
+    });
+
+    it('returns empty arrays for an empty map', () => {
+      const map = new DuoMap<string, string, number>();
+
+      expect(map.keys()).toEqual([]);
+      expect(map.values()).toEqual([]);
+      expect(map.entries()).toEqual([]);
+      expect([...map]).toEqual([]);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // iteration
+  // ---------------------------------------------------------------------------
+  describe('iteration', () => {
+    it('is iterable with for...of, yielding [key1, key2, value]', () => {
+      const map = new DuoMap<string, string, number>();
+      map.set('a', 'x', 1);
+      map.set('b', 'y', 2);
+
+      const seen: [string, string, number][] = [];
+      for (const entry of map) {
+        seen.push(entry);
+      }
+
+      expect(seen).toEqual([
+        ['a', 'x', 1],
+        ['b', 'y', 2],
+      ]);
+    });
+
+    it('spreads and destructures like a Map', () => {
+      const map = new DuoMap<string, string, number>();
+      map.set('a', 'x', 1);
+
+      const [[key1, key2, value]] = [...map];
+      const asMap = new Map(map.entries().map(([k1, k2, v]) => [`${k1}/${k2}`, v]));
+
+      expect([key1, key2, value]).toEqual(['a', 'x', 1]);
+      expect(asMap.get('a/x')).toBe(1);
+    });
+
+    it('iterates a snapshot, so writes during iteration are not visited', () => {
+      const map = new DuoMap<string, string, number>();
+      map.set('a', 'x', 1);
+
+      const seen: [string, string, number][] = [];
+      for (const entry of map) {
+        seen.push(entry);
+        map.set(`k${entry[2]}`, 'added', entry[2] + 10);
+      }
+
+      expect(seen).toEqual([['a', 'x', 1]]);
+      expect(map.size).toBe(2);
+    });
+
+    it('terminates after the last entry', () => {
+      const map = new DuoMap<string, string, number>();
+      map.set('a', 'x', 1);
+
+      const iterator = map[Symbol.iterator]();
+
+      expect(iterator.next()).toEqual({ value: ['a', 'x', 1], done: false });
+      expect(iterator.next().done).toBe(true);
+      expect(iterator.next().done).toBe(true);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Type parameters
+  // ---------------------------------------------------------------------------
+  describe('type parameters', () => {
+    it('defaults all three parameters to any', () => {
+      const map = new DuoMap();
+
+      map.set('a', 1, true);
+
+      expect(map.get('a', 1)).toBe(true);
+    });
+
+    it('keeps key types independent', () => {
+      const map = new DuoMap<{ id: number }, symbol, string[]>();
+      const key1 = { id: 1 };
+      const key2 = Symbol('k');
+
+      map.set(key1, key2, ['v']);
+
+      expect(map.get(key1, key2)).toEqual(['v']);
+      expect(map.get({ id: 1 }, key2)).toBeUndefined();
     });
   });
 });
