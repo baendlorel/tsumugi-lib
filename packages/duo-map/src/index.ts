@@ -22,8 +22,8 @@ export class DuoMap<K1 = any, K2 = any, V = any> {
     return this.map.getOrInsertComputed(key1, MapConstruct).getOrInsert(key2, value);
   }
 
-  getOrInsertComputed(key1: K1, key2: K2, compute: () => V): V {
-    return this.map.getOrInsertComputed(key1, MapConstruct).getOrInsertComputed(key2, compute);
+  getOrInsertComputed(key1: K1, key2: K2, compute: (key1: K1, key2: K2) => V): V {
+    return this.map.getOrInsertComputed(key1, MapConstruct).getOrInsertComputed(key2, () => compute(key1, key2));
   }
 
   has(key1: K1, key2: K2): boolean {
