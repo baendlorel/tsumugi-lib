@@ -507,21 +507,21 @@ describe('Cacher', () => {
     });
   });
 
-  describe('removeSub()', () => {
+  describe('deleteSub()', () => {
     it('drops a registered sub-cache', async () => {
       const cacher = new Cacher(async () => 1, TTL);
       cacher.derive('n', (value) => value);
 
       await cacher.reload();
 
-      expect(cacher.removeSub('n')).toBe(true);
+      expect(cacher.deleteSub('n')).toBe(true);
       expect(() => cacher.getSub('n')).toThrow(/No derived cache/);
     });
 
     it('returns false for a name that was never registered', () => {
       const cacher = new Cacher(async () => 1, TTL);
 
-      expect(cacher.removeSub('nope')).toBe(false);
+      expect(cacher.deleteSub('nope')).toBe(false);
     });
   });
 });
