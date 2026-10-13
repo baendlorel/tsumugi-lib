@@ -18,28 +18,6 @@ interface SubCacheEntry<T, TSub = any> {
 }
 
 export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = any> {
-  // #region pending static
-  private static readonly pending: Set<Promise<any>> = new Set();
-  private static onceAllSettled: (() => void) | null = null;
-  private static deletePending(promise: Promise<any>): void {
-    setTimeout(() => {
-      Cacher.pending.delete(promise);
-      if (Cacher.pending.size === 0) {
-        Cacher.onceAllSettled?.();
-        Cacher.onceAllSettled = null;
-      }
-    }, 1000);
-  }
-
-  /**
-   * This will be called once all pending loadings are settled
-   * @param callback
-   */
-  static setOnceAllSettled(callback: (() => void) | null): void {
-    Cacher.onceAllSettled = callback;
-  }
-  // #endregion
-
   /* @internal */
   private readonly getter: (lastValue?: T) => Promise<T>;
   /* @internal */
@@ -94,14 +72,10 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
 
     try {
       this.pending = this.getter.call(this.thisArg, this.cache === empty ? undefined : this.cache);
-      Cacher.pending.add(this.pending);
       this.cache = await this.pending;
       this.inited = true;
       this.last = performance.now();
     } finally {
-      if (typeof this.pending !== 'symbol') {
-        Cacher.deletePending(this.pending);
-      }
       this.pending = empty;
     }
 

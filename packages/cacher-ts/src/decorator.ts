@@ -1,17 +1,27 @@
 import { Cacher } from './cacher.js';
 import { _weakGetOrInsertComputed } from '@shared/std/map.js';
 
-const sym = Symbol();
-
 type Metadata = {
   [sym]: {
-    /**
-     * This is an instance-to-methodCache map.
-     */
     instanceToCacheMap: WeakMap<any, Map<string | symbol, Cacher>>;
   };
 };
-type MethodDecorator = (target: (...args: any[]) => any, context: ClassMethodDecoratorContext) => (this: any) => any;
+
+type MethodCacheDecorator = (
+  target: (...args: any[]) => any,
+  context: ClassMethodDecoratorContext,
+) => (this: any) => any;
+
+const sym = Symbol();
+const cachers = new Set<Cacher>();
+
+/**
+ * Load all decorated caches and return a promise that resolves when all caches are reloaded.
+ * - **Only** affects cachers that are decorated with `@Cache`.
+ */
+export function reloadAll() {
+  return Promise.all([...cachers].map((c) => c.reload()));
+}
 
 /**
  * Caches the result of a no-argument method.
@@ -19,7 +29,7 @@ type MethodDecorator = (target: (...args: any[]) => any, context: ClassMethodDec
  * @param id The id for the cached method, can be visited in `@SubCache`.
  * @param ttl Time-to-live for the cached value in milliseconds. `Infinity` never expires.
  */
-export function Cache(options: { id: string | symbol; ttl?: number }): MethodDecorator {
+export function Cache(options: { id: string | symbol; ttl?: number }): MethodCacheDecorator {
   // #region Argument validation
   if (typeof options !== 'object' || options === null) {
     throw new TypeError(`@Cache expects an options object with at least an 'id' property.`);
@@ -46,13 +56,15 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodDec
     if (meta?.[sym].instanceToCacheMap) {
       map = meta[sym].instanceToCacheMap;
     } else {
-      map = new WeakMap<any, Map<string | symbol, Cacher>>();
+      map = new WeakMap();
       meta[sym] = meta[sym] ?? {};
       meta[sym].instanceToCacheMap = map;
     }
 
     context.addInitializer(function (this: any) {
-      _weakGetOrInsertComputed(map, this, () => new Map()).set(id, new Cacher(target, ttl).setThis(this));
+      const cacher = new Cacher(target, ttl).setThis(this);
+      cachers.add(cacher);
+      _weakGetOrInsertComputed(map, this, () => new Map()).set(id, cacher);
     });
 
     return function (this: any) {
@@ -64,6 +76,7 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodDec
 
 /**
  * Derive sub-cacher from `@Cache({ id, ttl? })` and the decorated method.
+ * - Decorated method must be **SYNC**.
  * - `@Cache` must be  **initialized** before `@SubCache` does.
  * @param formId id used in Cache decorator.
  */
