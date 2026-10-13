@@ -5,7 +5,8 @@
     "moduleResolution": "nodenext",
     "stripInternal": true,
     "paths": {
-      "@shared": ["../_shared/index.ts"]
+      "@shared": ["../_shared/index.ts"],
+      "@shared/*": ["../_shared/*"]
     }
   },
   "include": ["src/**/*.ts", "implements/**/*.ts"]

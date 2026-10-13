@@ -210,8 +210,8 @@ export class Cacher<
   }
 }
 
-const a = new Cacher(() => 3, 1000);
-const b = a.reload();
+// const a = new Cacher(() => 3, 1000);
+// const b = a.reload();
 
-const a1 = new Cacher(async () => 3, 1000);
-const b1 = a1.reload();
+// const a1 = new Cacher(async () => 3, 1000);
+// const b1 = a1.reload();

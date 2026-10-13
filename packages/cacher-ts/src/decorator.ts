@@ -1,5 +1,5 @@
 import { Cacher } from './cacher.js';
-import { _weakGetOrInsertComputed } from '@shared';
+import { _weakGetOrInsertComputed } from '@shared/native/std.js';
 
 const sym = Symbol();
 

@@ -7,6 +7,8 @@ import { replaceOpts } from './scripts/replace-options.js';
 const isDev = process.env.NODE_ENV === 'development';
 const lib = process.env.LIB_DIR!;
 
+console.log('isDev', isDev);
+
 export default defineConfig({
   cwd: lib,
   entry: [join(lib, 'src', 'index.ts')],
