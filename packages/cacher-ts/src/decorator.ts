@@ -3,17 +3,15 @@ import { _weakGetOrInsertComputed } from '@shared/std/map.js';
 
 const sym = Symbol();
 
-type Context = ClassMethodDecoratorContext & {
-  metadata: {
-    [sym]: {
-      /**
-       * This is an instance-to-methodCache map.
-       */
-      instanceToCacheMap: WeakMap<any, Map<string | symbol, Cacher>>;
-    };
+type Metadata = {
+  [sym]: {
+    /**
+     * This is an instance-to-methodCache map.
+     */
+    instanceToCacheMap: WeakMap<any, Map<string | symbol, Cacher>>;
   };
 };
-type MethodDecorator = (target: (...args: any[]) => any, context: Context) => (this: any) => any;
+type MethodDecorator = (target: (...args: any[]) => any, context: ClassMethodDecoratorContext) => (this: any) => any;
 
 /**
  * Caches the result of a no-argument method.
@@ -37,12 +35,12 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodDec
   }
   // #endregion
 
-  return function (target: (...args: any[]) => any, context: Context) {
+  return function (target: (...args: any[]) => any, context: ClassMethodDecoratorContext) {
     if (target.length !== 0) {
       throw new TypeError(`"${String(target.name)}" decorated with @Cache() has more than 0 parameters.`);
     }
 
-    const meta = context.metadata;
+    const meta = context.metadata as Metadata;
 
     let map: WeakMap<any, Map<string | symbol, Cacher>>;
     if (meta?.[sym].instanceToCacheMap) {
@@ -70,10 +68,10 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodDec
  * @param formId id used in Cache decorator.
  */
 export function SubCache(formId: string) {
-  return function (target: (...args: any[]) => any, context: Context) {
+  return function (target: (...args: any[]) => any, context: ClassMethodDecoratorContext) {
     const sk = Symbol() as any;
 
-    const cacheMap = context.metadata?.[sym].instanceToCacheMap;
+    const cacheMap = (context.metadata as Metadata)?.[sym].instanceToCacheMap;
 
     return function (this: any) {
       const c = cacheMap?.get(this)?.get(formId);
