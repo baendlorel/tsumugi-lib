@@ -1,3 +1,5 @@
+import { _getOrInsertComputed, _getOrInsert } from '@shared';
+
 const MapConstruct = () => new Map();
 
 export class DuoMap<K1 = any, K2 = any, V = any> {
@@ -10,7 +12,7 @@ export class DuoMap<K1 = any, K2 = any, V = any> {
   }
 
   set(key1: K1, key2: K2, value: V): this {
-    this.map.getOrInsertComputed(key1, MapConstruct).set(key2, value);
+    _getOrInsertComputed(this.map, key1, MapConstruct).set(key2, value);
     return this;
   }
 
@@ -19,11 +21,13 @@ export class DuoMap<K1 = any, K2 = any, V = any> {
   }
 
   getOrInsert(key1: K1, key2: K2, value: V): V {
-    return this.map.getOrInsertComputed(key1, MapConstruct).getOrInsert(key2, value);
+    const m = _getOrInsertComputed(this.map, key1, MapConstruct);
+    return _getOrInsert(m, key2, value);
   }
 
   getOrInsertComputed(key1: K1, key2: K2, compute: (key1: K1, key2: K2) => V): V {
-    return this.map.getOrInsertComputed(key1, MapConstruct).getOrInsertComputed(key2, () => compute(key1, key2));
+    const m = _getOrInsertComputed(this.map, key1, MapConstruct);
+    return _getOrInsertComputed(m, key2, () => compute(key1, key2));
   }
 
   has(key1: K1, key2: K2): boolean {

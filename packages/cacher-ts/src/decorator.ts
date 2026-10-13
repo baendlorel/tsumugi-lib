@@ -1,4 +1,5 @@
 import { Cacher } from './cacher.js';
+import { _weakGetOrInsertComputed } from '@shared';
 
 const sym = Symbol();
 
@@ -53,7 +54,7 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodDec
     }
 
     context.addInitializer(function (this: any) {
-      map.getOrInsertComputed(this, () => new Map()).set(id, new Cacher(target, ttl).setThis(this));
+      _weakGetOrInsertComputed(map, this, () => new Map()).set(id, new Cacher(target, ttl).setThis(this));
     });
 
     return function (this: any) {
