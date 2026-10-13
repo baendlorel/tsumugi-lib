@@ -19,8 +19,8 @@ const cachers = new Set<Cacher>();
  * Load all decorated caches and return a promise that resolves when all caches are reloaded.
  * - **Only** affects cachers that are decorated with `@Cache`.
  */
-export function reloadAll() {
-  return Promise.all([...cachers].map((c) => c.reload()));
+export function initializeDecoratedCaches(): Promise<any[]> {
+  return Promise.all([...cachers].map((c) => (c.initialized ? c.get() : c.reload())));
 }
 
 /**
@@ -69,7 +69,7 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodCac
 
     return function (this: any) {
       const c = map.get(this)!.get(id)!;
-      return c.isInitialized ? c.get() : c.reload();
+      return c.initialized ? c.get() : c.reload();
     };
   };
 }
@@ -84,15 +84,22 @@ export function SubCache(formId: string) {
   return function (target: (...args: any[]) => any, context: ClassMethodDecoratorContext) {
     const sk = Symbol() as any;
 
-    const cacheMap = (context.metadata as Metadata)?.[sym].instanceToCacheMap;
+    let cacheMap: WeakMap<any, Map<string | symbol, Cacher>> | undefined = undefined;
 
     return function (this: any) {
-      const c = cacheMap?.get(this)?.get(formId);
-      if (!c) {
-        throw new Error(`@SubCache cannot find Cacher instance for key "${String(formId)}".`);
+      if (!cacheMap) {
+        cacheMap = (context.metadata as Metadata)?.[sym].instanceToCacheMap;
+        if (!cacheMap) {
+          throw new Error(`'cacheMap' for "${String(formId)}" not found.`);
+        }
       }
-      if (!c.isInitialized) {
-        throw new Error(`@SubCache cannot use uninitialized cache for key "${String(formId)}".`);
+
+      const c = cacheMap.get(this)?.get(formId);
+      if (!c) {
+        throw new Error(`Cacher "${String(formId)}" not found.`);
+      }
+      if (!c.initialized) {
+        throw new Error(`Cacher "${String(formId)}" isn't initialized.`);
       }
 
       // Initialize the sub-cache with a unique key.

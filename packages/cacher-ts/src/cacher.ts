@@ -49,7 +49,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
   /**
    * Checks if the cache is empty.
    */
-  get isInitialized(): boolean {
+  get initialized(): boolean {
     return this.inited;
   }
 
