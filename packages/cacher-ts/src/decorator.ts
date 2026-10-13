@@ -90,6 +90,9 @@ export function SubCache(formId: string) {
     // ! We cannot assure that @SubCache initializes before @Cache.
     // ! So we can only get cacheMap for now.
     context.addInitializer(function (this: any) {
+      if (cacheMap) {
+        return; // Maybe it's already initialized, because the range with-in the decorator context are the same.
+      }
       cacheMap = (context.metadata as Metadata)?.[sym].instanceToCacheMap;
       if (!cacheMap) {
         throw new Error(`'cacheMap' for "${String(formId)}" not found.`);
@@ -98,11 +101,8 @@ export function SubCache(formId: string) {
 
     return function (this: any) {
       const c = cacheMap!.get(this)?.get(formId);
-      if (!c) {
-        throw new Error(`Cacher "${String(formId)}" not found.`);
-      }
-      if (!c.initialized) {
-        throw new Error(`Cacher "${String(formId)}" isn't initialized.`);
+      if (!c?.initialized) {
+        throw new Error(`Cacher "${String(formId)}" not found or initialized.`);
       }
 
       // Initialize the sub-cache with a unique key.
