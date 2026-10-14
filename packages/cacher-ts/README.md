@@ -141,14 +141,14 @@ interface ConfigShape {
 }
 
 class Config {
-  @Cache('cfg', 10_000)
+  @Cache({ id: 'cfg', ttl: 10_000 })
   async cfg(): Promise<ConfigShape> {
     return (await fetch('/api/config')).json();
   }
 
   @SubCache('cfg')
-  adminNames(cfg: ConfigShape) {
-    return cfg.users.filter((u) => u.admin).map((u) => u.name);
+  async adminNames(cfg?: ConfigShape): Promise<string[]> {
+    return cfg!.users.filter((u) => u.admin).map((u) => u.name);
   }
 }
 
@@ -157,7 +157,7 @@ await config.cfg();        // creates the cache @SubCache borrows — do this fi
 await config.adminNames(); // → string[], derived and memoized
 ```
 
-When the parent is already cached and its getter is synchronous, the derived value comes back directly; otherwise you get a promise for it, so `await` is always safe. The mapper itself must be pure and synchronous, like every other sub-cache mapper.
+The method **must be `async` and its parameter must be optional**, and it is called with no argument (`config.adminNames()`): a decorator cannot change a method's parameter list, and the cached value is what the method body receives through that parameter. Both are type-enforced, so a sync `@SubCache` method — or one whose parameter is required — fails to compile. The mapper itself must be pure and synchronous, like every other sub-cache mapper.
 
 ## ⚠️ Good to know
 

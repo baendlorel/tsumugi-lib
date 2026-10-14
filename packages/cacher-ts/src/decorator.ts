@@ -1,15 +1,30 @@
 import { Cacher } from './cacher.js';
-import { _weakGetOrInsertComputed } from '@shared/std/map.js';
+import { _getOrInsertComputed } from '@shared/std/map.js';
 
-type MethodCacheDecorator = (
-  target: (...args: any[]) => any,
-  context: ClassMethodDecoratorContext,
-) => (this: any) => any;
+/**
+ * Type of a method decorated with `@Cache`.
+ * The decorated method **must be `async`** (i.e. it must return a `Promise`); a sync method
+ * would be typed as `Promise<R>` at the call site while actually returning a plain value.
+ */
+type MethodCacheDecorator = <This, R>(
+  target: (this: This) => Promise<R>,
+  context: ClassMethodDecoratorContext<This, (this: This) => Promise<R>>,
+) => (this: This) => Promise<R>;
+
+/**
+ * Type of a method decorated with `@SubCache`.
+ * A decorator cannot change a method's parameter list, so the decorated method **must be `async`
+ * and declare its parameter optional** — it is always called with no argument at the call site,
+ * and the parent's cached value is what the method body receives.
+ */
+type MethodSubCacheDecorator = <This, T, R>(
+  target: (this: This, value?: T) => R | Promise<R>,
+  context: ClassMethodDecoratorContext<This, (this: This, value?: T) => Promise<R>>,
+) => (this: This, value?: T) => Promise<R>;
 
 // & Keyed by instance, so it doesn't matter which class (parent or child) declares the decorators, or in which order.
 // & Also no reliance on `context.metadata`, which is undefined where `Symbol.metadata` is missing (e.g. tsc output on Node 24).
-const instanceToCacheMap = new WeakMap<any, Map<string | symbol, Cacher>>();
-const cachers = new Set<Cacher>();
+const instanceToCacheMap = new Map<any, Map<string | symbol, Cacher>>();
 
 /**
  * Load all decorated caches.
@@ -18,12 +33,17 @@ const cachers = new Set<Cacher>();
  * @returns a promise that you can await to ensure all decorated caches have been initialized.
  */
 export function initializeDecoratedCaches(force = false): Promise<any[]> {
-  return Promise.all([...cachers].map((c) => (c.initialized && !force ? true : c.reload())));
+  return Promise.all(
+    [...instanceToCacheMap.values()]
+      .flatMap((idToCacherMap) => [...idToCacherMap.values()])
+      .map((c) => (c.initialized && !force ? true : c.reload())),
+  );
 }
 
 /**
- * Caches the result of a no-argument method.
+ * Caches the result of a no-argument **async** method.
  * **You must handle errors in your method**.
+ * The method must be `async`: the cached value is always accessed through a promise.
  * @param id The id for the cached method, can be visited in `@SubCache`.
  * @param ttl Time-to-live for the cached value in milliseconds. `Infinity` never expires.
  */
@@ -43,19 +63,19 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodCac
   }
   // #endregion
 
-  return function (target: (...args: any[]) => Promise<any>, ctx: ClassMethodDecoratorContext) {
+  return function <This, R>(target: (this: This) => Promise<R>, ctx: ClassMethodDecoratorContext<This, (this: This) => Promise<R>>) {
     if (target.length !== 0) {
       throw new TypeError(`"${String(target.name)}" decorated with @Cache() has more than 0 parameters.`);
     }
 
     ctx.addInitializer(function (this: any) {
-      const cacher = new Cacher(target, ttl).setThis(this);
-      cachers.add(cacher);
-      const idToCacherMap = _weakGetOrInsertComputed(instanceToCacheMap, this, () => new Map());
+      const c = new Cacher(target, ttl).setThis(this);
+
+      const idToCacherMap = _getOrInsertComputed(instanceToCacheMap, this, () => new Map());
       if (idToCacherMap.has(id)) {
         throw new Error(`Duplicate cache id "${String(id)}" for the same instance.`);
       }
-      idToCacherMap.set(id, cacher);
+      idToCacherMap.set(id, c);
     });
 
     return function (this: any) {
@@ -66,23 +86,24 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodCac
 
 /**
  * Derive sub-cacher from `@Cache({ id, ttl? })` and the decorated method.
- * - Decorated method must be **SYNC**.
+ * - Decorated method must be **async**, and its parameter must be **optional**.
  * - `@Cache` must be  **initialized** before `@SubCache` does.
- * @param formId id used in Cache decorator.
+ * @param fromId id used in Cache decorator.
  */
-export function SubCache(formId: string) {
-  return function (target: (...args: any[]) => any, _context: ClassMethodDecoratorContext) {
+export function SubCache(fromId: string): MethodSubCacheDecorator {
+  return function <This, T, R>(
+    target: (this: This, value?: T) => R | Promise<R>,
+    _context: ClassMethodDecoratorContext<This, (this: This, value?: T) => Promise<R>>,
+  ) {
     const sk = Symbol() as any;
 
     // ! Cannot check for the @Cache at construction: @SubCache's initializer may run first
     // ! (declared above it, or declared in a parent class while @Cache is in the child).
     return function (this: any) {
-      const c = instanceToCacheMap.get(this)?.get(formId);
-      if (!c?.initialized) {
-        throw new Error(`Cacher "${String(formId)}" not found or initialized.`);
+      const c = instanceToCacheMap.get(this)?.get(fromId);
+      if (!c) {
+        throw new Error(`Cacher "${String(fromId)}" not found.`);
       }
-
-      // Initialize the sub-cache with a unique key.
       return c.getOrDerive(sk, target);
     };
   };

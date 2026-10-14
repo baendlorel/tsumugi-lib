@@ -15,6 +15,13 @@ cacher-ts 问题清单
         tsc 输出（无 Symbol.metadata）、无 @Cache 的 @SubCache、父类 @SubCache + 子类 @Cache 均已验证正常，
         用例在 examples/index.ts）、
       原高-1（getSub 先 `await this.get()`，过期会 reload，已验证）、
+      原高-2（装饰器类型签名已收紧：@Cache 的 MethodCacheDecorator 只接受
+        `<This, R>(target: (this: This) => Promise<R>, …)`，同步方法不再通过；
+        @SubCache 的 MethodSubCacheDecorator 只接受 `<This, T, R>(target: (this: This, value?: T) => R | Promise<R>, …)`，
+        即“声明为 async + 参数可选”，这是 TS 装饰器改不了方法签名导致的硬约束，已写进 README 与 JSDoc。
+        tsc 6.0.3（strict）实测：sync @Cache 报 TS1241/TS1270、README 式 sync @SubCache 报 TS1241/TS1270、
+        必填参数报 TS1241（'undefined' not assignable），`async m(x?: T): Promise<R>` 通过且
+        `obj.m()` 类型为 `Promise<R>`，examples/index.ts 类型检查通过）、
       原中-4（getSync 后台刷新的 Unhandled Rejection：getSync 已删除）。
 编号：本轮不再重新编号，剩下的条目保持原编号。
 
@@ -31,30 +38,11 @@ cacher-ts 问题清单
 （高-1 已解决）
 
 
+
+
+（高-2 已解决：类型签名已按修复建议收紧，README 与 JSDoc 已同步，详见文件头“已解决并删除”。）
+
 ---------以下先不看！
-
-
-
-[高-2] 装饰器的类型签名太宽：@Cache 接受同步方法而类型说谎；README 的 @SubCache 写法编译不过
-  位置：src/decorator.ts:4-7（MethodCacheDecorator）、src/decorator.ts:46、src/decorator.ts:73-74（SubCache）
-  类型验证：
-    - `@Cache({id:'x'}) m(): number { return 1 }` 编译通过，`const n: number = obj.m()` 也通过，
-      运行时却是 Promise<number>。提交 8974f50 说“锁定返回值为 Promise”，但只锁在了 46 行内部函数的参数上，
-      对外的 MethodCacheDecorator 是 `(target: (...args: any[]) => any, …)`，限制被抹掉了。
-      （同步方法还会触发中-1：同步抛一次错，缓存就永久卡死。）
-    - README 的写法 `@SubCache('cfg') adminNames(cfg: ConfigShape) { return …string[] }` 报 TS1270
-      （装饰器返回 Promise，无法赋给 `(cfg) => string[]`）；`config.adminNames()` 不传参报 TS2554。
-      `async v(cfg: Cfg)` 能声明，但调用 `obj.v()` 仍报 TS2554。
-      实测能编译通过的只有 `async view(cfg?: Cfg): Promise<R>` 这一种（examples/index.ts 里就是这么写的），
-      而它正好违反 JSDoc 的 “Decorated method must be SYNC”，README 也没写。
-  修复建议（已用 tsc 验证：同步方法会报错，async 方法通过，调用处类型正确）：
-        Cache(...)    : <This, R>(target: (this: This) => Promise<R>,
-                                  ctx: ClassMethodDecoratorContext<This, (this: This) => Promise<R>>) => (this: This) => Promise<R>
-        SubCache(...) : <This, T, R>(target: (this: This, value?: T) => R | Promise<R>,
-                                  ctx: ClassMethodDecoratorContext<This, (this: This, value?: T) => Promise<R>>)
-                                  => (this: This, value?: T) => Promise<R>
-        @SubCache 方法“参数可选 + 声明为 async”是 TS 装饰器改不了方法签名导致的硬约束，需要写进 README 和 JSDoc。
-
 ------------------------------------------------------------------
 三、中
 ------------------------------------------------------------------
