@@ -62,6 +62,18 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
     return this;
   }
 
+  private async runGetter() {
+    try {
+      const data = await this.getter.call(this.thisArg, this.cache === empty ? undefined : this.cache);
+      this.inited = true;
+      this.last = performance.now();
+      this.cache = data;
+      return data;
+    } finally {
+      this.pending = empty;
+    }
+  }
+
   /**
    * Always awaits the loading getter to be settled.
    */
@@ -70,15 +82,8 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
       return this.pending as Promise<T>;
     }
 
-    try {
-      this.pending = this.getter.call(this.thisArg, this.cache === empty ? undefined : this.cache);
-      this.cache = await this.pending;
-      this.inited = true;
-      this.last = performance.now();
-    } finally {
-      this.pending = empty;
-    }
-
+    this.pending = this.runGetter();
+    await this.pending;
     return this.cache as T;
   }
 
@@ -93,7 +98,22 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
    * Getter of the value.
    * If the cached value is outdated, it will trigger the initialization.
    */
-  get(): T {
+  async get(): Promise<T> {
+    if (!this.inited) {
+      throw new Error('Cache is empty and has not been initialized yet.');
+    }
+
+    if (performance.now() - this.last >= this.ttl) {
+      return this.reload();
+    }
+    return this.cache as T;
+  }
+
+  /**
+   * Only get the cached value. When it's expired, it will trigger a reload in the background.
+   * But still returns the current cached value **instead of** waiting for the reload to complete.
+   */
+  getSync(): T {
     if (!this.inited) {
       throw new Error('Cache is empty and has not been initialized yet.');
     }
@@ -107,7 +127,8 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
   /**
    * Derives a sub-cacher from the current one by applying a mapping function to its value.
    * - pure sync mapper will be called with `cacher.thisArg`
-   * - You may get it by `cacher.getSub(name)`
+   * - overwrite existing sub-cache if it already exists.
+   *
    * @param pureMapper Must be a **pure sync function**. It will be called without `await`.
    */
   derive<SubKey extends keyof Subs>(name: SubKey, pureMapper: (value: T) => Subs[SubKey]): void {
@@ -141,6 +162,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
     return this.getSub(name);
   }
 
+  // TODO 这里也改为sync版和async版
   /**
    * Get the cached value derived by the mapper.
    */

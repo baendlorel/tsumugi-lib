@@ -98,12 +98,14 @@ cacher-ts 问题清单
         `store.me().then(...)` 在第二次调用就会因为拿到的是普通值而抛 TypeError。
   README 说“await 总是安全的”，但 `.then`/`.catch`/`Promise.all` 之外的链式写法并不安全。
   建议：统一返回 Promise（async 包装）；或在类型上明确为 `T | Promise<T>`。
+-- 现在返回cacher.get；
 
 [中-3] 方法脱离接收者调用时报错不友好
   位置：src/decorator.ts:71
   现象（运行时验证）：`const f = obj.method; f()` → "Cannot read properties of undefined (reading 'get')"；
         `map.get(this)!.get(id)!` 使用了非空断言。
   建议：对 map.get(this) / .get(id) 的缺失给出明确错误信息。
+-- 在addInitializer中已经进行了确保，不需要此处再做冗余校验
 
 [中-4] Cache 选项校验与类型声明不一致、校验冗余
   位置：src/decorator.ts:30-47
@@ -113,6 +115,7 @@ cacher-ts 问题清单
   - 不校验 NaN / 负数：`NaN` 使 `elapsed >= NaN` 恒 false，等同 Infinity，属静默错误。
     Cacher 构造函数同样不校验 ttl（cacher.ts:38-41）。
   - SubCache(formId) 声明为 string，但 Cache 的 id 类型却含 symbol，两边不一致。
+-- 已修复
 
 [中-5] SubCache 的 cacheMap 只在第一个实例初始化时取一次，且校验放在实例化阶段
   位置：src/decorator.ts:88-101
@@ -120,6 +123,7 @@ cacher-ts 问题清单
         且 metadata 继承场景下（子类的 @SubCache 指向父类的 @Cache）取到的是继承来的 map，
         与严重-2 相关，边界行为没有测试。
   建议：在返回的包装函数首次调用或类定义阶段统一校验；并补充继承场景测试。
+-- 子类的SubCache没关系，因为map是以实例为键，所以不会发生什么问题
 
 [中-6] 并发 reload 的“守卫”依赖原始 promise，存在时序脆弱点
   位置：src/cacher.ts:68-82
@@ -129,6 +133,7 @@ cacher-ts 问题清单
         这个顺序就不再有保证，等待方可能在 cache 写入前读到旧值。
   建议：pending 存放 reload 自己的内部 async 包装 promise（写完 cache 再 resolve），
         所有 reload()/loading 都返回它。
+-- reload 使用了rungetter函数；
 
 [中-7] getter 同步抛错/返回非 Promise 时状态含糊
   位置：src/cacher.ts:69-80
@@ -136,9 +141,10 @@ cacher-ts 问题清单
         于是 `reload()` 的返回类型（总是 Promise）与 README“sync getter 原样返回值”的说法冲突
         （见文档部分，测试中因此有 13 个失败）。需要决定：要么正式不支持同步 getter（改文档和测试），
         要么支持并让类型/返回值与文档一致。
+-- 请你修改文档为：一定返回promise，推荐用async
 
 ------------------------------------------------------------------
-四、文档、注释与测试（不完善）
+四、文档、注释与测试（不完善） —— 整体上改完后重写。
 ------------------------------------------------------------------
 
 [文档-1] README 与实现严重脱节（会直接导致用户写出无法工作的代码）
@@ -181,7 +187,7 @@ cacher-ts 问题清单
   需要在 vitest/tsconfig 里启用装饰器转译才能测试。
 
 ------------------------------------------------------------------
-五、低
+五、低 ——先不看
 ------------------------------------------------------------------
 
 [低-1] implements/1.ts 是旧版实现（含 clear()/clearAfterPromise），仍被 tsconfig include 编译，

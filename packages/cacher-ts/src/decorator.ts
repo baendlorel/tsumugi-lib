@@ -39,7 +39,7 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodCac
 
   const { id, ttl = Infinity } = options;
 
-  if (typeof id !== 'string') {
+  if (typeof id !== 'string' && typeof id !== 'symbol') {
     throw new TypeError(`@Cache expects an options object with at least an 'id' property.`);
   }
   if (ttl !== undefined && typeof ttl !== 'number') {
@@ -47,7 +47,7 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodCac
   }
   // #endregion
 
-  return function (target: (...args: any[]) => any, ctx: ClassMethodDecoratorContext) {
+  return function (target: (...args: any[]) => Promise<any>, ctx: ClassMethodDecoratorContext) {
     if (target.length !== 0) {
       throw new TypeError(`"${String(target.name)}" decorated with @Cache() has more than 0 parameters.`);
     }
@@ -75,8 +75,7 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodCac
     });
 
     return function (this: any) {
-      const c = map.get(this)!.get(id)!;
-      return c.initialized ? c.get() : c.reload();
+      return map.get(this)!.get(id)!.get();
     };
   };
 }
