@@ -153,41 +153,13 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
   /**
    * Gets the derived sub-cache by its name, or derives it if it doesn't exist.
    * @param name The name of the derived sub-cache.
-   * @param pureMapper Must be a **pure sync function**. It will be called without `await`.
+   * @param pureMapper Must be a **pure function**.
    */
-  getOrDerive<SubKey extends keyof Subs>(name: SubKey, pureMapper: (value: T) => Subs[SubKey]): Promise<Subs[SubKey]> {
+  getOrDerive<SubKey extends keyof Subs>(name: SubKey, pureMapFn: (value: T) => Subs[SubKey]): Promise<Subs[SubKey]> {
     if (!this.sub.has(name)) {
-      this.derive(name, pureMapper);
+      this.derive(name, pureMapFn);
     }
     return this.getSub(name);
-  }
-
-  /**
-   * Get the cached value derived by the mapper synchronously.
-   * - **Must** use it after initialization.
-   */
-  getSubSync<SubKey extends keyof Subs>(key: SubKey): Subs[SubKey] {
-    if (!this.inited) {
-      throw new Error(`Cacher is not initialized.`);
-    }
-
-    const sub = this.sub.get(key);
-    if (!sub) {
-      throw new Error(`No derived cache with name "${String(key)}".`);
-    }
-
-    // Initialized cache won't be empty.
-    if (Object.is(sub.parent, this.cache)) {
-      return sub.cache as Subs[SubKey];
-    }
-
-    const parent = this.getSync();
-    const cache = sub.fn.call(this.thisArg, parent); // ! This makes parent and cache consistent even the mapper throws
-
-    sub.parent = parent;
-    sub.cache = cache;
-
-    return cache;
   }
 
   /**
