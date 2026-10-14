@@ -86,7 +86,7 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodCac
  * - `@Cache` must be  **initialized** before `@SubCache` does.
  * @param fromId id used in Cache decorator.
  */
-export function SubCache(fromId: string): MethodSubCacheDecorator {
+export function SubCache(fromId: string | symbol): MethodSubCacheDecorator {
   return function <This, T, R>(
     target: (this: This, value?: T) => R | Promise<R>,
     _context: ClassMethodDecoratorContext<This, (this: This, value?: T) => Promise<R>>,

@@ -125,7 +125,7 @@ await check('duplicate id in the same class', 'throws: Duplicate cache id "k" fo
   new A();
 });
 
-await check('严重-1 b: @SubCache without any @Cache', 'throws: Cacher "a" not found or initialized.', () => {
+await check('严重-1 b: @SubCache without any @Cache', 'throws: Cacher "a" not found.', () => {
   class A {
     @SubCache('a')
     async b(x?: number) {
@@ -190,5 +190,11 @@ await check('中-1: sync getter with ttl expires', [1, 2], async () => {
   await sleep(40);
   const second = await c.get();
   return [first, second];
+});
+
+await check('中-5: get() during the first load waits for it', 'loaded', async () => {
+  const c = new Cacher(async () => 'loaded', 1000);
+  c.reload(); // not awaited: the first load is in flight
+  return c.get();
 });
 // #endregion

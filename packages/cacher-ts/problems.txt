@@ -33,8 +33,12 @@ cacher-ts 问题清单
       原中-5（首次加载中调用 get() 不再直接抛错：get() 改为
         `if (!this.inited || expired) return this.reload()`，实测 `c.reload(); await c.get()`
         返回加载结果而不再 reject "Cache is empty"）、
-      中-2 的部分子项（`ttl !== undefined` 冗余已改为 `typeof ttl !== 'number'`；
-        SubCache 已能收 string | symbol，实测 symbol id 可用）、
+      中-2（装饰器/构造函数参数校验：`ttl !== undefined` 冗余已改为
+        `typeof ttl !== 'number'`；id 非法时的报错已改为 “'id' must be a string or symbol.”；
+        Cacher 构造函数现校验 ttl（拒绝 NaN / 负数 / 非安全整数 / > 2147483647，放行 Infinity）与
+        getter 必须为函数；SubCache 形参已放宽为 `string | symbol`，symbol id 类型与运行时均可用
+        （不加 cast 即可编译，实测派生值正确）。注：Infinity 必须放行 —— 它是 `@Cache` 省略 ttl 时的
+        默认值，且 README/JSDoc/tests 均依赖 “Infinity never expires”）、
       另外：Cacher 构造函数的 getter 类型已放宽为 `(lastValue?: T) => T | Promise<T>`
       （同步 getter 受支持，T 推断不受影响；@Cache 仍必须 async，见高-2 —— 装饰器返回
         Promise 无法赋给同步原方法，TS1270 是硬约束）。
@@ -68,15 +72,7 @@ cacher-ts 问题清单
 （中-5 已解决并删除，见文件头。注意：get() 现在在“未初始化/已过期”时直接返回 reload()，
   即首次加载尚未完成时调用 get() 会等待该次加载，而不是抛 "Cache is empty"。）
 
-[中-2] 装饰器参数校验：仍有遗漏与冗余（部分已修，剩余见下）
-  位置：src/decorator.ts:50-64；src/cacher.ts:46 构造函数
-  - 已修：`ttl !== undefined` 冗余 → 现为 `typeof ttl !== 'number'`；
-    SubCache 已能收 string | symbol（实测 symbol id 可用）。
-  - 仍未修：不校验 NaN / 负数（实测 ttl = NaN / -1 / 0 全部被接受，Cacher 构造函数同样不校验）。
-    NaN 使 `performance.now() - last >= NaN` 恒 false，等同 Infinity（静默不过期）。
-  - 仍未修：id 不合法时的报错仍是 “@Cache expects an options object with at least an 'id' property”，
-    不如 “'id' must be a string or symbol” 准确（实测 `Cache({})` 仍报这句）。
--- 都修复了
+（中-2 已解决并删除，见文件头。ttl 校验放行 Infinity —— 它是 @Cache 省略 ttl 时的默认值。）
 
 --- 下面先不看！
 
@@ -134,9 +130,9 @@ cacher-ts 问题清单
 
 [测试-2] 装饰器覆盖：已有 examples/index.ts（`pnpm exp`），还缺以下用例
   已覆盖：同类 @Cache + @SubCache、@SubCache 写在 @Cache 前、父 @Cache + 子 @SubCache、父 @SubCache + 子 @Cache、
-          每实例隔离、同类重复 id、无 @Cache 的 @SubCache、@SubCache / getSub 的 TTL。
-  待补充：getter 同步抛错后重试（中-1）、首次加载中调用 get（中-5）、子类覆写（中-6）、
-          initializeDecoratedCaches（含 force）。
+          每实例隔离、同类重复 id、无 @Cache 的 @SubCache、@SubCache / getSub 的 TTL、
+          getter 同步抛错后重试（中-1）、首次加载中调用 get（中-5）、initializeDecoratedCaches（非 force）。
+  待补充：子类覆写（中-6）、initializeDecoratedCaches 的 force 参数。
   注意：examples 目前用 `process.exitCode = 1` 表示失败，不在 vitest / `pnpm test` 里，CI 不会跑到。
 
 ------------------------------------------------------------------
