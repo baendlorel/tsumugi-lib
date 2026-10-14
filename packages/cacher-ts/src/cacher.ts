@@ -172,7 +172,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
     }
 
     // Initialized cache won't be empty.
-    if (Object.is(sub.parent, this.cache)) {
+    if (Object.is(sub.parent, this.cache) && this.cache !== empty) {
       return sub.cache as Subs[SubKey];
     }
 

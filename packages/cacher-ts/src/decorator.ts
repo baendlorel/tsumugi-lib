@@ -57,10 +57,8 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodCac
 
     // & Ensure [sym].instanceToCacheMap exists at the same time.
     if (!map) {
-      (ctx.metadata as Metadata) = {
-        [sym]: {
-          instanceToCacheMap: (map = new WeakMap<any, Map<string | symbol, Cacher>>()),
-        },
+      (ctx.metadata as Metadata)[sym] = {
+        instanceToCacheMap: (map = new WeakMap<any, Map<string | symbol, Cacher>>()),
       };
     }
 
