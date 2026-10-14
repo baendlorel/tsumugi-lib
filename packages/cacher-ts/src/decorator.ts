@@ -56,10 +56,7 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodCac
   const { id, ttl = Infinity } = options;
 
   if (typeof id !== 'string' && typeof id !== 'symbol') {
-    throw new TypeError(`@Cache expects an options object with at least an 'id' property.`);
-  }
-  if (typeof ttl !== 'number') {
-    throw new TypeError(`@Cache expects 'ttl' to be a number if provided, got ${typeof ttl}.`);
+    throw new TypeError(`@Cache expects 'id' to be a string or symbol.`);
   }
   // #endregion
 
@@ -67,10 +64,6 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodCac
     target: (this: This) => Promise<R>,
     ctx: ClassMethodDecoratorContext<This, (this: This) => Promise<R>>,
   ) {
-    if (target.length !== 0) {
-      throw new TypeError(`"${String(target.name)}" decorated with @Cache() has more than 0 parameters.`);
-    }
-
     ctx.addInitializer(function (this: any) {
       const c = new Cacher(target, ttl).setThis(this);
 

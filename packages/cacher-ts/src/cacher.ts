@@ -44,6 +44,12 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
    * @param ttl Time-to-live for the cached value in milliseconds.
    */
   constructor(getter: (lastValue?: T) => T | Promise<T>, ttl: number) {
+    if (typeof ttl !== 'number' || !Number.isSafeInteger(ttl) || ttl < 0 || ttl > 2147483647) {
+      throw new TypeError(`ttl must be a positive integer less than 2147483647.`);
+    }
+    if (typeof getter !== 'function') {
+      throw new TypeError(`getter must be a function.`);
+    }
     this.getter = getter;
     this.ttl = ttl;
   }

@@ -26,7 +26,15 @@ cacher-ts 问题清单
       原中-1（getter 同步抛错时 pending 永久卡死：runGetter 改为
         `await Promise.resolve().then(() => this.getter.call(...))`，保证 finally 在
         reload 的 `this.pending = this.runGetter()` 赋值之后执行；实测同步抛错后可重试
-        （calls = 2、loading = false），async getter 行为不变。用例在 examples/index.ts）。
+        （calls = 2、loading = false），async getter 行为不变。用例在 examples/index.ts。
+        后改用 @shared 的 `promiseTry` 实现同一语义）、
+      原中-3（@SubCache 的前置错误改为 reject：包装函数已改成 async，实测
+        `obj.m()` 返回 promise，`Promise.resolve(p).then(…, e => …)` 能抓到 "Cacher … not found."）、
+      原中-5（首次加载中调用 get() 不再直接抛错：get() 改为
+        `if (!this.inited || expired) return this.reload()`，实测 `c.reload(); await c.get()`
+        返回加载结果而不再 reject "Cache is empty"）、
+      中-2 的部分子项（`ttl !== undefined` 冗余已改为 `typeof ttl !== 'number'`；
+        SubCache 已能收 string | symbol，实测 symbol id 可用）、
       另外：Cacher 构造函数的 getter 类型已放宽为 `(lastValue?: T) => T | Promise<T>`
       （同步 getter 受支持，T 推断不受影响；@Cache 仍必须 async，见高-2 —— 装饰器返回
         Promise 无法赋给同步原方法，TS1270 是硬约束）。
@@ -55,29 +63,20 @@ cacher-ts 问题清单
 
 （中-1 已解决并删除，见文件头。同步 getter 现已在类型与运行时上都受支持。）
 
-[中-2] 装饰器参数校验：仍有遗漏与冗余
-  位置：src/decorator.ts:32-43、src/decorator.ts:73；src/cacher.ts:44 构造函数
-  - `ttl = Infinity` 已有默认值，41 行 `ttl !== undefined` 恒真，冗余。
-  - 仍不校验 NaN / 负数（验证：均不报错）：NaN 使 `elapsed >= NaN` 恒 false，等同 Infinity（静默）；Cacher 构造函数同样不校验。
-  - id 不合法时的报错仍是 “expects an options object with at least an 'id' property”，
-    不如 “'id' must be a string or symbol” 准确。
-  - `SubCache(formId: string)` 仍只收 string，而 `Cache` 的 id 是 `string | symbol`，symbol id 无法被 @SubCache 引用。
---已经简化
-[中-3] @SubCache 的前置错误是同步抛出，而其余错误是 reject
-  位置：src/decorator.ts:79-83
-  现象（运行时验证）：@Cache 未初始化（或根本没有对应的 @Cache）时调用，@SubCache 方法是同步 throw，
-        @Cache 方法则返回被 reject 的 Promise。`obj.sub().catch(...)` 抓不到这个错误，两者对“未初始化”的表现不一致。
-        （原严重-1 修复后，“找不到 @Cache” 也从 new 时报错变成了调用时报错，同样走这里。）
-  建议：SubCache 包装函数改为 async，或把检查放进 Promise 里统一 reject。
---已改为async函数
-[中-5] 首次加载进行中时调用 get() 直接 reject “Cache is empty”，不会等待正在进行的加载
-  位置：src/cacher.ts:101-104；@SubCache 的同类检查在 src/decorator.ts:81
-  现象（运行时验证）：`c.reload(); await c.get()` → rejects "Cache is empty and has not been initialized yet."。
-        对 @Cache 来说，就是 initializeDecoratedCaches() 还没 resolve 时（例如服务启动阶段就进来的请求）
-        `await obj.cfg()` 会失败，哪怕加载马上就完成。
-  说明：get() 已经是 async，等待成本为零：`if (!this.inited) { if (this.pending !== empty) return this.pending; throw … }`。
-        如果有意如此，请在 README 写明“初始化必须 await 完成”。
---现在反回reload
+（中-3 已解决并删除，见文件头。）
+
+（中-5 已解决并删除，见文件头。注意：get() 现在在“未初始化/已过期”时直接返回 reload()，
+  即首次加载尚未完成时调用 get() 会等待该次加载，而不是抛 "Cache is empty"。）
+
+[中-2] 装饰器参数校验：仍有遗漏与冗余（部分已修，剩余见下）
+  位置：src/decorator.ts:50-64；src/cacher.ts:46 构造函数
+  - 已修：`ttl !== undefined` 冗余 → 现为 `typeof ttl !== 'number'`；
+    SubCache 已能收 string | symbol（实测 symbol id 可用）。
+  - 仍未修：不校验 NaN / 负数（实测 ttl = NaN / -1 / 0 全部被接受，Cacher 构造函数同样不校验）。
+    NaN 使 `performance.now() - last >= NaN` 恒 false，等同 Infinity（静默不过期）。
+  - 仍未修：id 不合法时的报错仍是 “@Cache expects an options object with at least an 'id' property”，
+    不如 “'id' must be a string or symbol” 准确（实测 `Cache({})` 仍报这句）。
+-- 都修复了
 
 --- 下面先不看！
 
