@@ -1,18 +1,14 @@
 import { Cacher } from './cacher.js';
 import { _weakGetOrInsertComputed } from '@shared/std/map.js';
 
-type Metadata = {
-  [sym]: {
-    instanceToCacheMap: WeakMap<any, Map<string | symbol, Cacher>>;
-  };
-};
-
 type MethodCacheDecorator = (
   target: (...args: any[]) => any,
   context: ClassMethodDecoratorContext,
 ) => (this: any) => any;
 
-const sym = Symbol();
+// & Keyed by instance, so it doesn't matter which class (parent or child) declares the decorators, or in which order.
+// & Also no reliance on `context.metadata`, which is undefined where `Symbol.metadata` is missing (e.g. tsc output on Node 24).
+const instanceToCacheMap = new WeakMap<any, Map<string | symbol, Cacher>>();
 const cachers = new Set<Cacher>();
 
 /**
@@ -52,20 +48,10 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodCac
       throw new TypeError(`"${String(target.name)}" decorated with @Cache() has more than 0 parameters.`);
     }
 
-    let map: WeakMap<any, Map<string | symbol, Cacher>> | undefined = (ctx.metadata as Metadata)?.[sym]
-      ?.instanceToCacheMap;
-
-    // & Ensure [sym].instanceToCacheMap exists at the same time.
-    if (!map) {
-      (ctx.metadata as Metadata)[sym] = {
-        instanceToCacheMap: (map = new WeakMap<any, Map<string | symbol, Cacher>>()),
-      };
-    }
-
     ctx.addInitializer(function (this: any) {
       const cacher = new Cacher(target, ttl).setThis(this);
       cachers.add(cacher);
-      const idToCacherMap = _weakGetOrInsertComputed(map, this, () => new Map());
+      const idToCacherMap = _weakGetOrInsertComputed(instanceToCacheMap, this, () => new Map());
       if (idToCacherMap.has(id)) {
         throw new Error(`Duplicate cache id "${String(id)}" for the same instance.`);
       }
@@ -73,7 +59,7 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodCac
     });
 
     return function (this: any) {
-      return map.get(this)!.get(id)!.get();
+      return instanceToCacheMap.get(this)!.get(id)!.get();
     };
   };
 }
@@ -85,26 +71,13 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodCac
  * @param formId id used in Cache decorator.
  */
 export function SubCache(formId: string) {
-  return function (target: (...args: any[]) => any, context: ClassMethodDecoratorContext) {
+  return function (target: (...args: any[]) => any, _context: ClassMethodDecoratorContext) {
     const sk = Symbol() as any;
 
-    let cacheMap: WeakMap<any, Map<string | symbol, Cacher>> | undefined = undefined;
-
-    // ! Although to @Cache, here is settled
-    // ! We cannot assure that @SubCache initializes before @Cache.
-    // ! So we can only get cacheMap for now.
-    context.addInitializer(function (this: any) {
-      if (cacheMap) {
-        return; // Maybe it's already initialized, because the range with-in the decorator context are the same.
-      }
-      cacheMap = (context.metadata as Metadata)?.[sym]?.instanceToCacheMap;
-      if (!cacheMap) {
-        throw new Error(`'cacheMap' for "${String(formId)}" not found.`);
-      }
-    });
-
+    // ! Cannot check for the @Cache at construction: @SubCache's initializer may run first
+    // ! (declared above it, or declared in a parent class while @Cache is in the child).
     return function (this: any) {
-      const c = cacheMap!.get(this)?.get(formId);
+      const c = instanceToCacheMap.get(this)?.get(formId);
       if (!c?.initialized) {
         throw new Error(`Cacher "${String(formId)}" not found or initialized.`);
       }

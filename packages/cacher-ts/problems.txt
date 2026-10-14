@@ -1,76 +1,52 @@
 cacher-ts 问题清单
 ==================
-范围：src/cacher.ts、src/decorator.ts、README.md、tests/、package.json
+范围：src/cacher.ts、src/decorator.ts、README.md、tests/、examples/、package.json
 说明：已排除“文档/注释中已约定、代码选择信任”的事项（例如：getter 自行处理错误、后台刷新失败由用户处理、
       mapper 必须是纯同步函数、@Cache 方法不得带参数、@SubCache 须先让 @Cache 初始化、
       cachers 集合不注销（Nestjs 风格，实例常驻）、子类 @SubCache 以实例为键 等）。
-      下列“运行时验证”均为实际运行（esbuild 按 TC39 装饰器转译 + node 24.5）得到的结果；
-      “类型验证”为 tsc 6.0.3（strict）实测。标【新】的是本轮新发现。
+      “运行时验证”：装饰器相关的用例写在 examples/index.ts（`pnpm exp`，tsx 转译）；
+      其余为 esbuild/tsc 转译 + node 24.5 实测。“类型验证”为 tsc 6.0.3（strict）实测。
 等级：[严重] 功能不可用/数据错误；[高] 明显行为缺陷；[中] 不稳定/不完善；[低] 细节/文档。
 已解决并删除：cachers 泄漏（设计如此）、initializeDecoratedCaches 语义、装饰后方法返回类型、
       脱离接收者调用、SubCache 继承、reload/pending 时序（runGetter）、Cache 选项里 symbol 的校验、
-      metadata 共享（同类 @Cache/@SubCache 联用、@SubCache 写在 @Cache 前、子类 @SubCache 用父类 @Cache 均已验证正常）、
-      重复 id 检测（new 时报错）、getSub 未加载就 derive 时返回 Symbol（原高-1）、
-      “Zero dependencies”（已确认构建产物内联了 @shared/std/map.js，无外部 import）。
-编号：本轮删除原高-1 后重新编号，原高-2 → 高-1。
+      重复 id 检测（new 时报错）、getSub 未加载就 derive 时返回 Symbol、
+      “Zero dependencies”（构建产物已内联 @shared/std/map.js，无外部 import）、
+      原严重-1（装饰器依赖 context.metadata：已改为模块级 WeakMap，不再使用 metadata。
+        tsc 输出（无 Symbol.metadata）、无 @Cache 的 @SubCache、父类 @SubCache + 子类 @Cache 均已验证正常，
+        用例在 examples/index.ts）、
+      原高-1（getSub 先 `await this.get()`，过期会 reload，已验证）、
+      原中-4（getSync 后台刷新的 Unhandled Rejection：getSync 已删除）。
+编号：本轮不再重新编号，剩下的条目保持原编号。
 
 ------------------------------------------------------------------
 一、严重
 ------------------------------------------------------------------
 
-[严重-1] 装饰器依赖 context.metadata，仍有三种情况直接抛 TypeError
-  位置：src/decorator.ts:55-63（Cache）、src/decorator.ts:100（SubCache）
-  a)【新】用 tsc 编译时，所有带 @Cache 的类在【定义时】就抛错（运行时验证）：
-       Node 24 没有 Symbol.metadata。tsc 的降级输出是
-       `_metadata = Symbol.metadata ? Object.create(null) : void 0`，于是 ctx.metadata 为 undefined，
-       60 行 `(ctx.metadata as Metadata)[sym] = …` → "Cannot set properties of undefined (setting 'Symbol()')"。
-       esbuild/tsdown 能用只是因为它们自带 `Symbol.for('Symbol.metadata')` 兜底。
-       README 写的是“标准 TC39 装饰器、关掉 experimentalDecorators 即可”，并没有说只支持 esbuild 系。
-       （这就是上一轮“附：没有 Symbol.metadata 的环境”那一条，实测确认会出现。）
---将测试用句写在examples/index.ts中，我已经写了pnpm exp命令来运行。tsx可以很好地处理装饰器测试。
-  b) 100 行 `?.[sym].instanceToCacheMap` 仍然少了第二个 `?.`（上一轮的 c 没改）：
-       类里没有任何 @Cache 时，抛 "Cannot read properties of undefined (reading 'instanceToCacheMap')"，
-       到不了下一行本该给出的 `'cacheMap' for "a" not found.`。
---补上了
-  c)【新】父类写 @SubCache、子类写 @Cache（抽象基类声明派生视图、子类提供数据源）同样抛 b 的 TypeError：
-       父类装饰器拿到的是父类的 metadata 对象，子类的 [sym] 写在子类 metadata 上，父类看不到。、
---你帮我改
-  修复建议：map 本来就以实例为键，根本不需要 metadata。
-        改成模块级的 `const instanceToCacheMap = new WeakMap<object, Map<string | symbol, Cacher>>()`，
-        @Cache/@SubCache 都直接查它：a/b/c 一起消失，SubCache 初始化器里缓存 cacheMap 的逻辑也可以删掉。
-        只有想在“类定义时”就检测重复 id 时才需要 metadata，那时也要处理 metadata 为 undefined 的情况。
+（暂无）
+
 ------------------------------------------------------------------
 二、高
 ------------------------------------------------------------------
 
-[高-1] @SubCache / getSub 仍不会触发父缓存的 TTL 刷新
-  位置：src/cacher.ts:175-179
-  现象（运行时验证）：@Cache({ttl:50}) + @SubCache，读过一次派生值后等待 80ms 再读：
-        派生值不变、getter 调用次数不变（仍为 1）；直接用 Cacher.getSub 结果相同。
-  原因：getSub 先走 `Object.is(sub.parent, this.cache)` 快速返回，只有 parent 变化时才 `await this.get()`；
-        “父值没变”是常态，所以永远不检查 ttl，只读派生视图的用法等于永不过期。
-  修复：把 `const parent = await this.get()` 放到判等之前（过期时 get 内部 reload 并等待新值），
-        再用 `Object.is(sub.parent, parent)` 判断（这样 175 行的 `this.cache !== empty` 也可以去掉，get 会先抛未初始化）。
-  如果就是想“派生视图不续期”，请在 README 里明确写出来。
---已经改用this.get来获取current
+（高-1 已解决）
 
 
 ---------以下先不看！
 
 
 
-[高-2]【新】装饰器的类型签名太宽：@Cache 接受同步方法而类型说谎；README 的 @SubCache 写法编译不过
-  位置：src/decorator.ts:10-13（MethodCacheDecorator）、src/decorator.ts:87-88（SubCache）
+[高-2] 装饰器的类型签名太宽：@Cache 接受同步方法而类型说谎；README 的 @SubCache 写法编译不过
+  位置：src/decorator.ts:4-7（MethodCacheDecorator）、src/decorator.ts:46、src/decorator.ts:73-74（SubCache）
   类型验证：
     - `@Cache({id:'x'}) m(): number { return 1 }` 编译通过，`const n: number = obj.m()` 也通过，
-      运行时却是 Promise<number>。提交 8974f50 说“锁定返回值为 Promise”，但只锁在了 50 行内部函数的参数上，
+      运行时却是 Promise<number>。提交 8974f50 说“锁定返回值为 Promise”，但只锁在了 46 行内部函数的参数上，
       对外的 MethodCacheDecorator 是 `(target: (...args: any[]) => any, …)`，限制被抹掉了。
       （同步方法还会触发中-1：同步抛一次错，缓存就永久卡死。）
     - README 的写法 `@SubCache('cfg') adminNames(cfg: ConfigShape) { return …string[] }` 报 TS1270
       （装饰器返回 Promise，无法赋给 `(cfg) => string[]`）；`config.adminNames()` 不传参报 TS2554。
       `async v(cfg: Cfg)` 能声明，但调用 `obj.v()` 仍报 TS2554。
-      实测能编译通过的只有 `async view(cfg?: Cfg): Promise<R>` 这一种，而它正好违反 JSDoc 的
-      “Decorated method must be SYNC”，README 也没写。
+      实测能编译通过的只有 `async view(cfg?: Cfg): Promise<R>` 这一种（examples/index.ts 里就是这么写的），
+      而它正好违反 JSDoc 的 “Decorated method must be SYNC”，README 也没写。
   修复建议（已用 tsc 验证：同步方法会报错，async 方法通过，调用处类型正确）：
         Cache(...)    : <This, R>(target: (this: This) => Promise<R>,
                                   ctx: ClassMethodDecoratorContext<This, (this: This) => Promise<R>>) => (this: This) => Promise<R>
@@ -94,38 +70,29 @@ cacher-ts 问题清单
         或在 reload() 里用 `.finally` 清 pending，或用 `Promise.resolve().then(() => getter…)` 包一层。
 
 [中-2] 装饰器参数校验：仍有遗漏与冗余
-  位置：src/decorator.ts:36-47、src/decorator.ts:87；src/cacher.ts:44 构造函数
-  - `ttl = Infinity` 已有默认值，45 行 `ttl !== undefined` 恒真，冗余。
+  位置：src/decorator.ts:32-43、src/decorator.ts:73；src/cacher.ts:44 构造函数
+  - `ttl = Infinity` 已有默认值，41 行 `ttl !== undefined` 恒真，冗余。
   - 仍不校验 NaN / 负数（验证：均不报错）：NaN 使 `elapsed >= NaN` 恒 false，等同 Infinity（静默）；Cacher 构造函数同样不校验。
   - id 不合法时的报错仍是 “expects an options object with at least an 'id' property”，
     不如 “'id' must be a string or symbol” 准确。
   - `SubCache(formId: string)` 仍只收 string，而 `Cache` 的 id 是 `string | symbol`，symbol id 无法被 @SubCache 引用。
 
 [中-3] @SubCache 的前置错误是同步抛出，而其余错误是 reject
-  位置：src/decorator.ts:106-110
-  现象（运行时验证）：@Cache 未初始化时调用，@SubCache 方法是同步 throw，@Cache 方法则返回被 reject 的 Promise。
-        `obj.sub().catch(...)` 抓不到这个错误，两者对“未初始化”的表现不一致。
+  位置：src/decorator.ts:79-83
+  现象（运行时验证）：@Cache 未初始化（或根本没有对应的 @Cache）时调用，@SubCache 方法是同步 throw，
+        @Cache 方法则返回被 reject 的 Promise。`obj.sub().catch(...)` 抓不到这个错误，两者对“未初始化”的表现不一致。
+        （原严重-1 修复后，“找不到 @Cache” 也从 new 时报错变成了调用时报错，同样走这里。）
   建议：SubCache 包装函数改为 async，或把检查放进 Promise 里统一 reject。
 
-[中-4]【新】后台刷新（getSync 触发）失败时必然产生 Unhandled Rejection，README 给的处理办法无效
-  位置：src/cacher.ts:121-123
-  现象（运行时验证）：过期后调用 getSync()，再按 README 所说给 `cacher.loading` 挂上 `.catch`，
-        仍然得到一条 unhandledRejection（'refresh boom'）。Node 默认遇到 unhandled rejection 会让进程退出。
-  原因：loading 是 runGetter 的 promise；getSync 里 `this.reload()` 返回的是另一个 promise（async 函数包了一层），
-        它被丢弃，reject 时无人处理。用户拿不到这个 promise，无论怎么写都没法处理。
-  说明：排除项里约定了“后台刷新失败由用户处理”，但现在用户只剩一种办法：让 getter 永不 reject。
-        README “attach a handler if nothing awaits reload()/loading” 这条做不到。
-  修复：getSync 里写 `this.reload().catch(() => {})`（错误仍可从 loading 观察到），并在 README 写明。
-
-[中-5]【新】首次加载进行中时调用 get() 直接 reject “Cache is empty”，不会等待正在进行的加载
-  位置：src/cacher.ts:101-104；@SubCache 的同类检查在 src/decorator.ts:108
+[中-5] 首次加载进行中时调用 get() 直接 reject “Cache is empty”，不会等待正在进行的加载
+  位置：src/cacher.ts:101-104；@SubCache 的同类检查在 src/decorator.ts:81
   现象（运行时验证）：`c.reload(); await c.get()` → rejects "Cache is empty and has not been initialized yet."。
         对 @Cache 来说，就是 initializeDecoratedCaches() 还没 resolve 时（例如服务启动阶段就进来的请求）
         `await obj.cfg()` 会失败，哪怕加载马上就完成。
   说明：get() 已经是 async，等待成本为零：`if (!this.inited) { if (this.pending !== empty) return this.pending; throw … }`。
-        getSync 无法等待，继续抛错即可。如果有意如此，请在 README 写明“初始化必须 await 完成”。
+        如果有意如此，请在 README 写明“初始化必须 await 完成”。
 
-[中-6]【新】子类覆写 @Cache 方法的行为未定义
+[中-6] 子类覆写 @Cache 方法的行为未定义
   现象（运行时验证）：
     - 子类用【相同 id】覆写：`new` 时抛 `Duplicate cache id "load" for the same instance.`；
       这是覆写方法时最自然的写法（还能让父类的 @SubCache('load') 继续指向它），现在会直接报错。
@@ -138,46 +105,47 @@ cacher-ts 问题清单
 ------------------------------------------------------------------
 
 [文档-1] README 尚未随这次重写更新（与实现严重脱节，会直接导致用户写出无法工作的代码）
-  - 主打“同步读取 get(): T”，现在是 `get(): Promise<T>`，同步读是 `getSync()`（README 未提及 getSync）。
+  - 主打“同步读取 get(): T”，现在是 `get(): Promise<T>`，且 getSync 已删除，没有同步读取了；
+    “stale-while-revalidate / get() 可能返回一次旧值”的说法也不再成立（get 过期时会等待 reload）。
   - `isInitialized` → 代码是 `initialized`。
   - `@Cache()` / `@Cache(ttl)` / `@Cache(key, ttl)` → 代码是 `@Cache({ id, ttl? })`，id 必填。
   - `new Cacher<ConfigSubs, typeof loadRemoteConfig>(...)`：第二个泛型现在是“值类型”。
   - “Sync and async getters”一节：按决定改成“getter 一定返回 Promise，推荐使用 async”，reload() 恒返回 Promise。
-  - `getSub()` 现在是 async：会 `await this.get()`，README 仍写“同步、不触发 reload”（另见高-1）。
+  - `getSub()` 现在是 async：每次都会 `await this.get()`（过期时等待 reload），README 仍写“同步、不触发 reload”。
   - @SubCache：现在返回 Promise，父未初始化时同步抛错；README 写的“同步 getter 时直接返回值”已不成立；
-    示例代码本身类型检查不过（见高-2）；“通过写在实例上的 registry 访问”实际是 metadata 上的 WeakMap。
-  - “attach a handler if nothing awaits reload()/loading” 做不到（见中-4）。
+    示例代码本身类型检查不过（见高-2）；“通过写在实例上的 registry 访问”实际是模块内以实例为键的 WeakMap。
+  - “A refresh triggered from get() is fire-and-forget, so attach a handler…”：已没有后台刷新，删掉或改写。
   - README 没提 initializeDecoratedCaches（也没有导出，见导出-1）。
-  - 只在 esbuild/tsdown 下能用（见严重-1 a），修好之前至少要写明。
 
 [文档-2] 注释与行为不符 / 遗留代码
   - cacher.ts:50 `initialized` 注释 “Checks if the cache is empty” 语义相反（应为“是否已成功加载过”）。
   - cacher.ts:58 `setThis` 注释 “If the cache is empty, it will trigger a reload.” 实际不会触发 reload。
   - cacher.ts:99 `get()` 注释 “it will trigger the initialization”：实际是触发 reload 并等待其结果。
-  - cacher.ts:189-193 遗留的被注释掉的试验代码。
-  - decorator.ts:93-95、98 SubCache 内 “Although to @Cache, here is settled” 等注释不通顺。
-  - mapper 能否 async 前后矛盾：derive JSDoc（cacher.ts:132）写 “pure sync … called without `await`”，
-    SubCache JSDoc（decorator.ts:83）写 “must be SYNC”，但 getSub（cacher.ts:180）实际 `await` 了 mapper，
+  - cacher.ts:160-165：`current !== empty` 恒真（get() 未初始化会先抛错），`const parent = current` 是多余的别名，
+    160 行注释 “Initialized cache won't be empty.” 也随之可删。
+  - cacher.ts:175-179 遗留的被注释掉的试验代码。
+  - mapper 能否 async 前后矛盾：derive JSDoc（cacher.ts:117）写 “pure sync … called without `await`”，
+    SubCache JSDoc（decorator.ts:69）写 “must be SYNC”，但 getSub（cacher.ts:166）实际 `await` 了 mapper，
     而且 @SubCache 只有写成 async 才能通过类型检查（见高-2）。需要统一。
-  - cacher.ts getOrDerive 的参数名 `pureMapFn` 与 JSDoc 的 `@param pureMapper` 不一致。
-  - decorator.ts `formId` 应为 `fromId`（或直接叫 `id`）。
+  - cacher.ts:143 getOrDerive 的参数名 `pureMapFn` 与 JSDoc 的 `@param pureMapper` 不一致。
+  - decorator.ts:71/73 `formId` 应为 `fromId`（或直接叫 `id`）。
 
 [导出-1] initializeDecoratedCaches 仍未从 src/index.ts 导出
   现象：公开 API（有 JSDoc），但包入口只导出 Cacher/Cache/SubCache（已查看构建出的 index.d.mts），用户无法使用；
         而 @Cache 之后必须先调用它，否则 get() 抛 “Cache is empty”。
-  另外 Metadata / SubCacheEntry 等类型未导出。
+        （examples/index.ts 目前只能从 '../src/decorator.js' 直接导入。）
+  另外 SubCacheEntry 等类型未导出。
 
 [测试-1] 测试仍基于旧 API，30/37 失败，且有 15 个 Unhandled Rejection（npx vitest run packages/cacher-ts）
   原因：同步 getter、`load()`、`isInitialized`、get 同步返回、getSub 同步等旧语义。
-  需要按新 API 重写（get / getSync / reload / loading / getSub 为 async）。
+  需要按新 API 重写（get / reload / loading / getSub 为 async；getSync 已删除）。
 
-[测试-2] 装饰器零覆盖
-  建议补充：基本缓存、每实例隔离、同类/继承下重复 id 检测、@Cache + @SubCache 联用、
-  父类 @SubCache + 子类 @Cache（严重-1 c）、无 @Cache 的 @SubCache（严重-1 b）、
-  @SubCache 的 TTL（高-1）、getter 同步抛错后重试（中-1）、getSync 后台刷新失败（中-4）、
-  首次加载中调用 get（中-5）、子类覆写（中-6）、initializeDecoratedCaches（含 force）。
-  另外 vitest 当前配置（oxc）无法直接解析 TC39 装饰器语法，需要在 vitest/tsconfig 里启用装饰器转译；
-  建议至少有一组用例在“没有 Symbol.metadata 兜底”的转译下跑（严重-1 a）。
+[测试-2] 装饰器覆盖：已有 examples/index.ts（`pnpm exp`），还缺以下用例
+  已覆盖：同类 @Cache + @SubCache、@SubCache 写在 @Cache 前、父 @Cache + 子 @SubCache、父 @SubCache + 子 @Cache、
+          每实例隔离、同类重复 id、无 @Cache 的 @SubCache、@SubCache / getSub 的 TTL。
+  待补充：getter 同步抛错后重试（中-1）、首次加载中调用 get（中-5）、子类覆写（中-6）、
+          initializeDecoratedCaches（含 force）。
+  注意：examples 目前用 `process.exitCode = 1` 表示失败，不在 vitest / `pnpm test` 里，CI 不会跑到。
 
 ------------------------------------------------------------------
 五、低 ——先不看
@@ -186,16 +154,16 @@ cacher-ts 问题清单
 [低-1] implements/old1.ts 是旧版实现（含 clear()/clearAfterPromise），仍被 tsconfig include 编译，
       与现行 API 冲突且无说明；建议移走或标注为历史草稿。
 [低-2] package.json：`scripts.test` 使用 `clear && vitest`（非交互/CI 环境下 clear 可能报错且 vitest 默认进入 watch）；
-      缺少 `sideEffects: false`；无 `engines`（使用了 performance.now、WeakKey 类型、装饰器 metadata）。
+      缺少 `sideEffects: false`；无 `engines`（使用了 performance.now、WeakKey 类型）。
 [低-3] Cacher 的 private 成员用 `/* @internal */` + stripInternal 从 .d.ts 中剥除，
       发布后的类型里 Cacher 变为无私有成员的结构类型，不再具有名义性。
       另：runGetter 漏了 `/* @internal */`，构建出的 .d.ts 里只剩一个孤零零的 `private runGetter;`。
 [低-4] getOrDerive 在 name 已存在但 mapper 不同时静默忽略新 mapper（只在首次登记时生效），README 未说明。
 [低-5] getSub 以 Object.is 判等：getter 每次返回新对象（常见的 fetch().json()）时，每次刷新后派生值都会重算，
       没有可选的 equals 比较。
-[低-6]【新】泛型顺序 `Cacher<Subs, T>`：TS 不支持部分推断，只要显式写了 Subs，T 就退化为 any。
+[低-6] 泛型顺序 `Cacher<Subs, T>`：TS 不支持部分推断，只要显式写了 Subs，T 就退化为 any。
       类型验证：`new Cacher<{ doubled: number }>(async () => 'str', 1000)` 之后 `get()` 是 any，
       `derive('doubled', x => x.not.a.real.property)` 也能编译。可考虑把 T 放到第一位，或让 derive 自己推断子类型。
-[低-7]【新】Cache 初始化器里 `cachers.add(cacher)`（decorator.ts:67）在重复 id 检查之前：
+[低-7] Cache 初始化器里 `cachers.add(cacher)`（decorator.ts:53）在重复 id 检查之前：
       重复 id 导致 new 失败后，这个半成品实例的 cacher 仍留在全局集合里，
       initializeDecoratedCaches 会照样执行它们的 getter（验证：失败实例上的 getter 被调用了 2 次）。把检查移到 add 之前即可。
