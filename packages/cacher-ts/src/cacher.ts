@@ -157,11 +157,12 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
     }
 
     // Initialized cache won't be empty.
-    if (Object.is(sub.parent, this.cache) && this.cache !== empty) {
+    const current = await this.get();
+    if (Object.is(sub.parent, current) && current !== empty) {
       return sub.cache as Subs[SubKey];
     }
 
-    const parent = await this.get();
+    const parent = current;
     const cache = await sub.fn.call(this.thisArg, parent); // ! This makes parent and cache consistent even the mapper throws
 
     sub.parent = parent;

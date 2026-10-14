@@ -27,16 +27,18 @@ cacher-ts 问题清单
        esbuild/tsdown 能用只是因为它们自带 `Symbol.for('Symbol.metadata')` 兜底。
        README 写的是“标准 TC39 装饰器、关掉 experimentalDecorators 即可”，并没有说只支持 esbuild 系。
        （这就是上一轮“附：没有 Symbol.metadata 的环境”那一条，实测确认会出现。）
+--将测试用句写在examples/index.ts中，我已经写了pnpm exp命令来运行。tsx可以很好地处理装饰器测试。
   b) 100 行 `?.[sym].instanceToCacheMap` 仍然少了第二个 `?.`（上一轮的 c 没改）：
        类里没有任何 @Cache 时，抛 "Cannot read properties of undefined (reading 'instanceToCacheMap')"，
        到不了下一行本该给出的 `'cacheMap' for "a" not found.`。
+--补上了
   c)【新】父类写 @SubCache、子类写 @Cache（抽象基类声明派生视图、子类提供数据源）同样抛 b 的 TypeError：
-       父类装饰器拿到的是父类的 metadata 对象，子类的 [sym] 写在子类 metadata 上，父类看不到。
+       父类装饰器拿到的是父类的 metadata 对象，子类的 [sym] 写在子类 metadata 上，父类看不到。、
+--你帮我改
   修复建议：map 本来就以实例为键，根本不需要 metadata。
         改成模块级的 `const instanceToCacheMap = new WeakMap<object, Map<string | symbol, Cacher>>()`，
         @Cache/@SubCache 都直接查它：a/b/c 一起消失，SubCache 初始化器里缓存 cacheMap 的逻辑也可以删掉。
         只有想在“类定义时”就检测重复 id 时才需要 metadata，那时也要处理 metadata 为 undefined 的情况。
-
 ------------------------------------------------------------------
 二、高
 ------------------------------------------------------------------
@@ -50,6 +52,12 @@ cacher-ts 问题清单
   修复：把 `const parent = await this.get()` 放到判等之前（过期时 get 内部 reload 并等待新值），
         再用 `Object.is(sub.parent, parent)` 判断（这样 175 行的 `this.cache !== empty` 也可以去掉，get 会先抛未初始化）。
   如果就是想“派生视图不续期”，请在 README 里明确写出来。
+--已经改用this.get来获取current
+
+
+---------以下先不看！
+
+
 
 [高-2]【新】装饰器的类型签名太宽：@Cache 接受同步方法而类型说谎；README 的 @SubCache 写法编译不过
   位置：src/decorator.ts:10-13（MethodCacheDecorator）、src/decorator.ts:87-88（SubCache）
