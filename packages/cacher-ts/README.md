@@ -95,7 +95,9 @@ Pass the getter's type alongside `Subs` — `new Cacher<ConfigSubs>(...)` alone 
 
 ### Sync and async getters
 
-One class — the getter you hand it decides the behavior. A sync getter recomputes in place when the entry expires, and `reload()` returns its value directly. An async getter is awaited in the background, which is what enables stale-while-revalidate, and `reload()` returns the thenable; either way `reload()` mirrors the getter's own type.
+The getter is typed `(lastValue?: T) => T | Promise<T>` and is always awaited, so a sync getter is interchangeable with an async one: `get()` and `reload()` return `Promise<T>` either way, and a throwing sync getter stays retryable like a rejecting async one.
+
+The `@Cache()` decorator is stricter and requires the method to be `async` — see below for why.
 
 ### `@Cache()`
 
@@ -128,6 +130,8 @@ async cfg(last?: Config) {
 ```
 
 Errors are yours, as everywhere else: a throwing method propagates, nothing is cached, and the next call retries. The decorator uses standard (TC39) decorator semantics, so keep `experimentalDecorators` **off** — the default in modern TypeScript and in tsdown/esbuild.
+
+The decorated method **must be `async`** — unlike a hand-written `Cacher`, where a sync getter is fine. A decorator cannot change a method's signature: `@Cache()` replaces the method with a wrapper returning `Promise<R>`, and TypeScript requires that wrapper's return type to be assignable to the original method's type. A sync `() => number` method therefore fails to compile (`TS1270`), which is correct — the value is only ever available through a promise.
 
 ### `@SubCache()`
 

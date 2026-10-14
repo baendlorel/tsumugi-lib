@@ -22,7 +22,14 @@ cacher-ts 问题清单
         tsc 6.0.3（strict）实测：sync @Cache 报 TS1241/TS1270、README 式 sync @SubCache 报 TS1241/TS1270、
         必填参数报 TS1241（'undefined' not assignable），`async m(x?: T): Promise<R>` 通过且
         `obj.m()` 类型为 `Promise<R>`，examples/index.ts 类型检查通过）、
-      原中-4（getSync 后台刷新的 Unhandled Rejection：getSync 已删除）。
+      原中-4（getSync 后台刷新的 Unhandled Rejection：getSync 已删除）、
+      原中-1（getter 同步抛错时 pending 永久卡死：runGetter 改为
+        `await Promise.resolve().then(() => this.getter.call(...))`，保证 finally 在
+        reload 的 `this.pending = this.runGetter()` 赋值之后执行；实测同步抛错后可重试
+        （calls = 2、loading = false），async getter 行为不变。用例在 examples/index.ts）。
+      另外：Cacher 构造函数的 getter 类型已放宽为 `(lastValue?: T) => T | Promise<T>`
+      （同步 getter 受支持，T 推断不受影响；@Cache 仍必须 async，见高-2 —— 装饰器返回
+        Promise 无法赋给同步原方法，TS1270 是硬约束）。
 编号：本轮不再重新编号，剩下的条目保持原编号。
 
 ------------------------------------------------------------------
@@ -47,15 +54,7 @@ cacher-ts 问题清单
 三、中
 ------------------------------------------------------------------
 
-[中-1] getter 同步抛错时 pending 永远不会被清除，之后 reload() 全部卡死
-  位置：src/cacher.ts:65-75、src/cacher.ts:85
-  现象（运行时验证）：getter 同步 throw（`() => { throw … }`，或 @Cache 装饰的非 async 方法，见高-2）时，
-        runGetter 是 async 函数，`finally { this.pending = empty }` 在同步抛错时会【先于】
-        85 行 `this.pending = this.runGetter()` 的赋值执行，于是 pending 被赋成一个已 reject 的 promise 后再也不清；
-        之后 `loading` 恒为 truthy，reload()/get() 永远直接返回这个旧的 rejected promise，再也不会重试。
-        直接用 Cacher 和用 @Cache + initializeDecoratedCaches 都复现：第二次仍拿到旧错误，getter 调用次数为 1。
-  修复：runGetter 开头加一个 `await undefined`（保证 finally 在赋值之后执行），
-        或在 reload() 里用 `.finally` 清 pending，或用 `Promise.resolve().then(() => getter…)` 包一层。
+（中-1 已解决并删除，见文件头。同步 getter 现已在类型与运行时上都受支持。）
 
 [中-2] 装饰器参数校验：仍有遗漏与冗余
   位置：src/decorator.ts:32-43、src/decorator.ts:73；src/cacher.ts:44 构造函数

@@ -1,4 +1,5 @@
 import { empty } from './common.js';
+import { promiseTry } from '@shared/std/promise.js';
 
 interface SubCacheEntry<T, TSub = any> {
   /**
@@ -19,7 +20,7 @@ interface SubCacheEntry<T, TSub = any> {
 
 export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = any> {
   /* @internal */
-  private readonly getter: (lastValue?: T) => Promise<T>;
+  private readonly getter: (lastValue?: T) => T | Promise<T>;
   /* @internal */
   private readonly ttl: number;
 
@@ -38,10 +39,11 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
 
   /**
    * Create a cacher instance.
-   * @param getter An async value getter. **Remember to handle errors in your getter**.
+   * @param getter A value getter, sync or async. **Remember to handle errors in your getter**.
+   *   A sync getter is awaited like any other, so both kinds are interchangeable at the call site.
    * @param ttl Time-to-live for the cached value in milliseconds.
    */
-  constructor(getter: (lastValue?: T) => Promise<T>, ttl: number) {
+  constructor(getter: (lastValue?: T) => T | Promise<T>, ttl: number) {
     this.getter = getter;
     this.ttl = ttl;
   }
@@ -64,7 +66,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
 
   private async runGetter() {
     try {
-      const data = await this.getter.call(this.thisArg, this.cache === empty ? undefined : this.cache);
+      const data = await promiseTry(this.getter, this.thisArg, this.cache === empty ? undefined : this.cache);
       this.inited = true;
       this.last = performance.now();
       this.cache = data;

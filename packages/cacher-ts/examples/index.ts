@@ -169,3 +169,26 @@ await check('高-1: Cacher.getSub reloads the expired parent', { first: 1, secon
   return { first, second, calls };
 });
 // #endregion
+
+// #region sync getters
+await check('中-1: sync getter that throws stays retryable', { first: 'throws: boom', second: 'ok', calls: 2 }, async () => {
+  let calls = 0;
+  const c = new Cacher(() => {
+    if (++calls === 1) throw new Error('boom');
+    return 'ok';
+  }, 1000);
+  const first = await c.reload().then((v) => v, (e: Error) => `throws: ${e.message}`);
+  const second = await c.reload().then((v) => v, (e: Error) => `throws: ${e.message}`);
+  return { first, second, calls };
+});
+
+await check('中-1: sync getter with ttl expires', [1, 2], async () => {
+  let calls = 0;
+  const c = new Cacher(() => ++calls, 20);
+  await c.reload();
+  const first = await c.get();
+  await sleep(40);
+  const second = await c.get();
+  return [first, second];
+});
+// #endregion
