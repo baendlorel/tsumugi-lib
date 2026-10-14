@@ -155,18 +155,18 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
    * @param name The name of the derived sub-cache.
    * @param pureMapper Must be a **pure sync function**. It will be called without `await`.
    */
-  getOrDerive<SubKey extends keyof Subs>(name: SubKey, pureMapper: (value: T) => Subs[SubKey]): Subs[SubKey] {
+  getOrDerive<SubKey extends keyof Subs>(name: SubKey, pureMapper: (value: T) => Subs[SubKey]): Promise<Subs[SubKey]> {
     if (!this.sub.has(name)) {
       this.derive(name, pureMapper);
     }
     return this.getSub(name);
   }
 
-  // TODO 这里也改为sync版和async版
   /**
-   * Get the cached value derived by the mapper.
+   * Get the cached value derived by the mapper synchronously.
+   * - **Must** use it after initialization.
    */
-  getSub<SubKey extends keyof Subs>(key: SubKey): Subs[SubKey] {
+  getSubSync<SubKey extends keyof Subs>(key: SubKey): Subs[SubKey] {
     if (!this.inited) {
       throw new Error(`Cacher is not initialized.`);
     }
@@ -181,8 +181,31 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
       return sub.cache as Subs[SubKey];
     }
 
-    const parent = this.get();
+    const parent = this.getSync();
     const cache = sub.fn.call(this.thisArg, parent); // ! This makes parent and cache consistent even the mapper throws
+
+    sub.parent = parent;
+    sub.cache = cache;
+
+    return cache;
+  }
+
+  /**
+   * Get the cached value derived by the mapper.
+   */
+  async getSub<SubKey extends keyof Subs>(key: SubKey): Promise<Subs[SubKey]> {
+    const sub = this.sub.get(key);
+    if (!sub) {
+      throw new Error(`No derived cache with name "${String(key)}".`);
+    }
+
+    // Initialized cache won't be empty.
+    if (Object.is(sub.parent, this.cache)) {
+      return sub.cache as Subs[SubKey];
+    }
+
+    const parent = await this.get();
+    const cache = await sub.fn.call(this.thisArg, parent); // ! This makes parent and cache consistent even the mapper throws
 
     sub.parent = parent;
     sub.cache = cache;
