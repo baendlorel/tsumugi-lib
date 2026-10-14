@@ -101,11 +101,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
    * If the cached value is outdated, it will trigger the initialization.
    */
   async get(): Promise<T> {
-    if (!this.inited) {
-      throw new Error('Cache is empty and has not been initialized yet.');
-    }
-
-    if (performance.now() - this.last >= this.ttl) {
+    if (!this.inited || performance.now() - this.last >= this.ttl) {
       return this.reload();
     }
     return this.cache as T;

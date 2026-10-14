@@ -49,7 +49,6 @@ cacher-ts 问题清单
 
 （高-2 已解决：类型签名已按修复建议收紧，README 与 JSDoc 已同步，详见文件头“已解决并删除”。）
 
----------以下先不看！
 ------------------------------------------------------------------
 三、中
 ------------------------------------------------------------------
@@ -63,14 +62,14 @@ cacher-ts 问题清单
   - id 不合法时的报错仍是 “expects an options object with at least an 'id' property”，
     不如 “'id' must be a string or symbol” 准确。
   - `SubCache(formId: string)` 仍只收 string，而 `Cache` 的 id 是 `string | symbol`，symbol id 无法被 @SubCache 引用。
-
+--已经简化
 [中-3] @SubCache 的前置错误是同步抛出，而其余错误是 reject
   位置：src/decorator.ts:79-83
   现象（运行时验证）：@Cache 未初始化（或根本没有对应的 @Cache）时调用，@SubCache 方法是同步 throw，
         @Cache 方法则返回被 reject 的 Promise。`obj.sub().catch(...)` 抓不到这个错误，两者对“未初始化”的表现不一致。
         （原严重-1 修复后，“找不到 @Cache” 也从 new 时报错变成了调用时报错，同样走这里。）
   建议：SubCache 包装函数改为 async，或把检查放进 Promise 里统一 reject。
-
+--已改为async函数
 [中-5] 首次加载进行中时调用 get() 直接 reject “Cache is empty”，不会等待正在进行的加载
   位置：src/cacher.ts:101-104；@SubCache 的同类检查在 src/decorator.ts:81
   现象（运行时验证）：`c.reload(); await c.get()` → rejects "Cache is empty and has not been initialized yet."。
@@ -78,6 +77,13 @@ cacher-ts 问题清单
         `await obj.cfg()` 会失败，哪怕加载马上就完成。
   说明：get() 已经是 async，等待成本为零：`if (!this.inited) { if (this.pending !== empty) return this.pending; throw … }`。
         如果有意如此，请在 README 写明“初始化必须 await 完成”。
+--现在反回reload
+
+--- 下面先不看！
+
+
+
+
 
 [中-6] 子类覆写 @Cache 方法的行为未定义
   现象（运行时验证）：

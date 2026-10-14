@@ -58,12 +58,15 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodCac
   if (typeof id !== 'string' && typeof id !== 'symbol') {
     throw new TypeError(`@Cache expects an options object with at least an 'id' property.`);
   }
-  if (ttl !== undefined && typeof ttl !== 'number') {
+  if (typeof ttl !== 'number') {
     throw new TypeError(`@Cache expects 'ttl' to be a number if provided, got ${typeof ttl}.`);
   }
   // #endregion
 
-  return function <This, R>(target: (this: This) => Promise<R>, ctx: ClassMethodDecoratorContext<This, (this: This) => Promise<R>>) {
+  return function <This, R>(
+    target: (this: This) => Promise<R>,
+    ctx: ClassMethodDecoratorContext<This, (this: This) => Promise<R>>,
+  ) {
     if (target.length !== 0) {
       throw new TypeError(`"${String(target.name)}" decorated with @Cache() has more than 0 parameters.`);
     }
@@ -99,7 +102,7 @@ export function SubCache(fromId: string): MethodSubCacheDecorator {
 
     // ! Cannot check for the @Cache at construction: @SubCache's initializer may run first
     // ! (declared above it, or declared in a parent class while @Cache is in the child).
-    return function (this: any) {
+    return async function (this: any) {
       const c = instanceToCacheMap.get(this)?.get(fromId);
       if (!c) {
         throw new Error(`Cacher "${String(fromId)}" not found.`);
