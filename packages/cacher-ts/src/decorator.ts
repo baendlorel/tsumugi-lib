@@ -45,26 +45,31 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodCac
   }
   // #endregion
 
-  return function (target: (...args: any[]) => any, context: ClassMethodDecoratorContext) {
+  return function (target: (...args: any[]) => any, ctx: ClassMethodDecoratorContext) {
     if (target.length !== 0) {
       throw new TypeError(`"${String(target.name)}" decorated with @Cache() has more than 0 parameters.`);
     }
 
-    const meta = context.metadata as Metadata;
+    let map: WeakMap<any, Map<string | symbol, Cacher>> | undefined = (ctx.metadata as Metadata)?.[sym]
+      ?.instanceToCacheMap;
 
-    let map: WeakMap<any, Map<string | symbol, Cacher>>;
-    if (meta?.[sym].instanceToCacheMap) {
-      map = meta[sym].instanceToCacheMap;
-    } else {
-      map = new WeakMap();
-      meta[sym] = meta[sym] ?? {};
-      meta[sym].instanceToCacheMap = map;
+    // & Ensure [sym].instanceToCacheMap exists at the same time.
+    if (!map) {
+      (ctx.metadata as Metadata) = {
+        [sym]: {
+          instanceToCacheMap: (map = new WeakMap<any, Map<string | symbol, Cacher>>()),
+        },
+      };
     }
 
-    context.addInitializer(function (this: any) {
+    ctx.addInitializer(function (this: any) {
       const cacher = new Cacher(target, ttl).setThis(this);
       cachers.add(cacher);
-      _weakGetOrInsertComputed(map, this, () => new Map()).set(id, cacher);
+      const idToCacherMap = _weakGetOrInsertComputed(map, this, () => new Map());
+      if (idToCacherMap.has(id)) {
+        throw new Error(`Duplicate cache id "${String(id)}" for the same instance.`);
+      }
+      idToCacherMap.set(id, cacher);
     });
 
     return function (this: any) {
