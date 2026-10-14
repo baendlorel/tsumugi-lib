@@ -154,11 +154,12 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
       throw new Error(`No derived cache with name "${String(key)}".`);
     }
 
+    // Initialized cache won't be empty.
     if (Object.is(sub.parent, this.cache)) {
       return sub.cache as Subs[SubKey];
     }
 
-    const parent = this.cache as T;
+    const parent = this.get();
     const cache = sub.fn.call(this.thisArg, parent); // ! This makes parent and cache consistent even the mapper throws
 
     sub.parent = parent;

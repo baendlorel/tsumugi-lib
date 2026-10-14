@@ -16,11 +16,13 @@ const sym = Symbol();
 const cachers = new Set<Cacher>();
 
 /**
- * Load all decorated caches and return a promise that resolves when all caches are reloaded.
+ * Load all decorated caches.
+ * - Calls reload of the uninitialized caches.
  * - **Only** affects cachers that are decorated with `@Cache`.
+ * @returns a promise that you can await to ensure all decorated caches have been initialized.
  */
-export function initializeDecoratedCaches(): Promise<any[]> {
-  return Promise.all([...cachers].map((c) => (c.initialized ? c.get() : c.reload())));
+export function initializeDecoratedCaches(force = false): Promise<any[]> {
+  return Promise.all([...cachers].map((c) => (c.initialized && !force ? true : c.reload())));
 }
 
 /**

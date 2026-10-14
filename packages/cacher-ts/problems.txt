@@ -24,8 +24,8 @@ cacher-ts 问题清单
   附：context.metadata 在没有 Symbol.metadata 的环境下 TS 官方转译会是 undefined（此时
       `meta[sym] = ...` 还会对 undefined 赋值直接抛错）。建议明确 metadata 缺失时的行为
       （报清晰错误，或改用 WeakMap<Function, ...> 之类不依赖 metadata 的方案）。
-      
-——完成
+
+——完成：重新编写了context.metadata的设定
 
 [严重-2] 缓存按 (实例, id) 存储，同 id 会静默串值（返回另一个方法的结果）
   位置：src/decorator.ts:56-68
@@ -38,7 +38,7 @@ cacher-ts 问题清单
   建议：在装饰阶段检测同一 metadata 下 id 重复并抛错（文档里 id 本应唯一，但这类“静默数据错乱”
         值得做防御性检查）；或让 id 默认带上方法名/类作用域。
 
-——完成
+——完成：重复id现在会报错
 
 ------------------------------------------------------------------
 二、高
@@ -53,6 +53,7 @@ cacher-ts 问题清单
         实例反复发起请求。
   建议：用 Set<WeakRef<Cacher>> + FinalizationRegistry，或只登记“类级别”的信息，
         或提供 dispose/注销接口。
+--对的，因为这是Nestjs风格的，所有类都不会注销的
 
 [高-2] @SubCache 永远不会触发父缓存的 TTL 刷新
   位置：src/decorator.ts:104-109（以及 cacher.ts getSub 不检查 TTL）
@@ -63,6 +64,7 @@ cacher-ts 问题清单
         “@SubCache 读取到的值遵守 @Cache 的 ttl”，README 并未说明 @SubCache 不续期。
   建议：SubCache 包装函数里先调用 `c.get()`（在过期时发起后台刷新）再 getOrDerive；
         或者在文档里明确写出“派生视图不会续期”。
+--已改为parent=this.get()
 
 [高-3] initializeDecoratedCaches() 的行为与注释不一致
   位置：src/decorator.ts:18-24
@@ -72,6 +74,7 @@ cacher-ts 问题清单
         且 get() 触发的后台 reload 若失败是未处理的 rejection。
   建议：明确语义（“确保已初始化”还是“全部强制重载”），按语义改实现或改注释；
         考虑 allSettled 或收集错误。
+--现在对于已初始化的会返回true
 
 ------------------------------------------------------------------
 三、中（不稳定/不完善）
@@ -86,6 +89,7 @@ cacher-ts 问题清单
         README 里让用户“自己对 loading 挂 catch”也不可行（挂的是同一个 promise，且每次 get() 都是新的）。
   建议：get() 内部对后台刷新 `.catch(() => {})`（错误仍可通过显式 reload()/loading 观察），
         并考虑失败后也推进一个“最近尝试时间”或退避窗口。
+-- 这是用户需要考虑的
 
 [中-2] 装饰后方法的返回类型与运行时不一致
   位置：src/decorator.ts:71-73
