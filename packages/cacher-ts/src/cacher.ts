@@ -110,21 +110,6 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
   }
 
   /**
-   * Only get the cached value. When it's expired, it will trigger a reload in the background.
-   * But still returns the current cached value **instead of** waiting for the reload to complete.
-   */
-  getSync(): T {
-    if (!this.inited) {
-      throw new Error('Cache is empty and has not been initialized yet.');
-    }
-
-    if (performance.now() - this.last >= this.ttl) {
-      this.reload();
-    }
-    return this.cache as T;
-  }
-
-  /**
    * Derives a sub-cacher from the current one by applying a mapping function to its value.
    * - pure sync mapper will be called with `cacher.thisArg`
    * - overwrite existing sub-cache if it already exists.

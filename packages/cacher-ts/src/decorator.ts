@@ -97,7 +97,7 @@ export function SubCache(formId: string) {
       if (cacheMap) {
         return; // Maybe it's already initialized, because the range with-in the decorator context are the same.
       }
-      cacheMap = (context.metadata as Metadata)?.[sym].instanceToCacheMap;
+      cacheMap = (context.metadata as Metadata)?.[sym]?.instanceToCacheMap;
       if (!cacheMap) {
         throw new Error(`'cacheMap' for "${String(formId)}" not found.`);
       }

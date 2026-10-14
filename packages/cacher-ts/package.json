@@ -25,6 +25,7 @@
     "dist"
   ],
   "scripts": {
+    "exp": "tsx examples/index.ts",
     "test": "clear && vitest"
   },
   "repository": {
