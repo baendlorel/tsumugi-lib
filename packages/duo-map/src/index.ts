@@ -61,36 +61,30 @@ export class DuoMap<K1 = any, K2 = any, V = any> {
     this.map.forEach((m, key1) => m.forEach((value, key2) => callback(value, key1, key2)));
   }
 
-  keys(): [K1, K2][] {
-    const result: [K1, K2][] = [];
-    this.map.forEach((m, key1) => m.forEach((_, key2) => result.push([key1, key2])));
-    return result;
+  *keys(): IterableIterator<[K1, K2]> {
+    for (const [key1, m] of this.map) {
+      for (const key2 of m.keys()) {
+        yield [key1, key2];
+      }
+    }
   }
 
-  values(): V[] {
-    const result: V[] = [];
-    this.map.forEach((m) => m.forEach((value) => result.push(value)));
-    return result;
+  *values(): IterableIterator<V> {
+    for (const m of this.map.values()) {
+      yield* m.values();
+    }
   }
 
-  entries(): [K1, K2, V][] {
-    const result: [K1, K2, V][] = [];
-    this.map.forEach((m, key1) => m.forEach((value, key2) => result.push([key1, key2, value])));
-    return result;
+  *entries(): IterableIterator<[K1, K2, V]> {
+    for (const [key1, m] of this.map) {
+      for (const [key2, value] of m) {
+        yield [key1, key2, value];
+      }
+    }
   }
 
-  [Symbol.iterator](): Iterator<[K1, K2, V]> {
-    const entries = this.entries();
-    let index = 0;
-    return {
-      next(): IteratorResult<[K1, K2, V]> {
-        if (index < entries.length) {
-          return { value: entries[index++], done: false };
-        } else {
-          return { value: undefined as any, done: true };
-        }
-      },
-    };
+  *[Symbol.iterator](): IterableIterator<[K1, K2, V]> {
+    yield* this.entries();
   }
 }
 
@@ -162,37 +156,35 @@ export class TresMap<K1 = any, K2 = any, K3 = any, V = any> {
     );
   }
 
-  keys(): [K1, K2, K3][] {
-    const result: [K1, K2, K3][] = [];
-    this.map.forEach((m, key1) => m.forEach((m2, key2) => m2.forEach((_, key3) => result.push([key1, key2, key3]))));
-    return result;
-  }
-
-  values(): V[] {
-    const result: V[] = [];
-    this.map.forEach((m) => m.forEach((m2) => m2.forEach((value) => result.push(value))));
-    return result;
-  }
-
-  entries(): [K1, K2, K3, V][] {
-    const result: [K1, K2, K3, V][] = [];
-    this.map.forEach((m, key1) =>
-      m.forEach((m2, key2) => m2.forEach((value, key3) => result.push([key1, key2, key3, value]))),
-    );
-    return result;
-  }
-
-  [Symbol.iterator](): Iterator<[K1, K2, K3, V]> {
-    const entries = this.entries();
-    let index = 0;
-    return {
-      next(): IteratorResult<[K1, K2, K3, V]> {
-        if (index < entries.length) {
-          return { value: entries[index++], done: false };
-        } else {
-          return { value: undefined as any, done: true };
+  *keys(): IterableIterator<[K1, K2, K3]> {
+    for (const [key1, m1] of this.map) {
+      for (const [key2, m2] of m1) {
+        for (const key3 of m2.keys()) {
+          yield [key1, key2, key3];
         }
-      },
-    };
+      }
+    }
+  }
+
+  *values(): IterableIterator<V> {
+    for (const m1 of this.map.values()) {
+      for (const m2 of m1.values()) {
+        yield* m2.values();
+      }
+    }
+  }
+
+  *entries(): IterableIterator<[K1, K2, K3, V]> {
+    for (const [key1, m1] of this.map) {
+      for (const [key2, m2] of m1) {
+        for (const [key3, value] of m2) {
+          yield [key1, key2, key3, value];
+        }
+      }
+    }
+  }
+
+  *[Symbol.iterator](): IterableIterator<[K1, K2, K3, V]> {
+    yield* this.entries();
   }
 }
