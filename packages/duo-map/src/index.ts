@@ -2,6 +2,13 @@ import { _getOrInsertComputed, _getOrInsert } from '@shared/std/map.js';
 
 const MapConstruct = () => new Map();
 
+/**
+ * Creates a two-keyed map structure.
+ *
+ * @template K1 - The type of the first-level keys.
+ * @template K2 - The type of the second-level keys.
+ * @template V - The type of the values.
+ */
 export class DuoMap<K1 = any, K2 = any, V = any> {
   private map = new Map<K1, Map<K2, V>>();
 
@@ -77,6 +84,107 @@ export class DuoMap<K1 = any, K2 = any, V = any> {
     let index = 0;
     return {
       next(): IteratorResult<[K1, K2, V]> {
+        if (index < entries.length) {
+          return { value: entries[index++], done: false };
+        } else {
+          return { value: undefined as any, done: true };
+        }
+      },
+    };
+  }
+}
+
+/**
+ * Creates a three-keyed map structure.
+ *
+ * @template K1 - The type of the first-level keys.
+ * @template K2 - The type of the second-level keys.
+ * @template K3 - The type of the third-level keys.
+ * @template V - The type of the values.
+ */
+export class TresMap<K1 = any, K2 = any, K3 = any, V = any> {
+  private map = new Map<K1, Map<K2, Map<K3, V>>>();
+
+  get size(): number {
+    let count = 0;
+    this.map.forEach((m) => m.forEach((m2) => (count += m2.size)));
+    return count;
+  }
+
+  set(key1: K1, key2: K2, key3: K3, value: V): this {
+    _getOrInsertComputed(this.map, key1, MapConstruct).get(key2)?.set(key3, value);
+    return this;
+  }
+
+  get(key1: K1, key2: K2, key3: K3): V | undefined {
+    return this.map.get(key1)?.get(key2)?.get(key3);
+  }
+
+  getOrInsert(key1: K1, key2: K2, key3: K3, value: V): V {
+    const m2 =
+      _getOrInsertComputed(this.map, key1, MapConstruct).get(key2) ??
+      _getOrInsertComputed(this.map.get(key1)!, key2, MapConstruct);
+    return m2.get(key3) ?? (m2.set(key3, value), value);
+  }
+
+  getOrInsertComputed(key1: K1, key2: K2, key3: K3, compute: (key1: K1, key2: K2, key3: K3) => V): V {
+    const m2 =
+      _getOrInsertComputed(this.map, key1, MapConstruct).get(key2) ??
+      _getOrInsertComputed(this.map.get(key1)!, key2, MapConstruct);
+    return m2.get(key3) ?? (m2.set(key3, compute(key1, key2, key3)), compute(key1, key2, key3));
+  }
+
+  has(key1: K1, key2: K2, key3: K3): boolean {
+    return this.map.get(key1)?.get(key2)?.has(key3) ?? false;
+  }
+
+  delete(key1: K1, key2: K2, key3: K3): boolean {
+    const m = this.map.get(key1)?.get(key2);
+    if (!m) {
+      return false;
+    }
+    const result = m.delete(key3);
+    if (m.size === 0) {
+      this.map.get(key1)?.delete(key2);
+    }
+    return result;
+  }
+
+  clear(): void {
+    this.map.clear();
+  }
+
+  forEach(callback: (value: V, key1: K1, key2: K2, key3: K3) => void): void {
+    this.map.forEach((m, key1) =>
+      m.forEach((m2, key2) => m2.forEach((value, key3) => callback(value, key1, key2, key3))),
+    );
+  }
+
+  keys(): [K1, K2, K3][] {
+    const result: [K1, K2, K3][] = [];
+    this.map.forEach((m, key1) => m.forEach((m2, key2) => m2.forEach((_, key3) => result.push([key1, key2, key3]))));
+    return result;
+  }
+
+  values(): V[] {
+    const result: V[] = [];
+    this.map.forEach((m) => m.forEach((m2) => m2.forEach((value) => result.push(value))));
+    return result;
+  }
+
+  entries(): [K1, K2, K3, V][] {
+    const result: [K1, K2, K3, V][] = [];
+    this.map.forEach((m, key1) =>
+      m.forEach((m2, key2) => m2.forEach((value, key3) => result.push([key1, key2, key3, value]))),
+    );
+    return result;
+  }
+
+  [Symbol.iterator](): Iterator<[K1, K2, K3, V]> {
+    const entries = this.entries();
+    let index = 0;
+    return {
+      next(): IteratorResult<[K1, K2, K3, V]> {
         if (index < entries.length) {
           return { value: entries[index++], done: false };
         } else {

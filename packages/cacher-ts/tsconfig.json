@@ -6,6 +6,7 @@
     "stripInternal": true,
     "paths": {
       "@shared": ["../_shared/index.ts"],
+      "@duo-map": ["../duo-map/src/index.ts"],
       "@shared/*": ["../_shared/*"]
     }
   },
