@@ -1,5 +1,5 @@
+import { DuoMap } from '@duo-map';
 import { Cacher } from './cacher.js';
-import { _getOrInsertComputed } from '@shared/std/map.js';
 
 /**
  * Type of a method decorated with `@Cache`.
@@ -22,9 +22,7 @@ type MethodSubCacheDecorator = <This, T, R>(
   context: ClassMethodDecoratorContext<This, (this: This, value?: T) => Promise<R>>,
 ) => (this: This, value?: T) => Promise<R>;
 
-// & Keyed by instance, so it doesn't matter which class (parent or child) declares the decorators, or in which order.
-// & Also no reliance on `context.metadata`, which is undefined where `Symbol.metadata` is missing (e.g. tsc output on Node 24).
-const instanceToCacheMap = new Map<any, Map<string | symbol, Cacher>>();
+const instanceToCache = new DuoMap<any, string | symbol, Cacher>();
 
 /**
  * Load all decorated caches.
@@ -33,11 +31,7 @@ const instanceToCacheMap = new Map<any, Map<string | symbol, Cacher>>();
  * @returns a promise that you can await to ensure all decorated caches have been initialized.
  */
 export function initializeDecoratedCaches(force = false): Promise<any[]> {
-  return Promise.all(
-    [...instanceToCacheMap.values()]
-      .flatMap((idToCacherMap) => [...idToCacherMap.values()])
-      .map((c) => (c.initialized && !force ? true : c.reload())),
-  );
+  return Promise.all([...instanceToCache.values()].map((c) => (c.initialized && !force ? true : c.reload())));
 }
 
 /**
@@ -64,19 +58,25 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodCac
     target: (this: This) => Promise<R>,
     ctx: ClassMethodDecoratorContext<This, (this: This) => Promise<R>>,
   ) {
-    ctx.addInitializer(function (this: any) {
-      const c = new Cacher(target, ttl).setThis(this);
+    // Forward reference: initializer runs at `new` time, by which point `wrapper` is already assigned.
+    let wrapper: (this: This) => Promise<R> = function (this: any) {
+      return instanceToCache.get(this, id)!.get();
+    };
 
-      const idToCacherMap = _getOrInsertComputed(instanceToCacheMap, this, () => new Map());
-      if (idToCacherMap.has(id)) {
+    ctx.addInitializer(function (this: any) {
+      // If a subclass overrides this method without @Cache, its prototype won't carry our
+      // wrapper — skip registration to avoid an orphan Cacher that is never called.
+      if ((Object.getPrototypeOf(this) as any)[ctx.name] !== wrapper) {
+        return;
+      }
+
+      if (instanceToCache.has(this, id)) {
         throw new Error(`Duplicate cache id "${String(id)}" for the same instance.`);
       }
-      idToCacherMap.set(id, c);
+      instanceToCache.set(this, id, new Cacher(target, ttl, this));
     });
 
-    return function (this: any) {
-      return instanceToCacheMap.get(this)!.get(id)!.get();
-    };
+    return wrapper;
   };
 }
 
@@ -93,10 +93,8 @@ export function SubCache(fromId: string | symbol): MethodSubCacheDecorator {
   ) {
     const sk = Symbol() as any;
 
-    // ! Cannot check for the @Cache at construction: @SubCache's initializer may run first
-    // ! (declared above it, or declared in a parent class while @Cache is in the child).
     return async function (this: any) {
-      const c = instanceToCacheMap.get(this)?.get(fromId);
+      const c = instanceToCache.get(this, fromId);
       if (!c) {
         throw new Error(`Cacher "${String(fromId)}" not found.`);
       }
