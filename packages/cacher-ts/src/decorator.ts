@@ -1,6 +1,19 @@
 import { DuoMap } from '@duo-map';
 import { Cacher } from './cacher.js';
 
+class DecCacher extends Cacher {
+  private id: string;
+  constructor(getter: any, ttl: number, thisArg: any, id: string) {
+    super(getter, ttl, thisArg);
+    this.id = id;
+  }
+
+  destroy() {
+    super.destroy();
+    cacherMap.delete(this.id, this.thisArg);
+  }
+}
+
 /**
  * Type of a method decorated with `@Cache`.
  * The decorated method **must be `async`** (i.e. it must return a `Promise`); a sync method
@@ -17,36 +30,22 @@ type Ctx<This, R> = ClassMethodDecoratorContext<This, (this: This) => Promise<R>
  * Keyed by `[id, instance]`: each instance caches independently, and unrelated classes
  * may reuse an id. Entries are added lazily, on the first call of the decorated method.
  */
-const cacherMap = new DuoMap<string | symbol, any, Cacher>();
-
-/**
- * Load all decorated caches.
- * - Calls reload of the uninitialized caches.
- * - **Only** affects cachers that are decorated with `@Cache` and have been called at least
- *   once — registration is lazy, so untouched methods are not in the map.
- * @returns a promise that you can await to ensure all decorated caches have been initialized.
- */
-export function initializeDecoratedCaches(force = false): Promise<any[]> {
-  return Promise.all([...cacherMap.values()].map((c) => (c.initialized && !force ? true : c.reload())));
-}
-
-/**
- * Destroy the decorated cache for the given id and instance, to free up resources
- * and remove it from the internal cache map. No-op if none is registered.
- * @param id Registered id.
- * @param instance Instance of the class.
- */
-export function destroyDecoratedCache(id: string, instance: any): void {
-  const c = cacherMap.get(id, instance);
-  if (c) {
-    cacherMap.delete(id, instance);
-    c.destroy();
-  }
-}
+const cacherMap = new DuoMap<string | symbol, any, DecCacher>();
 
 export namespace DecoratedCache {
-  export function initialize(force = false): Promise<any[]> {
+  /**
+   * Initializes all cached instances.
+   */
+  export function initializeAll(force = false): Promise<any[]> {
     return Promise.all([...cacherMap.values()].map((c) => (c.initialized && !force ? true : c.reload())));
+  }
+
+  export function initialize(id: string, instance: any): Promise<any[]> {
+    const c = cacherMap.get(id, instance);
+    if (!c) {
+      throw new Error(`Cache with id "${id}" not found for the given instance.`);
+    }
+    return c.initialized ? c.get() : c.reload();
   }
 
   export function destroy(id: string, instance: any): void {
@@ -80,7 +79,7 @@ export function Cache(options?: { id?: string; ttl?: number }): MethodCacheDecor
 
     let { id = context.name, ttl } = Object(options);
     return function (this: This) {
-      return cacherMap.getOrInsertComputed(id, this, () => new Cacher(target, ttl, this)).get();
+      return cacherMap.getOrInsertComputed(id, this, () => new DecCacher(target, ttl, this, id)).get();
     };
   };
 }

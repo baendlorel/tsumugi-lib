@@ -24,7 +24,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
   /* @internal */
   private ttl: number;
   /* @internal */
-  private thisArg: any;
+  protected thisArg: any;
 
   /* @internal */
   private last: number = -Infinity;
