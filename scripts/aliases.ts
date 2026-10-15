@@ -10,6 +10,7 @@ export const getAliases = () => {
     alias[dir] = path.join(packagesDir, dir, 'src');
   }
   alias[`@shared`] = path.join(packagesDir, '_shared');
+  alias[`@duo-map`] = path.join(packagesDir, 'duo-map/src');
 
   return Object.entries(alias)
     .sort(([a], [b]) => b.length - a.length)
