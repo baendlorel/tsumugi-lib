@@ -3,13 +3,17 @@
 [![npm version](https://img.shields.io/npm/v/duo-map.svg)](https://www.npmjs.com/package/duo-map) [![npm downloads](http://img.shields.io/npm/dm/duo-map.svg)](https://npmcharts.com/compare/duo-map,token-types?start=1200&interval=30)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/59dd6795e61949fb97066ca52e6097ef)](https://www.codacy.com/app/Borewit/duo-map?utm_source=github.com&utm_medium=referral&utm_content=Borewit/duo-map&utm_campaign=Badge_Grade)
 
-A `Map` that maps **two keys to a single value**. Think of it as a nested `Map<Map>` with a flat API — no manual `get`/`set` bookkeeping of the inner map.
+
+This package offers 2 containers:
+
+- `DuoMap<K1, K2, V>`: A map with two keys.
+- `TresMap<K1, K2, K3, V>`: A map with three keys.
 
 For more awesome packages, check out [my homepage💛](https://baendlorel.github.io/?repoType=npm)
 
 ## Features
 
-- 🗝️ **Two keys, one lookup**: `get(key1, key2)` replaces the `map.get(a)?.get(b)` dance.
+- 🗝️ **Two/three keys, one lookup**: `duo.get(key1, key2)`/`tres.get(key1, key2, key3)` replaces the `map.get(a)?.get(b)`/`map.get(a)?.get(b)?.get(c)` dance.
 - 🌲 **Nested semantics**: entries are grouped by `key1`, but the API is flat.
 - 🧹 **Self-cleaning**: deleting the last pair of a `key1` group removes the group itself.
 - 💤 **Lazy inserts**: `getOrInsertComputed` only computes when the pair is actually missing.
@@ -202,16 +206,16 @@ Keys are compared with **SameValueZero**, exactly like native `Map` — `NaN` ma
 
 ## Differences from native `Map`
 
-| Feature               | `Map`                 | `DuoMap`                                     |
-| --------------------- | --------------------- | -------------------------------------------- |
-| Keys per entry        | 1                     | 2                                            |
-| Read / write          | `(key)`               | `(key1, key2)`                               |
-| Iteration yields      | `[key, value]`        | `[key1, key2, value]`                        |
-| `forEach` callback    | `(value, key, map)`   | `(value, key1, key2)`                        |
-| `keys()` / `values()` | iterators             | plain arrays                                 |
-| `getOrInsert`         | proposal only         | shipped, with a lazy `getOrInsertComputed`   |
-| Empty group cleanup   | —                     | `key1` group dropped with its last `delete`  |
-| `.size`               | O(1)                  | O(number of `key1` groups)                   |
+| Feature               | `Map`               | `DuoMap`                                    |
+| --------------------- | ------------------- | ------------------------------------------- |
+| Keys per entry        | 1                   | 2                                           |
+| Read / write          | `(key)`             | `(key1, key2)`                              |
+| Iteration yields      | `[key, value]`      | `[key1, key2, value]`                       |
+| `forEach` callback    | `(value, key, map)` | `(value, key1, key2)`                       |
+| `keys()` / `values()` | iterators           | plain arrays                                |
+| `getOrInsert`         | proposal only       | shipped, with a lazy `getOrInsertComputed`  |
+| Empty group cleanup   | —                   | `key1` group dropped with its last `delete` |
+| `.size`               | O(1)                | O(number of `key1` groups)                  |
 
 ## License
 

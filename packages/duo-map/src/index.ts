@@ -112,7 +112,8 @@ export class TresMap<K1 = any, K2 = any, K3 = any, V = any> {
   }
 
   set(key1: K1, key2: K2, key3: K3, value: V): this {
-    _getOrInsertComputed(this.map, key1, MapConstruct).get(key2)?.set(key3, value);
+    const m1 = _getOrInsertComputed(this.map, key1, MapConstruct);
+    _getOrInsertComputed(m1, key2, MapConstruct).set(key3, value);
     return this;
   }
 
@@ -121,17 +122,15 @@ export class TresMap<K1 = any, K2 = any, K3 = any, V = any> {
   }
 
   getOrInsert(key1: K1, key2: K2, key3: K3, value: V): V {
-    const m2 =
-      _getOrInsertComputed(this.map, key1, MapConstruct).get(key2) ??
-      _getOrInsertComputed(this.map.get(key1)!, key2, MapConstruct);
-    return m2.get(key3) ?? (m2.set(key3, value), value);
+    const m1 = _getOrInsertComputed(this.map, key1, MapConstruct);
+    const m2 = _getOrInsertComputed(m1, key2, MapConstruct);
+    return _getOrInsert(m2, key3, value);
   }
 
   getOrInsertComputed(key1: K1, key2: K2, key3: K3, compute: (key1: K1, key2: K2, key3: K3) => V): V {
-    const m2 =
-      _getOrInsertComputed(this.map, key1, MapConstruct).get(key2) ??
-      _getOrInsertComputed(this.map.get(key1)!, key2, MapConstruct);
-    return m2.get(key3) ?? (m2.set(key3, compute(key1, key2, key3)), compute(key1, key2, key3));
+    const m1 = _getOrInsertComputed(this.map, key1, MapConstruct);
+    const m2 = _getOrInsertComputed(m1, key2, MapConstruct);
+    return _getOrInsertComputed(m2, key3, () => compute(key1, key2, key3));
   }
 
   has(key1: K1, key2: K2, key3: K3): boolean {
@@ -139,13 +138,16 @@ export class TresMap<K1 = any, K2 = any, K3 = any, V = any> {
   }
 
   delete(key1: K1, key2: K2, key3: K3): boolean {
-    const m = this.map.get(key1)?.get(key2);
-    if (!m) {
-      return false;
-    }
-    const result = m.delete(key3);
-    if (m.size === 0) {
-      this.map.get(key1)?.delete(key2);
+    const m1 = this.map.get(key1);
+    if (!m1) return false;
+    const m2 = m1.get(key2);
+    if (!m2) return false;
+    const result = m2.delete(key3);
+    if (m2.size === 0) {
+      m1.delete(key2);
+      if (m1.size === 0) {
+        this.map.delete(key1);
+      }
     }
     return result;
   }
