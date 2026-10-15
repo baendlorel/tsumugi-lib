@@ -20,9 +20,9 @@ interface SubCacheEntry<T, TSub = any> {
 
 export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = any> {
   /* @internal */
-  private readonly getter: (lastValue?: T) => T | Promise<T>;
+  private getter: (lastValue?: T) => T | Promise<T>;
   /* @internal */
-  private readonly ttl: number;
+  private ttl: number;
   /* @internal */
   private thisArg: any;
 
@@ -35,7 +35,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
   /* @internal */
   private inited: boolean = false;
   /* @internal */
-  private readonly sub = new Map<keyof Subs, SubCacheEntry<T, any>>();
+  private sub = new Map<keyof Subs, SubCacheEntry<T, any>>();
 
   /**
    * Create a cacher instance.
@@ -177,10 +177,14 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
 
     return cache;
   }
+
+  destroy(): void {
+    this.getter = null as any;
+    this.cache = null as any;
+    this.sub.clear();
+    this.sub = null as any;
+    this.pending = null as any;
+    this.inited = false;
+    this.last = 0;
+  }
 }
-
-// const a = new Cacher(() => 3, 1000);
-// const b = a.reload();
-
-// const a1 = new Cacher(async () => 3, 1000);
-// const b1 = a1.reload();

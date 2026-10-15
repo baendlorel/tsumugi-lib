@@ -22,7 +22,7 @@ type MethodSubCacheDecorator = <This, T, R>(
   context: ClassMethodDecoratorContext<This, (this: This, value?: T) => Promise<R>>,
 ) => (this: This, value?: T) => Promise<R>;
 
-const instanceToCache = new DuoMap<any, string | symbol, Cacher>();
+const instanceToCache = new DuoMap<any, string, Cacher>();
 
 /**
  * Load all decorated caches.
@@ -35,13 +35,40 @@ export function initializeDecoratedCaches(force = false): Promise<any[]> {
 }
 
 /**
+ * Destroy the decorated cache for the given id and instance, to free up resources and remove it from the internal cache map.
+ * @param id Registered id
+ * @param instance Instance of the class.
+ */
+export function destroyDecoratedCache(id: string, instance: any): void {
+  const c = instanceToCache.get(instance, id);
+  if (c) {
+    instanceToCache.delete(instance, id);
+    c.destroy();
+  }
+}
+
+/**
+ * Destroy the decorated sub-cache for the given id, subId, and instance, to free up resources and remove it from the internal cache map.
+ * @param id Registered id of the parent cache
+ * @param subId Registered id of the sub-cache
+ * @param instance Instance of the class.
+ */
+export function destroyDecoratedSubCache(id: string, subId: string, instance: any): void {
+  const c = instanceToCache.get(instance, id);
+  if (!c) {
+    throw new Error(`SubCache "${id}:${subId}" not found.`);
+  }
+  c.deleteSub(subId);
+}
+
+/**
  * Caches the result of a no-argument **async** method.
  * **You must handle errors in your method**.
  * The method must be `async`: the cached value is always accessed through a promise.
  * @param id The id for the cached method, can be visited in `@SubCache`.
  * @param ttl Time-to-live for the cached value in milliseconds. `Infinity` never expires.
  */
-export function Cache(options: { id: string | symbol; ttl?: number }): MethodCacheDecorator {
+export function Cache(options: { id: string; ttl?: number }): MethodCacheDecorator {
   // #region Argument validation
   if (typeof options !== 'object' || options === null) {
     throw new TypeError(`@Cache expects an options object with at least an 'id' property.`);
@@ -49,8 +76,8 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodCac
 
   const { id, ttl = Infinity } = options;
 
-  if (typeof id !== 'string' && typeof id !== 'symbol') {
-    throw new TypeError(`@Cache expects 'id' to be a string or symbol.`);
+  if (typeof id !== 'string') {
+    throw new TypeError(`@Cache expects 'id' to be a string.`);
   }
   // #endregion
 
@@ -58,8 +85,7 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodCac
     target: (this: This) => Promise<R>,
     ctx: ClassMethodDecoratorContext<This, (this: This) => Promise<R>>,
   ) {
-    // Forward reference: initializer runs at `new` time, by which point `wrapper` is already assigned.
-    let wrapper: (this: This) => Promise<R> = function (this: any) {
+    const wrapper = function (this: any) {
       return instanceToCache.get(this, id)!.get();
     };
 
@@ -71,7 +97,7 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodCac
       }
 
       if (instanceToCache.has(this, id)) {
-        throw new Error(`Duplicate cache id "${String(id)}" for the same instance.`);
+        throw new Error(`Duplicate cache id "${id}" for the same instance.`);
       }
       instanceToCache.set(this, id, new Cacher(target, ttl, this));
     });
@@ -84,21 +110,21 @@ export function Cache(options: { id: string | symbol; ttl?: number }): MethodCac
  * Derive sub-cacher from `@Cache({ id, ttl? })` and the decorated method.
  * - Decorated method must be **async**, and its parameter must be **optional**.
  * - `@Cache` must be  **initialized** before `@SubCache` does.
- * @param fromId id used in Cache decorator.
+ * - Silently overrides any existing sub-cache with the same `subId`.
+ * @param fromId id used in `@Cache` decorator.
+ * @param subId id for the sub-cache derived from the parent cache.
  */
-export function SubCache(fromId: string | symbol): MethodSubCacheDecorator {
+export function SubCache(fromId: string, subId: string): MethodSubCacheDecorator {
   return function <This, T, R>(
     target: (this: This, value?: T) => R | Promise<R>,
     _context: ClassMethodDecoratorContext<This, (this: This, value?: T) => Promise<R>>,
   ) {
-    const sk = Symbol() as any;
-
     return async function (this: any) {
       const c = instanceToCache.get(this, fromId);
       if (!c) {
-        throw new Error(`Cacher "${String(fromId)}" not found.`);
+        throw new Error(`Cacher "${fromId}" not found.`);
       }
-      return c.getOrDerive(sk, target);
+      return c.getOrDerive(subId, target);
     };
   };
 }
