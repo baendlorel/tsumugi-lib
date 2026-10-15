@@ -47,7 +47,18 @@ cacher-ts 问题清单
         @SubCache 相关的 2e、2g 两条随 @SubCache 移除而消失；
         runGetter 已补 `/* @internal */`，构建出的 .d.mts 中不再出现裸的 `private runGetter;`）、
       导出-2（src/index.ts 曾残留 `export { SubCache … }`，在 @SubCache 被删除后导致
-        `tsc` 报 TS2305、`node` 报 SyntaxError；已删除该导出，`pnpm build` 恢复通过）。
+        `tsc` 报 TS2305、`node` 报 SyntaxError；已删除该导出，`pnpm build` 恢复通过）、
+      测试-1 / 测试-2（tests/index.test.ts 已按现行 async API 完全重写，拆为
+        tests/cacher.test.ts（58 例）与 tests/decorator.test.ts（21 例），共 79 例全绿；
+        装饰器用例从 examples/ 迁进 vitest，`pnpm test cacher-ts` 现在真的会跑到。
+        顺带发现并修掉一个测试基建问题：Vite 8 用 oxc 转译 TS，而 oxc 不处理类装饰器，
+        Node 24 又无法直接解析 `@` 语法 —— 装饰器测试全都报
+        `SyntaxError: Invalid or unexpected token`。已在根 vitest.config.ts 加一个
+        `decorator-downlevel` 插件：仅对含装饰器语法的文件先用 esbuild 降级到 es2022
+        （已实测 esbuild 产出的是 TC39 语义的 `__decorateElement`，
+        `ctx.kind` / `ctx.name` / `ctx.addInitializer` 均正常），其余文件不受影响。
+        examples/index.ts 与 examples/inherit.ts 覆盖的场景已被新测试覆盖或依赖已移除的
+        @SubCache，作为历史文件保留、不再运行）。
 编号：本轮不再重新编号，剩下的条目保持原编号。
 
 ------------------------------------------------------------------
@@ -72,26 +83,7 @@ cacher-ts 问题清单
 四、文档、注释与测试（不完善）
 ------------------------------------------------------------------
 
-[测试-1] tests/index.test.ts 基于旧 API，需按当前实现重写
-  主要失败原因：
-    - `get()` 现为 async，旧测试未 await，断言比较的是 Promise 对象而非值。
-    - `expect(() => cacher.get()).toThrow(…)` 无法捕捉 async 函数的 rejection。
-    - `reload()` 恒返回 Promise；旧测试 `expect(sync.reload()).toBe(3)` 对同步 getter 也失败。
-    - `isInitialized` 已改为 `initialized`。
-    - `getSync`、同步读取语义均已删除。
-  实测：`pnpm test cacher-ts`（vitest run）30 failed | 7 passed。
-  建议：完整重写 tests/index.test.ts，get / reload / loading / getSub / getOrDerive
-        均使用 await，并将装饰器测试从 examples/ 迁移进 vitest（目前不进 CI）。
-
-[测试-2] examples/index.ts 装饰器用例不进 CI，且已与现行 API 脱节
-  现状：examples/index.ts 与 examples/inherit.ts 仍在 `import { SubCache }`，
-        而 @SubCache 已从 src/decorator.ts 移除 —— 两个文件当前都会直接抛
-        `SyntaxError: The requested module does not provide an export named 'SubCache'`，
-        用例全部无法运行（原先覆盖的 11 个场景已全部失效，故不再逐条罗列）。
-  待重写场景：每实例隔离、同类重复 id、@Cache 无参（id 默认取方法名）、
-              initializeDecoratedCaches（含 force 与"惰性注册导致未调用方法不被 warm"）、
-              getter 同步抛错后重试（中-1）、首次加载中调用 get（中-5）、子类覆写三种形态。
-  注意：examples/ 用 `process.exitCode = 1` 表示失败，不在 vitest / `pnpm test` 里，CI 不会跑到。
+（暂无）
 
 ------------------------------------------------------------------
 五、低
