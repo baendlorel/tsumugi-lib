@@ -94,6 +94,15 @@ export class DuoMap<K1 = any, K2 = any, V = any> {
     this.map.forEach((m, key1) => m.forEach((value, key2) => callback(value, key1, key2)));
   }
 
+  /**
+   * Visits the pairs under `key1`, or the single pair under `key1` and `key2`.
+   *
+   * @throws {TypeError} If the last argument is not a function, or the key count is out of range.
+   */
+  forEachBy(key1: K1, callback: (value: V, key1: K1, key2: K2) => void): void {
+    this.map.get(key1)?.forEach((value, key2) => callback(value, key1, key2));
+  }
+
   keys(key1?: K1): IterableIterator<[K1, K2]>;
   *keys(...args: any[]): IterableIterator<[K1, K2]> {
     if (args.length === 0) {
@@ -267,9 +276,60 @@ export class TresMap<K1 = any, K2 = any, K3 = any, V = any> {
     );
   }
 
-  *keys(): IterableIterator<[K1, K2, K3]> {
-    for (const [key1, m1] of this.map) {
-      for (const [key2, m2] of m1) {
+  /**
+   * Visits the pairs under `key1`, under `key1` and `key2`, or the single pair under all three keys.
+   *
+   * @throws {TypeError} If the last argument is not a function, or the key count is out of range.
+   */
+  forEachBy(key1: K1, callback: (value: V, key1: K1, key2: K2, key3: K3) => void): void;
+  forEachBy(key1: K1, key2: K2, callback: (value: V, key1: K1, key2: K2, key3: K3) => void): void;
+  forEachBy(...args: any[]): void {
+    const callback = args[args.length - 1];
+    if (typeof callback !== 'function') {
+      throw new TypeError('TresMap.forEachBy: the last argument must be a function.');
+    }
+    if (args.length < 2 || args.length > 3) {
+      throw new TypeError(`TresMap.forEachBy: expected 1-2 keys and a callback, got ${args.length - 1} keys.`);
+    }
+    const key1 = args[0] as K1;
+    const m1 = this.map.get(key1);
+    if (!m1) {
+      return;
+    }
+    if (args.length === 2) {
+      m1.forEach((m2, key2) => m2.forEach((value, key3) => callback(value, key1, key2, key3)));
+      return;
+    }
+
+    const key2 = args[1] as K2;
+    m1.get(key2)?.forEach((value, key3) => callback(value, key1, key2, key3));
+  }
+
+  keys(key1?: K1, key2?: K2): IterableIterator<[K1, K2, K3]>;
+  *keys(...args: any[]): IterableIterator<[K1, K2, K3]> {
+    if (args.length === 0) {
+      for (const [key1, m1] of this.map) {
+        for (const [key2, m2] of m1) {
+          for (const key3 of m2.keys()) {
+            yield [key1, key2, key3];
+          }
+        }
+      }
+    } else if (args.length === 1) {
+      const key1 = args[0];
+      const m1 = this.map.get(key1);
+      if (m1) {
+        for (const [key2, m2] of m1) {
+          for (const key3 of m2.keys()) {
+            yield [key1, key2, key3];
+          }
+        }
+      }
+    } else if (args.length === 2) {
+      const key1 = args[0];
+      const key2 = args[1];
+      const m2 = this.map.get(key1)?.get(key2);
+      if (m2) {
         for (const key3 of m2.keys()) {
           yield [key1, key2, key3];
         }
@@ -277,17 +337,55 @@ export class TresMap<K1 = any, K2 = any, K3 = any, V = any> {
     }
   }
 
-  *values(): IterableIterator<V> {
-    for (const m1 of this.map.values()) {
-      for (const m2 of m1.values()) {
+  values(key1?: K1, key2?: K2): IterableIterator<V>;
+  *values(...args: any[]): IterableIterator<V> {
+    if (args.length === 0) {
+      for (const m1 of this.map.values()) {
+        for (const m2 of m1.values()) {
+          yield* m2.values();
+        }
+      }
+    } else if (args.length === 1) {
+      const key1 = args[0];
+      const m1 = this.map.get(key1);
+      if (m1) {
+        for (const m2 of m1.values()) {
+          yield* m2.values();
+        }
+      }
+    } else if (args.length === 2) {
+      const m2 = this.map.get(args[0])?.get(args[1]);
+      if (m2) {
         yield* m2.values();
       }
     }
   }
 
-  *entries(): IterableIterator<[K1, K2, K3, V]> {
-    for (const [key1, m1] of this.map) {
-      for (const [key2, m2] of m1) {
+  entries(key1?: K1, key2?: K2): IterableIterator<[K1, K2, K3, V]>;
+  *entries(...args: any[]): IterableIterator<[K1, K2, K3, V]> {
+    if (args.length === 0) {
+      for (const [key1, m1] of this.map) {
+        for (const [key2, m2] of m1) {
+          for (const [key3, value] of m2) {
+            yield [key1, key2, key3, value];
+          }
+        }
+      }
+    } else if (args.length === 1) {
+      const key1 = args[0];
+      const m1 = this.map.get(key1);
+      if (m1) {
+        for (const [key2, m2] of m1) {
+          for (const [key3, value] of m2) {
+            yield [key1, key2, key3, value];
+          }
+        }
+      }
+    } else if (args.length === 2) {
+      const key1 = args[0];
+      const key2 = args[1];
+      const m2 = this.map.get(key1)?.get(key2);
+      if (m2) {
         for (const [key3, value] of m2) {
           yield [key1, key2, key3, value];
         }
