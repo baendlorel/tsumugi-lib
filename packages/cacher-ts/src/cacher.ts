@@ -184,6 +184,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
     this.sub.clear();
     this.sub = null as any;
     this.pending = null as any;
+    this.thisArg = null as any;
     this.inited = false;
     this.last = 0;
   }

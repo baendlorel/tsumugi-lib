@@ -1,27 +1,14 @@
+import { DuoMap } from '@duo-map';
 import { Cacher } from './cacher.js';
 
-/**
- * Type of a method decorated with `@Cache`.
- * The decorated method **must be `async`** (i.e. it must return a `Promise`); a sync method
- * would be typed as `Promise<R>` at the call site while actually returning a plain value.
- */
 type MethodCacheDecorator = <This, R>(
   target: (this: This) => Promise<R>,
   context: ClassMethodDecoratorContext<This, (this: This) => Promise<R>>,
 ) => (this: This) => Promise<R>;
 
-/**
- * Type of a method decorated with `@SubCache`.
- * A decorator cannot change a method's parameter list, so the decorated method **must be `async`
- * and declare its parameter optional** — it is always called with no argument at the call site,
- * and the parent's cached value is what the method body receives.
- */
-type MethodSubCacheDecorator = <This, T, R>(
-  target: (this: This, value?: T) => R | Promise<R>,
-  context: ClassMethodDecoratorContext<This, (this: This, value?: T) => Promise<R>>,
-) => (this: This, value?: T) => Promise<R>;
+type Ctx<This, R> = ClassMethodDecoratorContext<This, (this: This) => Promise<R>>;
 
-const cacherMap = new Map<string, Cacher>();
+const cacherMap = new DuoMap<string | symbol, any, Cacher>();
 
 /**
  * Load all decorated caches.
@@ -38,84 +25,30 @@ export function initializeDecoratedCaches(force = false): Promise<any[]> {
  * @param id Registered id
  * @param instance Instance of the class.
  */
-export function destroyDecoratedCache(id: string): void {
-  const c = cacherMap.get(id);
+export function destroyDecoratedCache(id: string, instance: any): void {
+  const c = cacherMap.get(id, instance);
   if (c) {
-    cacherMap.delete(id);
+    cacherMap.delete(id, instance);
     c.destroy();
   }
 }
 
 /**
- * Destroy the decorated sub-cache for the given id, subId, and instance, to free up resources and remove it from the internal cache map.
- * @param id Registered id of the parent cache
- * @param subId Registered id of the sub-cache
- * @param instance Instance of the class.
- */
-export function destroyDecoratedSubCache(id: string, subId: string): void {
-  const c = cacherMap.get(id);
-  if (!c) {
-    throw new Error(`SubCache "${id}:${subId}" not found.`);
-  }
-  c.deleteSub(subId);
-}
-
-/**
- * Caches the result of a no-argument **async** method.
+ * A class method decorator. Caches the result of a no-argument **async** method.
  * **You must handle errors in your method**.
  * The method must be `async`: the cached value is always accessed through a promise.
- * @param id The id for the cached method, can be visited in `@SubCache`.
+ * @param id The id for the cached method.
  * @param ttl Time-to-live for the cached value in milliseconds. `Infinity` never expires.
  */
-export function Cache(options: { id: string; ttl?: number }): MethodCacheDecorator {
-  // #region Argument validation
-  if (typeof options !== 'object' || options === null) {
-    throw new TypeError(`@Cache expects an options object with at least an 'id' property.`);
-  }
-  const { id, ttl = Infinity } = options;
-  if (typeof id !== 'string') {
-    throw new TypeError(`@Cache expects 'id' to be a string.`);
-  }
-  // #endregion
+export function Cache(options?: { id?: string; ttl?: number }): MethodCacheDecorator {
+  return function <This, R>(target: (this: This) => Promise<R>, context: Ctx<This, R>) {
+    if (context.kind !== 'method') {
+      throw new Error('@Cache can only be applied to class methods.');
+    }
 
-  return function <This, R>(
-    target: (this: This) => Promise<R>,
-    ctx: ClassMethodDecoratorContext<This, (this: This) => Promise<R>>,
-  ) {
-    const wrapper = function (this: any) {
-      return cacherMap.get(id)!.get();
-    };
-
-    ctx.addInitializer(function (this: any) {
-      if (cacherMap.has(id)) {
-        throw new Error(`Duplicated cache id "${id}".`);
-      }
-      cacherMap.set(id, new Cacher(target, ttl, this));
-    });
-
-    return wrapper;
-  };
-}
-
-/**
- * Derive sub-cacher from `@Cache({ id, ttl? })` and the decorated method.
- * - Decorated method must be **async**, and its parameter must be **optional**.
- * - `@Cache` must be  **initialized** before `@SubCache` does.
- * - Silently overrides any existing sub-cache with the same `subId`.
- * @param fromId id used in `@Cache` decorator.
- * @param subId id for the sub-cache derived from the parent cache.
- */
-export function SubCache(fromId: string, subId: string): MethodSubCacheDecorator {
-  return function <This, T, R>(
-    target: (this: This, value?: T) => R | Promise<R>,
-    _context: ClassMethodDecoratorContext<This, (this: This, value?: T) => Promise<R>>,
-  ) {
-    return async function (this: any) {
-      const c = cacherMap.get(fromId);
-      if (!c) {
-        throw new Error(`Cacher "${fromId}" not found.`);
-      }
-      return c.getOrDerive(subId, target);
+    let { id = context.name, ttl } = Object(options);
+    return function (this: This) {
+      return cacherMap.getOrInsertComputed(id, this, () => new Cacher(target, ttl, this)).get();
     };
   };
 }
