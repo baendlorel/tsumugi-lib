@@ -3,10 +3,11 @@
 [![npm version](https://img.shields.io/npm/v/cacher-ts.svg)](https://www.npmjs.com/package/cacher-ts) [![npm downloads](http://img.shields.io/npm/dm/cacher-ts.svg)](https://npmcharts.com/compare/cacher-ts,token-types?start=1200&interval=30)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/59dd6795e61949fb97066ca52e6097ef)](https://www.codacy.com/app/Borewit/cacher-ts?utm_source=github.com&utm_medium=referral&utm_content=Borewit/cacher-ts&utm_campaign=Badge_Grade)
 
-A tiny cache for TypeScript with a **synchronous read path**: an async getter fills the cache, `get()` reads it without a promise, expiry refreshes in the background, and derived views recompute only when their source changes.
+A TypeScript TTL cache with async getter support, derived sub-caches, and `@Cache` / `@SubCache` class decorators.
 
 For more awesome packages, check out [my homepage💛](https://baendlorel.github.io/?repoType=npm)
 
+---
 
 ## 📦 Installation
 
@@ -18,21 +19,22 @@ pnpm add cacher-ts
 
 ## ✨ Features
 
-- **Sync reads, async fills.** `get()` returns `T`, not `Promise<T>`.
-- **No fetch on construction.** Call `reload()` for the first load.
-- **The getter sees the previous value** — `getter(lastValue)`, `undefined` on the first load.
-- **One in-flight request per cacher.** Concurrent reads never multiply into requests.
-- **Stale-while-revalidate.** Expiry *starts* a refresh; `get()` returns the current value at once.
-- **Monotonic TTL** on `performance.now()`, so wall-clock jumps cannot expire an entry.
-- **Typed derived sub-caches**, re-mapped only when the parent changes by identity.
-- **Failures are never cached.** The next `reload()` retries.
-- **`@Cache(key?, ttl?)`** memoizes a zero-argument method, per instance, with the receiver bound for you.
-- **`@SubCache(key)`** exposes a derived view of a cached method as a method of its own.
-- **Zero dependencies.** Typed, ESM + CJS.
+- **Promise-based reads.** `get()` and `reload()` both return `Promise<T>`. Sync getters are transparently wrapped.
+- **Lazy load.** The getter is never called until `reload()` (or `get()`) is first invoked.
+- **The getter sees the previous value** — `getter(lastValue?: T)`, `undefined` on the first call.
+- **One in-flight request per cacher.** Concurrent `reload()` / `get()` calls share one in-flight promise.
+- **Monotonic TTL** on `performance.now()` — immune to wall-clock changes.
+- **Failures are never cached.** A throwing or rejected getter leaves the previous value intact; the next call retries.
+- **Typed derived sub-caches**, re-mapped only when the parent value changes by identity.
+- **`@Cache({ id, ttl? })`** memoizes a zero-argument async method, per instance, with `this` bound automatically.
+- **`@SubCache(fromId, subId)`** exposes a derived view of a `@Cache` method as a method of its own.
+- Zero runtime dependencies. ESM + CJS dual output.
+
+---
 
 ## 🚀 Usage
 
-### Basics
+### Cacher — core class
 
 ```ts
 import { Cacher } from 'cacher-ts';
@@ -40,136 +42,199 @@ import { Cacher } from 'cacher-ts';
 const user = new Cacher(async () => (await fetch('/api/me')).json(), 60_000);
 
 await user.reload(); // the constructor does not fetch — load once, at startup
-user.get();          // → the cached user, synchronously
+const data = await user.get(); // → the cached user
 ```
 
-`ttl` is required, in milliseconds. `Infinity` never expires; `0` expires immediately, so every read refreshes. `get()` throws until a first load has succeeded — guard it with the `isInitialized` flag, which turns true only after a load has **succeeded**, not merely been attempted.
+#### Constructor
 
-### The getter receives the previous value
+```ts
+new Cacher(getter, ttl?, thisArg?)
+```
 
-The getter is always called with what is currently cached — `undefined` on the first load. It is the cache itself, not a copy, and it is the same reference `get()` hands out, so mutating it in place is the cheapest way to carry state forward. Nothing merges your return value back in: whatever the getter returns *becomes* the new cache. A failed load leaves the previous value untouched, so the next attempt starts from the same place.
+| Parameter | Type                                 | Default    | Description                                                                                                                                                                                                                    |
+| --------- | ------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `getter`  | `(lastValue?: T) => T \| Promise<T>` | —          | Called on first load and on every TTL expiry. Receives the previous cached value (`undefined` first time). **Handle your own errors** — a thrown or rejected getter leaves the previous value intact and is retried next call. |
+| `ttl`     | `number`                             | `Infinity` | Milliseconds until the cached value expires. `0` = reload on every `get()`. `Infinity` = never expires. Must be a non-negative safe integer or `Infinity`.                                                                     |
+| `thisArg` | `any`                                | `null`     | Bound as `this` when calling the getter and sub-cache mappers. Can be changed later with `setThis()`.                                                                                                                          |
 
-### `setThis`
+#### Reading the value
 
-`setThis()` binds the receiver for a method-style getter, which is then called as `getter.call(thisArg, lastValue)`. It is the only way to bind it, and it matters because an expiry-triggered refresh runs from `get()`, where there is nothing to pass. It returns the cacher, so it chains onto the constructor:
+```ts
+// Return the cached value. If not yet initialized or expired, waits for a reload first.
+const value = await cacher.get();
+
+// Force a new load. If one is already in flight, join it instead of starting another.
+const value = await cacher.reload();
+```
+
+#### Properties
+
+```ts
+cacher.initialized  // boolean — true after the first successful load
+cacher.loading      // Promise<T> | false — the in-flight promise, or false
+```
+
+#### Using `setThis`
+
+`setThis(thisArg)` rebinds the receiver for the getter and all sub-cache mappers. Useful inside a class:
 
 ```ts
 class Api {
   private cacher = new Cacher(this.loadUser, 60_000).setThis(this);
 
-  private loadUser() { return fetch('/api/me').then((r) => r.json()); }
-
-  get user() {
-    return this.cacher.isInitialized ? this.cacher.get() : this.cacher.reload();
+  private async loadUser() {
+    return fetch('/api/me').then(r => r.json());
   }
 }
 ```
-
-### Reading is sync, refreshing is not
-
-Past the TTL, `get()` returns the current value on that call and starts a refresh in the background, so a burst of callers reads instantly while one request is in flight. The `loading` property is the in-flight promise, or `false` when idle — `await` it to join a refresh, or `await cacher.reload()` to drive one yourself when you need a guaranteed-fresh value.
 
 ### Derived sub-caches
 
-`derive()` registers a named, computed view of the cached value. The mapper runs inline, so it must be pure and synchronous; it is called with the cacher's `thisArg`, so `cacher.derive('names', this.extractNames)` works once the cacher is bound with `setThis()`. Declaring the names and types once with the `Subs` generic makes both `derive()` and `getSub()` checked against it:
+A sub-cache maps the parent value to a derived shape. The mapper is a **pure synchronous function** called inline; its result is cached until the parent value changes by identity (`Object.is`).
 
 ```ts
-interface ConfigSubs {
-  names: string[];
-  adminCount: number;
-}
+interface ConfigSubs { names: string[]; adminCount: number }
 
-const config = new Cacher<ConfigSubs, typeof loadRemoteConfig>(loadRemoteConfig, 10_000);
+const config = new Cacher<ConfigSubs, Config>(loadConfig, 10_000);
 
-config.derive('names', (cfg) => cfg.users.map((u) => u.name));
-config.derive('adminCount', (cfg) => cfg.users.filter((u) => u.admin).length);
+config.derive('names',      (cfg) => cfg.users.map(u => u.name));
+config.derive('adminCount', (cfg) => cfg.users.filter(u => u.admin).length);
 
 await config.reload();
-config.getSub('names'); // → string[]   the mapper runs, the result is remembered
-config.getSub('names'); // → string[]   memoized: same source reference
+const names = await config.getSub('names');       // string[] — mapper runs, result remembered
+const names2 = await config.getSub('names');      // string[] — memoized: parent unchanged
+
+config.hasSub('names');       // boolean
+config.deleteSub('names');    // boolean — true if existed and was removed
 ```
 
-A sub-cache re-maps when the parent changes **by identity** (`Object.is`), so a re-fetch returning a new object re-maps while one returning the same reference does not. `getSub()` throws on an unregistered name and reads the parent's *current* value without triggering a reload; `hasSub(name)` tests whether one is registered, and `deleteSub(name)` drops it.
+`getSub()` awaits the parent cache (reloads if expired), then runs the mapper only when needed.
 
-Pass the getter's type alongside `Subs` — `new Cacher<ConfigSubs>(...)` alone still checks the names but quietly makes `get()` and the mapper parameter `any`.
-
-### Sync and async getters
-
-The getter is typed `(lastValue?: T) => T | Promise<T>` and is always awaited, so a sync getter is interchangeable with an async one: `get()` and `reload()` return `Promise<T>` either way, and a throwing sync getter stays retryable like a rejecting async one.
-
-The `@Cache()` decorator is stricter and requires the method to be `async` — see below for why.
-
-### `@Cache()`
-
-When the thing worth caching is already a method, `@Cache()` wraps it — same cache underneath, and the receiver is bound for you, so the method's own `this` is the instance on every load:
+Register-and-read in one step:
 
 ```ts
-import { Cache } from 'cacher-ts';
+const names = await config.getOrDerive('names', (cfg) => cfg.users.map(u => u.name));
+```
 
-class UserStore {
-  @Cache(60_000)
-  async me() {
-    return (await fetch('/api/me')).json();
+> **Note:** `getOrDerive` only registers the mapper on the **first** call. Subsequent calls with a different mapper silently reuse the original. Use `deleteSub` + `derive` to replace a mapper.
+
+### Cleanup
+
+```ts
+cacher.setThis(newThisArg)  // rebind 'this' for the getter and mappers
+cacher.destroy()            // release all references; do not use after this
+```
+
+---
+
+## 🎨 Decorators
+
+Requires TypeScript ≥ 5.0 with TC39 stage-3 class decorators. Keep `"experimentalDecorators"` **off** (the default in modern TypeScript).
+
+### `@Cache({ id, ttl? })`
+
+Caches the result of a zero-argument **async** method, separately per instance.
+
+```ts
+import { Cache, SubCache, initializeDecoratedCaches } from 'cacher-ts';
+
+class ConfigService {
+  @Cache({ id: 'cfg', ttl: 60_000 })
+  async loadConfig(): Promise<Config> {
+    return fetch('/api/config').then(r => r.json());
+  }
+
+  @SubCache('cfg', 'host')
+  async host(cfg?: Config): Promise<string> {
+    return cfg!.host;
   }
 }
 
-const store = new UserStore();
-await store.me(); // → fetches, caches
-await store.me(); // → cached
+const svc = new ConfigService();
+await initializeDecoratedCaches();        // eagerly warm all @Cache methods (optional)
+const cfg  = await svc.loadConfig();     // cached value
+const host = await svc.host();           // derived sub-cache
 ```
 
-Both arguments are optional. `@Cache()` never expires and keys the cache by the method name; `@Cache(ttl)` keeps the method name; `@Cache(key, ttl)` names the key explicitly, which is what `@SubCache` below needs. A lone string is read as the key and a lone number as the ttl.
+| Option | Type     | Description                                                                                                             |
+| ------ | -------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `id`   | `string` | Required. Identifies this cache on the instance; used by `@SubCache` to locate the parent. Must be unique per instance. |
+| `ttl`  | `number` | Optional. Milliseconds before the value expires. Defaults to `Infinity`.                                                |
 
-There is one cache per instance, per key — keyed on the receiver, so instances and sibling methods never share. The method must take no parameters, enforced at class-definition time with a `TypeError`; because the entry is keyed on the instance alone, do not use it on a method whose result depends on other mutable state. A defaulted parameter slips past the check and then receives the previous cached value, exactly as a getter's first argument does:
+Constraints enforced by TypeScript:
+- The decorated method must return `Promise<R>` — sync methods fail to compile (`TS1270`).
+- The method must have no parameters.
+
+### `@SubCache(fromId, subId)`
+
+Derives a sub-cache from the `@Cache` with the given `id`.
 
 ```ts
-@Cache('cfg', 10_000)
-async cfg(last?: Config) {
-  return last ? patchRemote(last) : (await fetch('/api/config')).json();
+@SubCache('cfg', 'host')
+async host(cfg?: Config): Promise<string> {
+  return cfg!.host;
 }
 ```
 
-Errors are yours, as everywhere else: a throwing method propagates, nothing is cached, and the next call retries. The decorator uses standard (TC39) decorator semantics, so keep `experimentalDecorators` **off** — the default in modern TypeScript and in tsdown/esbuild.
+| Parameter | Description                                                        |
+| --------- | ------------------------------------------------------------------ |
+| `fromId`  | The `id` of a `@Cache` decoration on this class or a parent class. |
+| `subId`   | A name for this sub-cache within the parent cacher.                |
 
-The decorated method **must be `async`** — unlike a hand-written `Cacher`, where a sync getter is fine. A decorator cannot change a method's signature: `@Cache()` replaces the method with a wrapper returning `Promise<R>`, and TypeScript requires that wrapper's return type to be assignable to the original method's type. A sync `() => number` method therefore fails to compile (`TS1270`), which is correct — the value is only ever available through a promise.
+Constraints:
+- The method must be **async** and its **parameter must be optional** — it is always called with no argument at the call site; the framework passes the parent's cached value in through that parameter.
+- The parent `@Cache` must be initialized before calling a `@SubCache` method.
 
-### `@SubCache()`
+### `initializeDecoratedCaches(force?)`
 
-`@SubCache(key)` turns a method into a `derive()`d view of the cache behind `@Cache(key)`. The method's single argument is the parent's cached value and its `this` is the instance, so it reads like a normal getter; the result is memoized until the parent value changes by identity.
+Eagerly calls `reload()` on every `@Cache` cacher that has not yet loaded. Pass `true` to force-reload all.
 
 ```ts
-import { Cache, SubCache } from 'cacher-ts';
-
-interface ConfigShape {
-  users: { name: string; admin: boolean }[];
-}
-
-class Config {
-  @Cache({ id: 'cfg', ttl: 10_000 })
-  async cfg(): Promise<ConfigShape> {
-    return (await fetch('/api/config')).json();
-  }
-
-  @SubCache('cfg')
-  async adminNames(cfg?: ConfigShape): Promise<string[]> {
-    return cfg!.users.filter((u) => u.admin).map((u) => u.name);
-  }
-}
-
-const config = new Config();
-await config.cfg();        // creates the cache @SubCache borrows — do this first
-await config.adminNames(); // → string[], derived and memoized
+await initializeDecoratedCaches();       // load uninitialised cachers
+await initializeDecoratedCaches(true);   // force-reload all
 ```
 
-The method **must be `async` and its parameter must be optional**, and it is called with no argument (`config.adminNames()`): a decorator cannot change a method's parameter list, and the cached value is what the method body receives through that parameter. Both are type-enforced, so a sync `@SubCache` method — or one whose parameter is required — fails to compile. The mapper itself must be pure and synchronous, like every other sub-cache mapper.
+Useful at application startup to warm caches before the first request arrives.
 
-## ⚠️ Good to know
+### `destroyDecoratedCache(id, instance)`
 
-- **`get()` throws before the first successful `reload()`** — guard the first read with `isInitialized`.
-- **`get()` can hand you a stale value for one call** — only with an async getter, where the refresh runs in the background; `await cacher.loading` or `await cacher.reload()` when you need it fresh.
-- **Getter errors are yours to handle.** A failing `reload()` rejects, the previous value survives, and the next `reload()` retries. A refresh triggered from `get()` is fire-and-forget, so attach a handler if nothing awaits `reload()`/`loading`.
-- **Mappers must be pure and synchronous.** `getSub()` calls them inline; a throwing mapper propagates, leaving the parent/child pair consistent and retryable.
-- **`@SubCache()` borrows its parent's cache.** It reaches `@Cache(key)` through a registry written on the instance the first time a cached method runs there, so a `@SubCache()` method throws until its parent has run at least once. On a class with several `@Cache` methods, initialize the parent you intend to derive from first.
+Destroys the cacher registered for `id` on `instance` and removes it from the internal registry.
+
+```ts
+import { destroyDecoratedCache } from 'cacher-ts';
+
+destroyDecoratedCache('cfg', svc);
+```
+
+---
+
+## 🧬 Subclass inheritance
+
+| Scenario                                                         | Behaviour                                                                                       |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Child re-declares the method **with `@Cache` and the same `id`** | Throws `Duplicate cache id "…"` at instantiation.                                               |
+| Child overrides the method **without `@Cache`**                  | The override is not cached; the parent's initializer is silently skipped for this instance.     |
+| Parent has `@Cache`, child adds `@SubCache` referencing it       | Works — the sub-cache finds the parent cacher by instance lookup.                               |
+| Parent has `@SubCache`, child adds the matching `@Cache`         | Works — the sub-cache resolves the parent at call time, after the child's cacher is registered. |
+
+---
+
+## 🔷 TypeScript
+
+The `Cacher` class takes two type parameters: `Cacher<Subs, T>`.
+
+```ts
+type MySubs = { doubled: number; tag: string };
+
+const cacher = new Cacher<MySubs, number>(async () => 21);
+cacher.derive('doubled', v => v * 2);
+
+const n = await cacher.getSub('doubled'); // typed as number
+```
+
+> **Tip:** Always provide both type parameters together. TypeScript does not support partial type-argument inference, so writing only `new Cacher<MySubs>(…)` will silently make `T` (and therefore `get()`) return `any`.
+
+---
 
 ## License
 
