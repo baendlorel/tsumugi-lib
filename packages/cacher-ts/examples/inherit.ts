@@ -7,6 +7,8 @@ class AA {
   async a() {
     return 'aa';
   }
+
+  a2() {}
 }
 
 class BB extends AA {
@@ -17,9 +19,11 @@ class BB extends AA {
 }
 
 async function main() {
-  const aa = new AA();
-  const bb = new BB();
-  await aa.a();
-  await bb.a();
+  // const aa = new AA();
+  // const bb = new BB();
+  // await aa.a();
+  // await bb.a();
+
+  console.log(AA.prototype.a2 === BB.prototype.a2);
 }
 main();

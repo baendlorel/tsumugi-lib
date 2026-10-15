@@ -1,4 +1,3 @@
-import { DuoMap } from '@duo-map';
 import { Cacher } from './cacher.js';
 
 /**
@@ -22,7 +21,7 @@ type MethodSubCacheDecorator = <This, T, R>(
   context: ClassMethodDecoratorContext<This, (this: This, value?: T) => Promise<R>>,
 ) => (this: This, value?: T) => Promise<R>;
 
-const instanceToCache = new DuoMap<any, string, Cacher>();
+const cacherMap = new Map<string, Cacher>();
 
 /**
  * Load all decorated caches.
@@ -31,7 +30,7 @@ const instanceToCache = new DuoMap<any, string, Cacher>();
  * @returns a promise that you can await to ensure all decorated caches have been initialized.
  */
 export function initializeDecoratedCaches(force = false): Promise<any[]> {
-  return Promise.all([...instanceToCache.values()].map((c) => (c.initialized && !force ? true : c.reload())));
+  return Promise.all([...cacherMap.values()].map((c) => (c.initialized && !force ? true : c.reload())));
 }
 
 /**
@@ -39,10 +38,10 @@ export function initializeDecoratedCaches(force = false): Promise<any[]> {
  * @param id Registered id
  * @param instance Instance of the class.
  */
-export function destroyDecoratedCache(id: string, instance: any): void {
-  const c = instanceToCache.get(instance, id);
+export function destroyDecoratedCache(id: string): void {
+  const c = cacherMap.get(id);
   if (c) {
-    instanceToCache.delete(instance, id);
+    cacherMap.delete(id);
     c.destroy();
   }
 }
@@ -53,8 +52,8 @@ export function destroyDecoratedCache(id: string, instance: any): void {
  * @param subId Registered id of the sub-cache
  * @param instance Instance of the class.
  */
-export function destroyDecoratedSubCache(id: string, subId: string, instance: any): void {
-  const c = instanceToCache.get(instance, id);
+export function destroyDecoratedSubCache(id: string, subId: string): void {
+  const c = cacherMap.get(id);
   if (!c) {
     throw new Error(`SubCache "${id}:${subId}" not found.`);
   }
@@ -73,9 +72,7 @@ export function Cache(options: { id: string; ttl?: number }): MethodCacheDecorat
   if (typeof options !== 'object' || options === null) {
     throw new TypeError(`@Cache expects an options object with at least an 'id' property.`);
   }
-
   const { id, ttl = Infinity } = options;
-
   if (typeof id !== 'string') {
     throw new TypeError(`@Cache expects 'id' to be a string.`);
   }
@@ -86,20 +83,14 @@ export function Cache(options: { id: string; ttl?: number }): MethodCacheDecorat
     ctx: ClassMethodDecoratorContext<This, (this: This) => Promise<R>>,
   ) {
     const wrapper = function (this: any) {
-      return instanceToCache.get(this, id)!.get();
+      return cacherMap.get(id)!.get();
     };
 
     ctx.addInitializer(function (this: any) {
-      // If a subclass overrides this method without @Cache, its prototype won't carry our
-      // wrapper — skip registration to avoid an orphan Cacher that is never called.
-      if ((Object.getPrototypeOf(this) as any)[ctx.name] !== wrapper) {
-        return;
+      if (cacherMap.has(id)) {
+        throw new Error(`Duplicated cache id "${id}".`);
       }
-
-      if (instanceToCache.has(this, id)) {
-        throw new Error(`Duplicate cache id "${id}" for the same instance.`);
-      }
-      instanceToCache.set(this, id, new Cacher(target, ttl, this));
+      cacherMap.set(id, new Cacher(target, ttl, this));
     });
 
     return wrapper;
@@ -120,7 +111,7 @@ export function SubCache(fromId: string, subId: string): MethodSubCacheDecorator
     _context: ClassMethodDecoratorContext<This, (this: This, value?: T) => Promise<R>>,
   ) {
     return async function (this: any) {
-      const c = instanceToCache.get(this, fromId);
+      const c = cacherMap.get(fromId);
       if (!c) {
         throw new Error(`Cacher "${fromId}" not found.`);
       }
