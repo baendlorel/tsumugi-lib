@@ -1,2 +1,2 @@
 export { Cacher } from './cacher.js';
-export { Cache, initializeDecoratedCaches, destroyDecoratedCache } from './decorator.js';
+export { Cache, DecoratedCache } from './decorator.js';

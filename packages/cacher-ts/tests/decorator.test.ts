@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Cache, Cacher, destroyDecoratedCache, initializeDecoratedCaches } from '../src/index.js';
+import { Cache, Cacher, DecoratedCache } from '../src/index.js';
 
 /**
  * `@Cache` keeps one module-global registry, so an `id` is only reusable across *instances*
@@ -159,7 +159,7 @@ describe('@Cache', () => {
   // ---------------------------------------------------------------------------
   // Registry helpers
   // ---------------------------------------------------------------------------
-  describe('initializeDecoratedCaches()', () => {
+  describe('DecoratedCache.initializeAll()', () => {
     it('only warms methods that have already been called', async () => {
       const touched: number[] = [];
       class Svc {
@@ -180,7 +180,7 @@ describe('@Cache', () => {
       await svc.touched();
       expect(touched).toHaveLength(1);
 
-      await initializeDecoratedCaches();
+      await DecoratedCache.initializeAll();
 
       // Registration is lazy, so the untouched method is not in the registry at all.
       expect(touched).toEqual([1]);
@@ -197,7 +197,7 @@ describe('@Cache', () => {
 
       const svc = new Svc();
       await svc.load();
-      await initializeDecoratedCaches();
+      await DecoratedCache.initializeAll();
 
       expect(calls).toBe(1);
     });
@@ -213,13 +213,70 @@ describe('@Cache', () => {
 
       const svc = new Svc();
       await svc.load();
-      await initializeDecoratedCaches(true);
+      await DecoratedCache.initializeAll(true);
 
       expect(calls).toBe(2);
     });
   });
 
-  describe('destroyDecoratedCache()', () => {
+  describe('DecoratedCache.initialize()', () => {
+    it('loads an uninitialised cache on demand', async () => {
+      let calls = 0;
+      class Svc {
+        @Cache({ id: 'initSingle' })
+        async load() {
+          return ++calls;
+        }
+      }
+
+      const svc = new Svc();
+      await svc.load();
+      expect(calls).toBe(1);
+
+      // Already initialised: returns the cached value without re-running the getter.
+      await expect(DecoratedCache.initialize('initSingle', svc)).resolves.toBe(1);
+      expect(calls).toBe(1);
+    });
+
+    it('throws when the id is not registered on the instance', async () => {
+      class Svc {
+        @Cache({ id: 'initMissing' })
+        async load() {
+          return 1;
+        }
+      }
+
+      const svc = new Svc();
+      await svc.load();
+
+      // Reachable through `svc`, but not through this other instance.
+      await expect(DecoratedCache.initialize('initMissing', new Svc())).rejects.toThrow(
+        'Cache with id "initMissing" not found for the given instance.',
+      );
+    });
+  });
+
+  describe('DecoratedCache.get()', () => {
+    it('returns the underlying Cacher, or undefined when unregistered', async () => {
+      class Svc {
+        @Cache({ id: 'getUnderlying', ttl: 1234 })
+        async load() {
+          return 1;
+        }
+      }
+
+      const svc = new Svc();
+      expect(DecoratedCache.get('getUnderlying', svc)).toBeUndefined();
+
+      await svc.load();
+
+      const cacher = DecoratedCache.get('getUnderlying', svc);
+      expect(cacher).toBeInstanceOf(Cacher);
+      await expect(cacher!.get()).resolves.toBe(1);
+    });
+  });
+
+  describe('DecoratedCache.destroy()', () => {
     it('drops the entry so the next call loads again', async () => {
       let calls = 0;
       class Svc {
@@ -232,14 +289,15 @@ describe('@Cache', () => {
       const svc = new Svc();
       await expect(svc.load()).resolves.toBe(1);
 
-      destroyDecoratedCache('destroyEntry', svc);
+      DecoratedCache.destroy('destroyEntry', svc);
+      expect(DecoratedCache.get('destroyEntry', svc)).toBeUndefined();
 
       await expect(svc.load()).resolves.toBe(2);
       expect(calls).toBe(2);
     });
 
     it('is a no-op when nothing is registered', () => {
-      expect(() => destroyDecoratedCache('neverRegistered', {})).not.toThrow();
+      expect(() => DecoratedCache.destroy('neverRegistered', {})).not.toThrow();
     });
   });
 

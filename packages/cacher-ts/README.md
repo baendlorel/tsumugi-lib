@@ -27,6 +27,7 @@ pnpm add cacher-ts
 - **Failures are never cached.** A throwing or rejected getter leaves the previous value intact; the next call retries.
 - **Typed derived sub-caches**, re-mapped only when the parent value changes by identity.
 - **`@Cache({ id?, ttl? })`** memoizes a no-argument async method, per instance, with `this` bound automatically. Both options are optional: `id` defaults to the method name.
+- **`DecoratedCache` registry helpers** to warm (`initialize`, `initializeAll`), inspect (`get`) and tear down (`destroy`) decorated caches by `id` + instance.
 - Zero runtime dependencies. ESM + CJS dual output.
 
 ---
@@ -135,7 +136,7 @@ Requires TypeScript ≥ 5.0 with TC39 stage-3 class decorators. Keep `"experimen
 Caches the result of a no-argument **async** method, separately per instance.
 
 ```ts
-import { Cache, initializeDecoratedCaches } from 'cacher-ts';
+import { Cache, DecoratedCache } from 'cacher-ts';
 
 class ConfigService {
   @Cache({ id: 'cfg', ttl: 60_000 })
@@ -165,6 +166,10 @@ class ConfigService {
 | `id`   | `string` | the method name | Identifies this cache on the instance. Must be unique per instance. |
 | `ttl`  | `number` | `Infinity`      | Milliseconds before the value expires. `Infinity` never expires.    |
 
+Sharing an `id` collapses two methods into **one** cache — including across `super` calls — since
+`[id, instance]` is the only registry key. Unrelated classes may reuse the same `id`, and each
+instance holds its own entry.
+
 Constraints enforced by TypeScript:
 - The decorated method must return `Promise<R>` — sync methods fail to compile (`TS1270`).
 - The method must have no parameters.
@@ -183,29 +188,40 @@ const svc = new ConfigService();  // nothing registered yet
 await svc.loadConfig();           // cacher created now, keyed by ['cfg', svc]
 ```
 
-### `initializeDecoratedCaches(force?)`
+This matters for the registry helpers below: they only ever see `[id, instance]` pairs that have
+been **called at least once**. A freshly constructed instance has nothing registered.
 
-Reloads every `@Cache` cacher that is already registered but not yet loaded. Pass `true` to
-force-reload all of them.
+### `DecoratedCache` registry helpers
+
+`DecoratedCache` is a namespace over the module-global registry of every `@Cache` cacher — all
+classes, all instances. Each helper takes the same `[id, instance]` key the decorator uses.
 
 ```ts
-await initializeDecoratedCaches();       // load uninitialised cachers
-await initializeDecoratedCaches(true);   // force-reload all
+import { DecoratedCache } from 'cacher-ts';
+
+await DecoratedCache.initialize('cfg', svc);  // load this one cacher, if not loaded yet
+await DecoratedCache.initializeAll();         // load every cacher that is not initialised
+await DecoratedCache.initializeAll(true);     // force-reload every cacher
+
+DecoratedCache.get('cfg', svc);               // Cacher | undefined
+DecoratedCache.destroy('cfg', svc);           // tear down and drop the registry entry
 ```
 
-Because registration is lazy, this only warms methods that have been **called at least once**.
-A freshly constructed instance has nothing registered, so `initializeDecoratedCaches()` has no
-effect on it — call the methods first (or just let the first real request pay for the load).
+| Member          | Signature                              | Behaviour                                                                                                                                              |
+| --------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `initialize`    | `(id, instance) => Promise<unknown>`   | Resolves with the cached value, reloading only when the cacher is not initialised yet. **Throws** if `id` is not registered on that instance.          |
+| `initializeAll` | `(force?) => Promise<unknown[]>`       | Reloads every registered cacher, and resolves with all of their values. Pass `true` to re-run even initialised getters.                                |
+| `get`           | `(id, instance) => Cacher \| undefined` | The underlying [`Cacher`](#cacher--core-class), or `undefined` when nothing is registered.                                                            |
+| `destroy`       | `(id, instance) => void`               | Destroys the cacher and removes it from the registry. A no-op if nothing is registered; the next call of the method builds a fresh cacher.            |
 
-### `destroyDecoratedCache(id, instance)`
-
-Destroys the cacher registered for `id` on `instance` and removes it from the internal registry.
-A no-op if nothing is registered. The next call of the method creates a fresh cacher.
+> `initializeAll` walks the whole registry, so it warms caches of *any* class and *any* instance —
+> there is no per-class or per-instance scoping. Combined with lazy registration, it only ever
+> touches methods that have already been called once.
 
 ```ts
-import { destroyDecoratedCache } from 'cacher-ts';
-
-destroyDecoratedCache('cfg', svc);
+// Warm everything that has been touched, then drop one cache so it reloads on demand.
+await DecoratedCache.initializeAll();
+DecoratedCache.destroy('cfg', svc);
 ```
 
 ---

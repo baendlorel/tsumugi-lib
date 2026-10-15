@@ -34,13 +34,14 @@ const cacherMap = new DuoMap<string | symbol, any, DecCacher>();
 
 export namespace DecoratedCache {
   /**
-   * Initializes all cached instances.
+   * Initializes every registered cache, resolving with their values in registry order.
+   * Already-initialized caches keep their value unless `force` is `true`.
    */
   export function initializeAll(force = false): Promise<any[]> {
-    return Promise.all([...cacherMap.values()].map((c) => (c.initialized && !force ? true : c.reload())));
+    return Promise.all([...cacherMap.values()].map((c) => (c.initialized && !force ? c.get() : c.reload())));
   }
 
-  export function initialize(id: string, instance: any): Promise<any[]> {
+  export async function initialize(id: string, instance: any): Promise<any> {
     const c = cacherMap.get(id, instance);
     if (!c) {
       throw new Error(`Cache with id "${id}" not found for the given instance.`);
