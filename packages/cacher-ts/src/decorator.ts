@@ -44,6 +44,24 @@ export function destroyDecoratedCache(id: string, instance: any): void {
   }
 }
 
+export namespace DecoratedCache {
+  export function initialize(force = false): Promise<any[]> {
+    return Promise.all([...cacherMap.values()].map((c) => (c.initialized && !force ? true : c.reload())));
+  }
+
+  export function destroy(id: string, instance: any): void {
+    const c = cacherMap.get(id, instance);
+    if (c) {
+      cacherMap.delete(id, instance);
+      c.destroy();
+    }
+  }
+
+  export function get(id: string, instance: any): Cacher | undefined {
+    return cacherMap.get(id, instance);
+  }
+}
+
 /**
  * A class method decorator. Caches the result of a no-argument **async** method.
  * **You must handle errors in your method**.
