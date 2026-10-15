@@ -23,9 +23,9 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
   private readonly getter: (lastValue?: T) => T | Promise<T>;
   /* @internal */
   private readonly ttl: number;
-
   /* @internal */
-  private thisArg: any = null;
+  private thisArg: any;
+
   /* @internal */
   private last: number = -Infinity;
   /* @internal */
@@ -43,7 +43,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
    *   A sync getter is awaited like any other, so both kinds are interchangeable at the call site.
    * @param ttl Time-to-live for the cached value in milliseconds.
    */
-  constructor(getter: (lastValue?: T) => T | Promise<T>, ttl: number) {
+  constructor(getter: (lastValue?: T) => T | Promise<T>, ttl: number = Infinity, thisArg: any = null) {
     if (ttl !== Infinity) {
       if (typeof ttl !== 'number' || !Number.isSafeInteger(ttl) || ttl < 0 || ttl > 2147483647) {
         throw new TypeError(`ttl must be a positive integer less than 2147483647.`);
@@ -54,6 +54,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
     }
     this.getter = getter;
     this.ttl = ttl;
+    this.thisArg = thisArg;
   }
 
   /**
