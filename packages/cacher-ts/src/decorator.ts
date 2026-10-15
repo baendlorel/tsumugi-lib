@@ -1,6 +1,11 @@
 import { DuoMap } from '@duo-map';
 import { Cacher } from './cacher.js';
 
+/**
+ * Type of a method decorated with `@Cache`.
+ * The decorated method **must be `async`** (i.e. it must return a `Promise`); a sync method
+ * would be typed as `Promise<R>` at the call site while actually returning a plain value.
+ */
 type MethodCacheDecorator = <This, R>(
   target: (this: This) => Promise<R>,
   context: ClassMethodDecoratorContext<This, (this: This) => Promise<R>>,
@@ -8,12 +13,17 @@ type MethodCacheDecorator = <This, R>(
 
 type Ctx<This, R> = ClassMethodDecoratorContext<This, (this: This) => Promise<R>>;
 
+/**
+ * Keyed by `[id, instance]`: each instance caches independently, and unrelated classes
+ * may reuse an id. Entries are added lazily, on the first call of the decorated method.
+ */
 const cacherMap = new DuoMap<string | symbol, any, Cacher>();
 
 /**
  * Load all decorated caches.
  * - Calls reload of the uninitialized caches.
- * - **Only** affects cachers that are decorated with `@Cache`.
+ * - **Only** affects cachers that are decorated with `@Cache` and have been called at least
+ *   once — registration is lazy, so untouched methods are not in the map.
  * @returns a promise that you can await to ensure all decorated caches have been initialized.
  */
 export function initializeDecoratedCaches(force = false): Promise<any[]> {
@@ -21,8 +31,9 @@ export function initializeDecoratedCaches(force = false): Promise<any[]> {
 }
 
 /**
- * Destroy the decorated cache for the given id and instance, to free up resources and remove it from the internal cache map.
- * @param id Registered id
+ * Destroy the decorated cache for the given id and instance, to free up resources
+ * and remove it from the internal cache map. No-op if none is registered.
+ * @param id Registered id.
  * @param instance Instance of the class.
  */
 export function destroyDecoratedCache(id: string, instance: any): void {
@@ -37,8 +48,11 @@ export function destroyDecoratedCache(id: string, instance: any): void {
  * A class method decorator. Caches the result of a no-argument **async** method.
  * **You must handle errors in your method**.
  * The method must be `async`: the cached value is always accessed through a promise.
- * @param id The id for the cached method.
- * @param ttl Time-to-live for the cached value in milliseconds. `Infinity` never expires.
+ * The cacher is created on the first call, keyed by `[id, instance]`.
+ *
+ * @param options Optional. `id` defaults to the method name, `ttl` to `Infinity`.
+ * @param options.id Identifies this cache on the instance.
+ * @param options.ttl Time-to-live for the cached value in milliseconds. `Infinity` never expires.
  */
 export function Cache(options?: { id?: string; ttl?: number }): MethodCacheDecorator {
   return function <This, R>(target: (this: This) => Promise<R>, context: Ctx<This, R>) {

@@ -58,21 +58,21 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
   }
 
   /**
-   * Checks if the cache is empty.
+   * `true` once the getter has completed at least one successful load.
    */
   get initialized(): boolean {
     return this.inited;
   }
 
   /**
-   * Initializes the cacher with the given `this` context.
-   * If the cache is empty, it will trigger a reload.
+   * Rebinds `this` for the getter and the sub-cache mappers. Does not trigger a reload.
    */
   setThis(thisArg: any): this {
     this.thisArg = thisArg;
     return this;
   }
 
+  /* @internal */
   private async runGetter() {
     try {
       const data = await promiseTry(this.getter, this.thisArg, this.cache === empty ? undefined : this.cache);
@@ -107,7 +107,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
 
   /**
    * Getter of the value.
-   * If the cached value is outdated, it will trigger the initialization.
+   * Returns the cached value, reloading and awaiting it first if the cache is empty or expired.
    */
   async get(): Promise<T> {
     if (!this.inited || performance.now() - this.last >= this.ttl) {
@@ -118,10 +118,11 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
 
   /**
    * Derives a sub-cacher from the current one by applying a mapping function to its value.
-   * - pure sync mapper will be called with `cacher.thisArg`
+   * - the mapper is called with `cacher.thisArg`
    * - overwrite existing sub-cache if it already exists.
    *
-   * @param pureMapper Must be a **pure sync function**. It will be called without `await`.
+   * @param pureMapper Ideally a **pure sync function**; an `async` one works at runtime
+   *   (its result is awaited) but does not fit the declared type.
    */
   derive<SubKey extends keyof Subs>(name: SubKey, pureMapper: (value: T) => Subs[SubKey]): void {
     this.sub.set(name, { cache: empty, parent: empty, fn: pureMapper });
@@ -144,8 +145,9 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
 
   /**
    * Gets the derived sub-cache by its name, or derives it if it doesn't exist.
+   * Only the **first** mapper registered for a name is kept; later ones are ignored.
    * @param name The name of the derived sub-cache.
-   * @param pureMapper Must be a **pure function**.
+   * @param pureMapFn The mapper to register if `name` is not derived yet.
    */
   getOrDerive<SubKey extends keyof Subs>(name: SubKey, pureMapFn: (value: T) => Subs[SubKey]): Promise<Subs[SubKey]> {
     if (!this.sub.has(name)) {
@@ -156,6 +158,8 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
 
   /**
    * Get the cached value derived by the mapper.
+   * Awaits the parent cache first (reloading it when expired), then runs the mapper
+   * only if the parent value changed by identity since the last mapping.
    */
   async getSub<SubKey extends keyof Subs>(key: SubKey): Promise<Subs[SubKey]> {
     const sub = this.sub.get(key);
@@ -163,16 +167,15 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
       throw new Error(`No derived cache with name "${String(key)}".`);
     }
 
-    // Initialized cache won't be empty.
     const current = await this.get();
-    if (Object.is(sub.parent, current) && current !== empty) {
+    if (Object.is(sub.parent, current)) {
       return sub.cache as Subs[SubKey];
     }
 
-    const parent = current;
-    const cache = await sub.fn.call(this.thisArg, parent); // ! This makes parent and cache consistent even the mapper throws
+    // ! Assign only after the mapper settles, so parent and cache stay consistent even if it throws.
+    const cache = await sub.fn.call(this.thisArg, current);
 
-    sub.parent = parent;
+    sub.parent = current;
     sub.cache = cache;
 
     return cache;

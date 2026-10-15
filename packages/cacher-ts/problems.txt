@@ -2,40 +2,52 @@ cacher-ts 问题清单
 ==================
 范围：src/cacher.ts、src/decorator.ts、README.md、tests/、examples/、package.json
 说明：已排除"文档/注释中已约定、代码选择信任"的事项（例如：getter 自行处理错误、后台刷新失败由用户处理、
-      mapper 必须是纯同步函数、@Cache 方法不得带参数、@SubCache 须先让 @Cache 初始化、
-      cachers 集合不注销（Nestjs 风格，实例常驻）、子类 @SubCache 以实例为键 等）。
+      mapper 必须是纯同步函数、@Cache 方法不得带参数、
+      cachers 集合不注销（Nestjs 风格，实例常驻） 等）。
       "运行时验证"：装饰器相关的用例写在 examples/index.ts（`pnpm exp`，tsx 转译）；
       其余为 esbuild/tsc 转译 + node 24.5 实测。"类型验证"为 tsc 6.0.3（strict）实测。
 等级：[严重] 功能不可用/数据错误；[高] 明显行为缺陷；[中] 不稳定/不完善；[低] 细节/文档。
 已解决并删除：cachers 泄漏（设计如此）、initializeDecoratedCaches 语义、装饰后方法返回类型、
-      脱离接收者调用、SubCache 继承、reload/pending 时序（runGetter）、Cache 选项里 symbol 的校验、
+      脱离接收者调用、reload/pending 时序（runGetter）、Cache 选项里 symbol 的校验、
       重复 id 检测（new 时报错）、getSub 未加载就 derive 时返回 Symbol、
-      "Zero dependencies"（构建产物已内联 @shared/std/map.js，无外部 import）、
-      原严重-1（装饰器依赖 context.metadata：已改为模块级 WeakMap，不再使用 metadata。
-        tsc 输出（无 Symbol.metadata）、无 @Cache 的 @SubCache、父类 @SubCache + 子类 @Cache 均已验证正常，
-        用例在 examples/index.ts）、
+      "Zero dependencies"（构建产物已内联 @shared/std/map.js 与 @duo-map，无外部 import）、
+      原严重-1（装饰器依赖 context.metadata：曾改为模块级 WeakMap，现改用 DuoMap，均不使用 metadata。
+        tsc 输出（无 Symbol.metadata）已验证正常，用例在 examples/index.ts）、
       原高-1（getSub 先 `await this.get()`，过期会 reload，已验证）、
       原高-2（装饰器类型签名已收紧：@Cache 的 MethodCacheDecorator 只接受
         `<This, R>(target: (this: This) => Promise<R>, …)`，同步方法不再通过；
-        @SubCache 的 MethodSubCacheDecorator 只接受 `<This, T, R>(target: (this: This, value?: T) => R | Promise<R>, …)`，
-        即"声明为 async + 参数可选"，这是 TS 装饰器改不了方法签名导致的硬约束，已写进 README 与 JSDoc。
-        tsc 6.0.3（strict）实测：sync @Cache 报 TS1241/TS1270、README 式 sync @SubCache 报 TS1241/TS1270、
-        必填参数报 TS1241（'undefined' not assignable），`async m(x?: T): Promise<R>` 通过且
-        `obj.m()` 类型为 `Promise<R>`，examples/index.ts 类型检查通过）、
+        tsc 6.0.3（strict）实测 sync @Cache 报 TS1241/TS1270，`async m(): Promise<R>` 通过且
+        `obj.m()` 类型为 `Promise<R>`）、
       原中-4（getSync 后台刷新的 Unhandled Rejection：getSync 已删除）、
       原中-1（getter 同步抛错时 pending 永久卡死：改用 @shared 的 promiseTry，保证 finally 在
         reload 的 `this.pending = this.runGetter()` 赋值之后执行；实测同步抛错后可重试，用例在 examples/index.ts）、
-      原中-3（@SubCache 的前置错误改为 reject：包装函数已改成 async，
-        实测 `obj.m()` 返回 promise，`.then(…, e => …)` 能抓到 "Cacher … not found."）、
+      原中-3（@SubCache 的前置错误改为 reject：@SubCache 本身已在"万事从简"中移除）、
       原中-5（首次加载中调用 get() 不再直接抛错：get() 改为
         `if (!this.inited || expired) return this.reload()`，首次加载尚未完成时
         调用 get() 会等待该次加载，而不是抛 "Cache is empty"）、
       中-2（装饰器/构造函数参数校验：Cacher 构造函数现校验 ttl 与 getter；
         ttl 拒绝 NaN / 负数 / 非安全整数 / > 2147483647，放行 Infinity；
-        Cacher getter 类型已放宽为 `(lastValue?: T) => T | Promise<T>`，同步 getter 受支持）、
+        Cacher getter 类型已放宽为 `(lastValue?: T) => T | Promise<T>`，同步 getter 受支持。
+        @Cache 的 options 现为可选，故原先"options 必填 + id 必填"的校验已随之下线，
+        改为 `Object(options)` 解构 + `id = context.name` 兜底）、
       文档-1（README 已按现行 async API 完整重写）、
-      导出-1（initializeDecoratedCaches 已在 src/index.ts 正确导出，dist/index.d.mts 可见）、
-      低-7（Cache 初始化器里重复 id 检查已在 instanceToCache.set 之前，顺序正确，无半成品泄漏）。
+      导出-1（initializeDecoratedCaches 已在 src/index.ts 正确导出）、
+      低-7（Cache 初始化器里重复 id 检查顺序：重复 id 检测本身已随实例化期注册一并移除）、
+      中-6（子类覆写 @Cache 方法的行为：装饰器改为惰性注册后，"父类 initializer 多余 warm"
+        的现象不复存在——只有被真正调用过的 [id, 实例] 才会注册。
+        实测：子类同 id 覆写 → 父子共用 `[id, 实例]` 这一个 Cacher，`m()` 与 `super.m()`
+        都命中同一份缓存（因此 `super.m()` 不会执行父类方法体，只返回子类结果）；
+        子类不同 id 覆写 → 父子的 getter 各自独立，`super.m()`（不同实例维度同 id）
+        首次调用时惰性建 cacher；子类无装饰器覆写 → 父 wrapper 被原型链遮蔽，
+        不再被 initializeDecoratedCaches 预先 warm，`super.m()` 走惰性注册正常返回父值。
+        同 id 覆写导致"父方法体不执行"这一点已作为设计取舍接受，不再单列）、
+      文档-2（cacher.ts 的注释与行为不符已全部修正：initialized / setThis / get / derive /
+        getOrDerive 的 JSDoc 已重写；getSub 的恒真判断与无意义别名一并清理；
+        mapper 的"纯同步"说法改为"建议纯同步，结果会被 await"；
+        @SubCache 相关的 2e、2g 两条随 @SubCache 移除而消失；
+        runGetter 已补 `/* @internal */`，构建出的 .d.mts 中不再出现裸的 `private runGetter;`）、
+      导出-2（src/index.ts 曾残留 `export { SubCache … }`，在 @SubCache 被删除后导致
+        `tsc` 报 TS2305、`node` 报 SyntaxError；已删除该导出，`pnpm build` 恢复通过）。
 编号：本轮不再重新编号，剩下的条目保持原编号。
 
 ------------------------------------------------------------------
@@ -54,42 +66,11 @@ cacher-ts 问题清单
 三、中
 ------------------------------------------------------------------
 
-[中-6] 子类覆写 @Cache 方法的行为
-  现象（运行时验证）：
-    - 子类用【相同 id】覆写：`new` 时抛 `Duplicate cache id "…" for the same instance.`；
-      这是最自然的覆写写法（还能让父类的 @SubCache 继续指向子类实现），却直接报错。
-    - 子类用【不同 id】覆写：父、子两个 cacher 都会注册，initializeDecoratedCaches
-      会把两个 getter 都执行一遍（父类那个只能通过 super 访问，往往是一次多余的请求）。
-  现状：README 已说明当前行为（同 id 抛错、无装饰器覆写静默跳过），
-        但尚未确立"同 id 时子类替换父类 cacher"的设计方案与实现。
-
-
+（暂无）
 
 ------------------------------------------------------------------
 四、文档、注释与测试（不完善）
 ------------------------------------------------------------------
-
-[文档-2] 注释与行为不符 / 遗留问题
-  a. cacher.ts `initialized` getter JSDoc "Checks if the cache is empty"，语义相反
-     （应为"Returns true after the first successful load"）。
-  b. cacher.ts `setThis` JSDoc "If the cache is empty, it will trigger a reload."，
-     实际不会触发 reload。
-  c. cacher.ts `get()` JSDoc "it will trigger the initialization"，
-     实际是调用 reload() 并等待其结果（"trigger a reload and await it"）。
-  d. cacher.ts `getSub` 中的 `current !== empty` 判断恒真（await this.get() 返回后
-     cache 不可能是 empty），`const parent = current` 是无意义的别名，
-     "Initialized cache won't be empty." 注释也可删除。
-  e. mapper 能否 async 前后矛盾：derive JSDoc 写 "pure sync … called without `await`"，
-     但 getSub 实际调用了 `await sub.fn.call(…)`；而且 @SubCache 的装饰器方法本身必须
-     async 才能通过类型检查（高-2）。需要统一说法：mapper 是 sync，@SubCache 方法的
-     async 是外层包装，内部逻辑须同步（或正式支持 async mapper 并更新文档）。
-  f. cacher.ts `getOrDerive` 参数名 `pureMapFn` 与 JSDoc `@param pureMapper` 不一致。
-  g. decorator.ts `SubCache` 函数签名为 `(fromId: string, subId: string)`（两个必填参数），
-     但 examples/index.ts 中所有 @SubCache 调用均只传一个参数（如 `@SubCache('a')`），
-     导致 subId 在运行时为 undefined。examples/ 不在 tsconfig include 范围内，tsc 不报错，
-     但当同一 fromId 有多个 @SubCache 时，所有派生值共用 undefined 键，后注册者会被静默覆盖。
-     建议：在 SubCache 实现中以 `_context.name`（方法名）作为 subId 的默认值，
-     或在 examples/ 中补全第二参数，并把 examples/ 加入 tsconfig include。
 
 [测试-1] tests/index.test.ts 基于旧 API，需按当前实现重写
   主要失败原因：
@@ -98,15 +79,18 @@ cacher-ts 问题清单
     - `reload()` 恒返回 Promise；旧测试 `expect(sync.reload()).toBe(3)` 对同步 getter 也失败。
     - `isInitialized` 已改为 `initialized`。
     - `getSync`、同步读取语义均已删除。
+  实测：`pnpm test cacher-ts`（vitest run）30 failed | 7 passed。
   建议：完整重写 tests/index.test.ts，get / reload / loading / getSub / getOrDerive
         均使用 await，并将装饰器测试从 examples/ 迁移进 vitest（目前不进 CI）。
 
-[测试-2] examples/index.ts 装饰器用例不进 CI
-  已覆盖场景：同类 @Cache + @SubCache、@SubCache 写在 @Cache 前、父 @Cache + 子 @SubCache、
-              父 @SubCache + 子 @Cache、每实例隔离、同类重复 id、无 @Cache 的 @SubCache、
-              @SubCache / getSub 的 TTL、getter 同步抛错后重试（中-1）、
-              首次加载中调用 get（中-5）、initializeDecoratedCaches（非 force）。
-  待补充：子类覆写（中-6）、initializeDecoratedCaches 的 force 参数。
+[测试-2] examples/index.ts 装饰器用例不进 CI，且已与现行 API 脱节
+  现状：examples/index.ts 与 examples/inherit.ts 仍在 `import { SubCache }`，
+        而 @SubCache 已从 src/decorator.ts 移除 —— 两个文件当前都会直接抛
+        `SyntaxError: The requested module does not provide an export named 'SubCache'`，
+        用例全部无法运行（原先覆盖的 11 个场景已全部失效，故不再逐条罗列）。
+  待重写场景：每实例隔离、同类重复 id、@Cache 无参（id 默认取方法名）、
+              initializeDecoratedCaches（含 force 与"惰性注册导致未调用方法不被 warm"）、
+              getter 同步抛错后重试（中-1）、首次加载中调用 get（中-5）、子类覆写三种形态。
   注意：examples/ 用 `process.exitCode = 1` 表示失败，不在 vitest / `pnpm test` 里，CI 不会跑到。
 
 ------------------------------------------------------------------
@@ -118,9 +102,10 @@ cacher-ts 问题清单
 [低-2] package.json：`scripts.test` 使用 `clear && vitest`（非交互/CI 环境下 clear 可能报错，
       且 vitest 默认进入 watch 模式）；缺少 `sideEffects: false`；
       无 `engines` 字段（使用了 performance.now、WeakKey 类型）。
+      另：package.json 末行缺换行符（0.6.0 起）。
 [低-3] Cacher 的 private 成员用 `/* @internal */` + stripInternal 从 .d.ts 中剥除，
       发布后的 Cacher 类型变为无私有成员的结构类型，丧失名义性。
-      另：runGetter 漏了 `/* @internal */`，构建出的 .d.ts 里只剩孤零零的 `private runGetter;`。
+      （runGetter 漏标 `/* @internal */` 的问题已修复，见文件头。）
 [低-4] getOrDerive 在 name 已存在但 mapper 不同时，静默忽略新 mapper（只在首次登记时生效）。
       README 现已说明此行为，但 JSDoc 尚未更新。
 [低-5] getSub 以 Object.is 判断父值是否变化：getter 每次返回新对象（常见的 fetch().json()）时，
@@ -129,3 +114,8 @@ cacher-ts 问题清单
       类型验证：`new Cacher<{ doubled: number }>(async () => 'str', 1000)` 之后 get() 为 any，
       `derive('doubled', x => x.not_exist)` 也能编译通过。
       建议：将 T 放到第一位，或让 derive / getSub 各自推断子类型，与 Subs 解耦。
+[低-7] @Cache 的 `id` 类型声明为 `string`，但实现按 `string | symbol` 使用
+      （`cacherMap` 的第二层键、`context.name` 可能是 symbol）。
+      用 symbol 命名的方法配 `@Cache()` 可以正常跑通（实测），但 `@Cache({ id: Symbol() })`
+      会被类型挡下。若确实要支持 symbol id，应放宽声明；否则建议在实现里把
+      `context.name` 显式 `String(...)`，避免声明与实现两张皮。

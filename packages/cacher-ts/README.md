@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/cacher-ts.svg)](https://www.npmjs.com/package/cacher-ts) [![npm downloads](http://img.shields.io/npm/dm/cacher-ts.svg)](https://npmcharts.com/compare/cacher-ts,token-types?start=1200&interval=30)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/59dd6795e61949fb97066ca52e6097ef)](https://www.codacy.com/app/Borewit/cacher-ts?utm_source=github.com&utm_medium=referral&utm_content=Borewit/cacher-ts&utm_campaign=Badge_Grade)
 
-A TypeScript TTL cache with async getter support, derived sub-caches, and `@Cache` / `@SubCache` class decorators.
+A TypeScript TTL cache with async getter support, derived sub-caches, and a `@Cache` class-method decorator.
 
 For more awesome packages, check out [my homepage💛](https://baendlorel.github.io/?repoType=npm)
 
@@ -26,8 +26,7 @@ pnpm add cacher-ts
 - **Monotonic TTL** on `performance.now()` — immune to wall-clock changes.
 - **Failures are never cached.** A throwing or rejected getter leaves the previous value intact; the next call retries.
 - **Typed derived sub-caches**, re-mapped only when the parent value changes by identity.
-- **`@Cache({ id, ttl? })`** memoizes a zero-argument async method, per instance, with `this` bound automatically.
-- **`@SubCache(fromId, subId)`** exposes a derived view of a `@Cache` method as a method of its own.
+- **`@Cache({ id?, ttl? })`** memoizes a no-argument async method, per instance, with `this` bound automatically. Both options are optional: `id` defaults to the method name.
 - Zero runtime dependencies. ESM + CJS dual output.
 
 ---
@@ -90,7 +89,7 @@ class Api {
 
 ### Derived sub-caches
 
-A sub-cache maps the parent value to a derived shape. The mapper is a **pure synchronous function** called inline; its result is cached until the parent value changes by identity (`Object.is`).
+A sub-cache maps the parent value to a derived shape. Write the mapper as a **pure synchronous function** — it is called with `thisArg`, and its result is awaited (so an `async` mapper works at runtime, even though the declared type is synchronous) and cached until the parent value changes by identity (`Object.is`).
 
 ```ts
 interface ConfigSubs { names: string[]; adminCount: number }
@@ -127,78 +126,81 @@ cacher.destroy()            // release all references; do not use after this
 
 ---
 
-## 🎨 Decorators
+## 🎨 `@Cache`
 
 Requires TypeScript ≥ 5.0 with TC39 stage-3 class decorators. Keep `"experimentalDecorators"` **off** (the default in modern TypeScript).
 
-### `@Cache({ id, ttl? })`
+### Usage
 
-Caches the result of a zero-argument **async** method, separately per instance.
+Caches the result of a no-argument **async** method, separately per instance.
 
 ```ts
-import { Cache, SubCache, initializeDecoratedCaches } from 'cacher-ts';
+import { Cache, initializeDecoratedCaches } from 'cacher-ts';
 
 class ConfigService {
   @Cache({ id: 'cfg', ttl: 60_000 })
   async loadConfig(): Promise<Config> {
     return fetch('/api/config').then(r => r.json());
   }
-
-  @SubCache('cfg', 'host')
-  async host(cfg?: Config): Promise<string> {
-    return cfg!.host;
-  }
 }
 
 const svc = new ConfigService();
-await initializeDecoratedCaches();        // eagerly warm all @Cache methods (optional)
-const cfg  = await svc.loadConfig();     // cached value
-const host = await svc.host();           // derived sub-cache
+const cfg = await svc.loadConfig();  // getter runs, result cached on `svc`
+const again = await svc.loadConfig(); // cached value, getter not called
 ```
 
-| Option | Type     | Description                                                                                                             |
-| ------ | -------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `id`   | `string` | Required. Identifies this cache on the instance; used by `@SubCache` to locate the parent. Must be unique per instance. |
-| `ttl`  | `number` | Optional. Milliseconds before the value expires. Defaults to `Infinity`.                                                |
+Both options are optional, so the bare form works too:
+
+```ts
+class ConfigService {
+  @Cache()                    // id defaults to 'loadConfig', ttl to Infinity
+  async loadConfig(): Promise<Config> {
+    return fetch('/api/config').then(r => r.json());
+  }
+}
+```
+
+| Option | Type     | Default         | Description                                                         |
+| ------ | -------- | --------------- | ------------------------------------------------------------------- |
+| `id`   | `string` | the method name | Identifies this cache on the instance. Must be unique per instance. |
+| `ttl`  | `number` | `Infinity`      | Milliseconds before the value expires. `Infinity` never expires.    |
 
 Constraints enforced by TypeScript:
 - The decorated method must return `Promise<R>` — sync methods fail to compile (`TS1270`).
 - The method must have no parameters.
 
-### `@SubCache(fromId, subId)`
+`@Cache` also checks at runtime that it was applied to a method, and throws
+`@Cache can only be applied to class methods.` otherwise.
 
-Derives a sub-cache from the `@Cache` with the given `id`.
+### Registration is lazy
+
+The cacher is created on the **first call** of the decorated method, not when the instance is
+constructed. Nothing is registered — no getter runs, no `this` is captured — until you actually
+call the method.
 
 ```ts
-@SubCache('cfg', 'host')
-async host(cfg?: Config): Promise<string> {
-  return cfg!.host;
-}
+const svc = new ConfigService();  // nothing registered yet
+await svc.loadConfig();           // cacher created now, keyed by ['cfg', svc]
 ```
-
-| Parameter | Description                                                        |
-| --------- | ------------------------------------------------------------------ |
-| `fromId`  | The `id` of a `@Cache` decoration on this class or a parent class. |
-| `subId`   | A name for this sub-cache within the parent cacher.                |
-
-Constraints:
-- The method must be **async** and its **parameter must be optional** — it is always called with no argument at the call site; the framework passes the parent's cached value in through that parameter.
-- The parent `@Cache` must be initialized before calling a `@SubCache` method.
 
 ### `initializeDecoratedCaches(force?)`
 
-Eagerly calls `reload()` on every `@Cache` cacher that has not yet loaded. Pass `true` to force-reload all.
+Reloads every `@Cache` cacher that is already registered but not yet loaded. Pass `true` to
+force-reload all of them.
 
 ```ts
 await initializeDecoratedCaches();       // load uninitialised cachers
 await initializeDecoratedCaches(true);   // force-reload all
 ```
 
-Useful at application startup to warm caches before the first request arrives.
+Because registration is lazy, this only warms methods that have been **called at least once**.
+A freshly constructed instance has nothing registered, so `initializeDecoratedCaches()` has no
+effect on it — call the methods first (or just let the first real request pay for the load).
 
 ### `destroyDecoratedCache(id, instance)`
 
 Destroys the cacher registered for `id` on `instance` and removes it from the internal registry.
+A no-op if nothing is registered. The next call of the method creates a fresh cacher.
 
 ```ts
 import { destroyDecoratedCache } from 'cacher-ts';
@@ -210,29 +212,15 @@ destroyDecoratedCache('cfg', svc);
 
 ## 🧬 Subclass inheritance
 
-| Scenario                                                         | Behaviour                                                                                       |
-| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Child re-declares the method **with `@Cache` and the same `id`** | Throws `Duplicate cache id "…"` at instantiation.                                               |
-| Child overrides the method **without `@Cache`**                  | The override is not cached; the parent's initializer is silently skipped for this instance.     |
-| Parent has `@Cache`, child adds `@SubCache` referencing it       | Works — the sub-cache finds the parent cacher by instance lookup.                               |
-| Parent has `@SubCache`, child adds the matching `@Cache`         | Works — the sub-cache resolves the parent at call time, after the child's cacher is registered. |
+Since a cacher is keyed by `[id, instance]`, what matters is whether the parent and child end up
+sharing an `id`.
 
----
-
-## 🔷 TypeScript
-
-The `Cacher` class takes two type parameters: `Cacher<Subs, T>`.
-
-```ts
-type MySubs = { doubled: number; tag: string };
-
-const cacher = new Cacher<MySubs, number>(async () => 21);
-cacher.derive('doubled', v => v * 2);
-
-const n = await cacher.getSub('doubled'); // typed as number
-```
-
-> **Tip:** Always provide both type parameters together. TypeScript does not support partial type-argument inference, so writing only `new Cacher<MySubs>(…)` will silently make `T` (and therefore `get()`) return `any`.
+| Scenario                                                            | Behaviour                                                                                                                                                                          |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Child re-declares the method **with `@Cache` and the same `id`**    | Parent and child share one cacher per instance. `super.m()` hits the *same* cache, so the parent's method body never runs.                                                         |
+| Child re-declares the method **with `@Cache` and a different `id`** | Two independent cachers. `m()` and `super.m()` (or `m()` on a parent-typed reference) each cache their own result.                                                                 |
+| Child overrides the method **without `@Cache`**                     | The override is not cached and the parent's wrapper is shadowed on the prototype, so nothing is warmed for it. Calling `super.m()` still works and caches under the parent's `id`. |
+| Child adds a **new** `@Cache` method                                | Independent of the parent's cachers — each `id` is its own entry.                                                                                                                  |
 
 ---
 
