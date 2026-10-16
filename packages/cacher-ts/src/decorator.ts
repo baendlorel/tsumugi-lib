@@ -41,7 +41,7 @@ export namespace DecoratedCache {
     return Promise.all([...cacherMap.values()].map((c) => (c.initialized && !force ? c.get() : c.reload())));
   }
 
-  export async function initialize(id: string, instance: any): Promise<any> {
+  export async function initialize(instance: any, id: string): Promise<any> {
     const c = cacherMap.get(id, instance);
     if (!c) {
       throw new Error(`Cache with id "${id}" not found for the given instance.`);
@@ -49,7 +49,7 @@ export namespace DecoratedCache {
     return c.initialized ? c.get() : c.reload();
   }
 
-  export function destroy(id: string, instance: any): void {
+  export function destroy(instance: any, id: string): void {
     const c = cacherMap.get(id, instance);
     if (c) {
       cacherMap.delete(id, instance);
@@ -57,9 +57,22 @@ export namespace DecoratedCache {
     }
   }
 
-  export function get(id: string, instance: any): Cacher | undefined {
+  export function get(instance: any, id: string): Cacher | undefined {
     return cacherMap.get(id, instance);
   }
+}
+
+interface CacheOptions {
+  /**
+   * Identifier for the cache. Defaults to the method name if not provided.
+   */
+  id?: string;
+  /**
+   * Time-to-live for the cached value in milliseconds.
+   * - Can be `Infinity` for a cache that never expires.
+   * - Otherwise, must be a non-negative number between `0` and `2**31 - 1`.
+   */
+  ttl?: number;
 }
 
 /**
@@ -68,11 +81,10 @@ export namespace DecoratedCache {
  * The method must be `async`: the cached value is always accessed through a promise.
  * The cacher is created on the first call, keyed by `[id, instance]`.
  *
- * @param options Optional. `id` defaults to the method name, `ttl` to `Infinity`.
- * @param options.id Identifies this cache on the instance.
- * @param options.ttl Time-to-live for the cached value in milliseconds. `Infinity` never expires.
+ * @param options.id Identifier for the cache. Defaults to the method name if not provided.
+ * @param options.ttl Time-to-live for the cached value in milliseconds. Can be `Infinity` for a cache that never expires. Otherwise, must be a non-negative number between `0` and `2**31 - 1`.
  */
-export function Cache(options?: { id?: string; ttl?: number }): MethodCacheDecorator {
+export function Cache(options?: CacheOptions): MethodCacheDecorator {
   return function <This, R>(target: (this: This) => Promise<R>, context: Ctx<This, R>) {
     if (context.kind !== 'method') {
       throw new Error('@Cache can only be applied to class methods.');

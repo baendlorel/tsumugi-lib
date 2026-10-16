@@ -199,20 +199,20 @@ classes, all instances. Each helper takes the same `[id, instance]` key the deco
 ```ts
 import { DecoratedCache } from 'cacher-ts';
 
-await DecoratedCache.initialize('cfg', svc);  // load this one cacher, if not loaded yet
+await DecoratedCache.initialize(svc, 'cfg');  // load this one cacher, if not loaded yet
 await DecoratedCache.initializeAll();         // load every cacher that is not initialised
 await DecoratedCache.initializeAll(true);     // force-reload every cacher
 
-DecoratedCache.get('cfg', svc);               // Cacher | undefined
-DecoratedCache.destroy('cfg', svc);           // tear down and drop the registry entry
+DecoratedCache.get(svc, 'cfg');               // Cacher | undefined
+DecoratedCache.destroy(svc, 'cfg');           // tear down and drop the registry entry
 ```
 
-| Member          | Signature                              | Behaviour                                                                                                                                              |
-| --------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `initialize`    | `(id, instance) => Promise<unknown>`   | Resolves with the cached value, reloading only when the cacher is not initialised yet. **Throws** if `id` is not registered on that instance.          |
-| `initializeAll` | `(force?) => Promise<unknown[]>`       | Reloads every registered cacher, and resolves with all of their values. Pass `true` to re-run even initialised getters.                                |
-| `get`           | `(id, instance) => Cacher \| undefined` | The underlying [`Cacher`](#cacher--core-class), or `undefined` when nothing is registered.                                                            |
-| `destroy`       | `(id, instance) => void`               | Destroys the cacher and removes it from the registry. A no-op if nothing is registered; the next call of the method builds a fresh cacher.            |
+| Member          | Signature                               | Behaviour                                                                                                                                     |
+| --------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `initialize`    | `(id, instance) => Promise<unknown>`    | Resolves with the cached value, reloading only when the cacher is not initialised yet. **Throws** if `id` is not registered on that instance. |
+| `initializeAll` | `(force?) => Promise<unknown[]>`        | Reloads every registered cacher, and resolves with all of their values. Pass `true` to re-run even initialised getters.                       |
+| `get`           | `(id, instance) => Cacher \| undefined` | The underlying [`Cacher`](#cacher--core-class), or `undefined` when nothing is registered.                                                    |
+| `destroy`       | `(id, instance) => void`                | Destroys the cacher and removes it from the registry. A no-op if nothing is registered; the next call of the method builds a fresh cacher.    |
 
 > `initializeAll` walks the whole registry, so it warms caches of *any* class and *any* instance —
 > there is no per-class or per-instance scoping. Combined with lazy registration, it only ever
@@ -221,7 +221,7 @@ DecoratedCache.destroy('cfg', svc);           // tear down and drop the registry
 ```ts
 // Warm everything that has been touched, then drop one cache so it reloads on demand.
 await DecoratedCache.initializeAll();
-DecoratedCache.destroy('cfg', svc);
+DecoratedCache.destroy(svc, 'cfg');
 ```
 
 ---
