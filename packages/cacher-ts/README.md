@@ -24,6 +24,7 @@ pnpm add cacher-ts
 - **The getter sees the previous value** — `getter(lastValue?: T)`, `undefined` on the first call.
 - **One in-flight request per cacher.** Concurrent `reload()` / `get()` calls share one in-flight promise.
 - **Monotonic TTL** on `performance.now()` — immune to wall-clock changes.
+- **`ttl` accepts `number` or `bigint`** — a `number` is validated as a non-negative safe integer, a `bigint` as non-negative. Use `bigint` for TTLs past `2**53` ms.
 - **Failures are never cached.** A throwing or rejected getter leaves the previous value intact; the next call retries.
 - **Typed derived sub-caches**, re-mapped only when the parent value changes by identity.
 - **`@Cache({ id?, ttl? })`** memoizes a no-argument async method, per instance, with `this` bound automatically. Both options are optional: `id` defaults to the method name.
@@ -54,7 +55,7 @@ new Cacher(getter, ttl?, thisArg?)
 | Parameter | Type                                 | Default    | Description                                                                                                                                                                                                                    |
 | --------- | ------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `getter`  | `(lastValue?: T) => T \| Promise<T>` | —          | Called on first load and on every TTL expiry. Receives the previous cached value (`undefined` first time). **Handle your own errors** — a thrown or rejected getter leaves the previous value intact and is retried next call. |
-| `ttl`     | `number`                             | `Infinity` | Milliseconds until the cached value expires. `0` = reload on every `get()`. `Infinity` = never expires. Must be a non-negative safe integer or `Infinity`.                                                                     |
+| `ttl`     | `number \| bigint`                   | `Infinity` | Milliseconds until the cached value expires. `0` = reload on every `get()`. `Infinity` = never expires. A `number` must be a non-negative safe integer; a `bigint` must be non-negative. Use `bigint` for TTLs beyond `2**53` ms (~285 000 years). |
 | `thisArg` | `any`                                | `null`     | Bound as `this` when calling the getter and sub-cache mappers. Can be changed later with `setThis()`.                                                                                                                          |
 
 #### Reading the value
@@ -72,6 +73,7 @@ const value = await cacher.reload();
 ```ts
 cacher.initialized  // boolean — true after the first successful load
 cacher.loading      // Promise<T> | false — the in-flight promise, or false
+cacher.destroyed    // boolean — true once destroy() has been called
 ```
 
 #### Using `setThis`
@@ -164,7 +166,7 @@ class ConfigService {
 | Option | Type     | Default         | Description                                                         |
 | ------ | -------- | --------------- | ------------------------------------------------------------------- |
 | `id`   | `string` | the method name | Identifies this cache on the instance. Must be unique per instance. |
-| `ttl`  | `number` | `Infinity`      | Milliseconds before the value expires. `Infinity` never expires.    |
+| `ttl`  | `number \| bigint` | `Infinity`      | Milliseconds before the value expires. `Infinity` never expires.    |
 
 Sharing an `id` collapses two methods into **one** cache — including across `super` calls — since
 `[id, instance]` is the only registry key. Unrelated classes may reuse the same `id`, and each

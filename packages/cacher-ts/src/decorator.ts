@@ -70,8 +70,9 @@ interface CacheOptions {
 
   /**
    * Time-to-live for the cached value in milliseconds.
-   * - Can be `bigint` or `number`.
+   * - `number` or `bigint`; a `number` must be a non-negative safe integer, a `bigint` non-negative.
    * - Can be `Infinity` for a cache that never expires.
+   * - Use `bigint` for TTLs beyond `2**53` ms.
    */
   ttl?: number | bigint;
 }
@@ -83,7 +84,7 @@ interface CacheOptions {
  * The cacher is created on the first call, keyed by `[id, instance]`.
  *
  * @param options.id Identifier for the cache. Defaults to the method name if not provided.
- * @param options.ttl Time-to-live for the cached value in milliseconds. Can be `Infinity` for a cache that never expires. Otherwise, must be a non-negative number between `0` and `2**31 - 1`.
+ * @param options.ttl Time-to-live for the cached value in milliseconds. `number` or `bigint`, both non-negative. Can be `Infinity` for a cache that never expires.
  */
 export function Cache(options?: CacheOptions): MethodCacheDecorator {
   return function <This, R>(target: (this: This) => Promise<R>, context: Ctx<This, R>) {

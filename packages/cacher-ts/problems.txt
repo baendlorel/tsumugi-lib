@@ -61,8 +61,134 @@ cacher-ts 问题清单
         @SubCache，作为历史文件保留、不再运行）。
 编号：本轮不再重新编号，剩下的条目保持原编号。
 
+==================================================================
+本轮审查：22387b5「现在 ttl 可以是 bigint 了」
+==================================================================
+审查范围：src/cacher.ts（新 validTTL、ttl/last 类型、get/runGetter/destroy 的换算）、
+          src/decorator.ts（CacheOptions.ttl 与注释）、README.md、tests/。
+实测：`npx vitest run packages/cacher-ts` → 30 failed / 52 passed；
+      `npx tsc -p packages/cacher-ts/tsconfig.json --noEmit` → exit 0（类型全绿）；
+      另用 tsx 直接驱动 src 做了运行时探针。
+
 ------------------------------------------------------------------
-一、严重
+严重
+------------------------------------------------------------------
+
+[严重-1] ttl 默认值失效 —— `new Cacher(getter)` 与 `new Cacher(getter, Infinity)` 必然抛错，
+         "不传 ttl" 这条主路径整个不可用，并连带击穿全部 `@Cache`。
+
+  机理（src/cacher.ts:66-71、25-39）：
+      constructor(…, ttl: number | bigint = Infinity, …) { this.ttl = validTTL(ttl); }
+  默认值是 number 的 `Infinity`，而 validTTL 的 number 分支要求
+  `Number.isSafeInteger(ttl)` —— Infinity 不是安全整数，直接落到 throw。
+  旧实现里那句 `if (ttl !== Infinity)` 的特判在本次提交中被删除。
+
+  实测：
+      new Cacher(async () => 1)             → TypeError: ttl must be a non-negative number or bigint.
+      new Cacher(async () => 1, Infinity)   → 同上
+      new Cacher(async () => 1, 0)          → ok
+      new Cacher(async () => 1, 60000n)     → ok
+  validTTL 自己的 JSDoc 写着「Cannot be `NaN`, can be `Infinity`」，与代码完全相反。
+
+  @Cache 全量陪葬（src/decorator.ts:94-96）：
+      let { id = context.name, ttl } = Object(options);
+      … new DecCacher(target, ttl, this, id) …
+  不传 ttl 时 `ttl === undefined`，Cacher 的构造签名把 undefined 与缺省同等看待，
+  于是仍取默认的 `Infinity` → 仍抛错。因此 `@Cache()`、`@Cache({ id: 'x' })`
+  都会在**首次调用被装饰方法**时抛，而非构造实例时。
+  实测：装饰器用例 19/19 全红，栈顶都是 `decorator.ts:7 → cacher.ts:71`。
+
+  修法：validTTL 放行 `Infinity`（number 分支加 `ttl === Infinity` 特判，映射为哨兵 bigint
+  或另留一个 neverExpires 标志），或在解构处给 `ttl` 补显式默认值，两者最好都做。
+
+[严重-2] destroy() 后 `initialized` 变成 `null`，公开 API 违反自己的类型契约。
+
+  本次提交把 `inited = false` 改成 `inited = null as any`，好让新的
+  `get destroyed() { return this.inited === null }` 能工作。代价是：
+      cacher.initialized   // 类型声明 boolean，实际返回 null
+  实测（destroy 前后）：`true` (boolean) → `null` (object)。
+  测试 `destroy() > clears the cached value and the initialization flag` 因此转红。
+
+  注：destroy 后调用 `get()` 会 resolve 出 `null` 这一点**不是本次引入的**
+  （老代码 destroy 把 `pending` 置 null，`pending !== empty` 为真，get() 同样 resolve null，
+  已用旧逻辑单独跑过复现）。本次只是把破坏面从 get() 扩大到了 initialized 的契约。
+
+  destroyed 的实现方式也偏脆：用「inited 是否为 null」同时编码「是否初始化」和「是否销毁」
+  两种语义，而这个字段是 `/* @internal */` + stripInternal 的私有成员。
+  建议独立一个 `private destroyedFlag = false`，`inited` 恢复 boolean。
+
+------------------------------------------------------------------
+高
+------------------------------------------------------------------
+
+[高-1] 时间精度被 floor 到整毫秒，且在两处各截断一次。
+
+  改动前 `last` 存 `performance.now()` 的浮点值（实测 104.885…），
+  `get()` 里做浮点差比较；改动后 runGetter 与 get() 各写一次
+  `BigInt(Math.floor(performance.now()))`，精度从亚毫秒砍到整毫秒。
+  对秒级 TTL 无实际影响，但 floor + BigInt 的写法重复两处：
+  抽成一个私有 `private now(): bigint` 更好，也避免两处将来不一致。
+  实测 `performance.now()` 在 node 24.5 为亚毫秒浮点，无小数部分时 floor 无副作用。
+
+[高-2] number 分支的校验上限被悄悄放开，但错误信息、JSDoc、README、测试四方没跟上。
+
+  旧代码拒绝 `> 2147483647`；新代码只拒绝 `!Number.isSafeInteger`，
+  于是 `2147483648` 现在被接受（测试 `rejects a above 2^31-1 ttl` 因此转红）。
+  若这是「随 bigint 一起放开」的有意为之，那么：
+      - decorator.ts:86 的 @param 仍写「must be a non-negative number between 0 and 2**31 - 1」；
+      - README 的 Cacher 参数表与 @Cache 选项表 ttl 行仍写 `number` + 「safe integer」；
+      - tests 仍断言 2^31-1 被拒。
+  代码 / JSDoc / README / tests 四方不一致，应以「非负且由 Number.isSafeInteger 界定」
+  为准统一改写（或恢复旧上限，二选一，别停在中间态）。
+
+[高-3] bigint 分支不校验负值 —— `new Cacher(fn, -1n)` 直接通过（实测 ttl = -1n）。
+
+  number 分支明确拒绝负数，bigint 分支却原样返回；JSDoc 声称
+  「Must be a non-negative number or bigint」。负 bigint 会让每次 get() 都判定过期（恒真），
+  等于把 ttl 静默降级成 0，属于「配错不报错」。补 `if (ttl < 0n) throw new TypeError(…)`。
+
+------------------------------------------------------------------
+中
+------------------------------------------------------------------
+
+[中-1] 类型只在入口收窄，出口仍是 `number | bigint` 双轨。
+
+  `private ttl: bigint` 收窄了，但没有任何只读访问器；一旦将来暴露 ttl
+  （或 DecCacher 之类子类要读），number/bigint 又会在公开签名里摇摆。
+  建议：内部一律 bigint（入口收窄后不再外泄），或统一对外 bigint，别两轨并行。
+
+[中-2] ttl 校验只在构造期做，而 @Cache 把 ttl 透传到首次调用才构造 DecCacher，
+      于是「ttl 配错」的错误被推迟到第一次方法调用才抛，构造实例时毫无感知。
+      这不全是 bigint 引入的，但严重-1 让触发面从「极端 ttl」扩大到「所有未显式传 ttl 的 @Cache」，
+      值得顺手把校验时机与错误信息一起理顺。
+
+------------------------------------------------------------------
+低（文档与测试）
+------------------------------------------------------------------
+
+[低-1] tests/ 完全没跟上：无一例覆盖 bigint ttl；`never refreshes when ttl is Infinity`、
+      `accepts 0 and Infinity as ttl`、`rejects a above 2^31-1 ttl` 三例因本次改动直接转红；
+      其余 27 例失败是链式反应——凡用 `Infinity`（子缓存用例）或不传 ttl 的用例全部连带红。
+      修完严重-1 / 高-3 后，建议补：`0n` 与 `0` 等价、`Infinity` 与极大 bigint 等价、
+      负 bigint 被拒、`2147483648` 的预期（取决于高-2 的取舍）。
+
+[低-2] README 需同步：Cacher 参数表 ttl 行（类型 `number` → `number | bigint`，
+      描述去掉「safe integer」上限说法）、@Cache 选项表 ttl 行、以及
+      全文没有任何 bigint 说明（可补一句「需要超过 2^53 毫秒（约 28.5 万年）的 TTL 时用 bigint」）。
+
+[低-3] decorator.ts：:73 注释「Can be `bigint` or `number`」顺序与签名 `number | bigint` 相反，
+      且没解释 bigint 的用途；:86 的 @param 描述完全没更新（仍写 2**31-1）。
+
+------------------------------------------------------------------
+修复优先级
+------------------------------------------------------------------
+1. validTTL 放行 Infinity（否则整个包不可用）；顺带给 CacheOptions.ttl 补默认值。
+2. destroy 语义：inited 恢复 boolean，另立私有 destroyed 标志。
+3. bigint 分支补非负校验；统一 number/bigint 的单向收窄。
+4. 同步 JSDoc / README / tests 三方（bigint 说明 + 上限取舍 + 默认 Infinity）。
+
+------------------------------------------------------------------
+一、严重（历史轮次）
 ------------------------------------------------------------------
 
 （暂无）
