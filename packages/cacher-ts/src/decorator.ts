@@ -1,10 +1,11 @@
 import { DuoMap } from '@duo-map';
 import { Cacher } from './cacher.js';
+import { validTTL } from './common.js';
 
 class DecCacher extends Cacher {
   private id: string;
-  constructor(getter: any, ttl: number, thisArg: any, id: string) {
-    super(getter, ttl, thisArg);
+  constructor(getter: any, ttl: number | bigint, thisArg: any, id: string) {
+    super(getter, ttl === -1n ? Infinity : ttl, thisArg);
     this.id = id;
   }
 
@@ -87,12 +88,14 @@ interface CacheOptions {
  * @param options.ttl Time-to-live for the cached value in milliseconds. `number` or `bigint`, both non-negative. Can be `Infinity` for a cache that never expires.
  */
 export function Cache(options?: CacheOptions): MethodCacheDecorator {
+  let { id, ttl } = Object(options);
+  ttl = validTTL(ttl);
+
   return function <This, R>(target: (this: This) => Promise<R>, context: Ctx<This, R>) {
     if (context.kind !== 'method') {
       throw new Error('@Cache can only be applied to class methods.');
     }
-
-    let { id = context.name, ttl } = Object(options);
+    id = id ?? context.name;
     return function (this: This) {
       return cacherMap.getOrInsertComputed(id, this, () => new DecCacher(target, ttl, this, id)).get();
     };

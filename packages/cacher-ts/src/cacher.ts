@@ -1,5 +1,5 @@
-import { empty } from './common.js';
 import { promiseTry } from '@shared/std/promise.js';
+import { empty, infinityBigInt, validTTL } from './common.js';
 
 interface SubCacheEntry<T, TSub = any> {
   /**
@@ -18,24 +18,8 @@ interface SubCacheEntry<T, TSub = any> {
   fn: (value: T) => TSub;
 }
 
-/**
- * - Must be a non-negative number or bigint.
- * - Cannot be `NaN`, can be `Infinity`.
- */
-function validTTL(ttl: unknown): bigint {
-  if (typeof ttl === 'number') {
-    if (!Number.isSafeInteger(ttl) || ttl < 0) {
-      throw new TypeError(`ttl must be a non-negative number or bigint.`);
-    }
-
-    return BigInt(ttl);
-  }
-
-  if (typeof ttl === 'bigint') {
-    return ttl;
-  }
-
-  throw new TypeError(`ttl must be a non-negative number or bigint.`);
+function now(): bigint {
+  return BigInt(Math.floor(performance.now()));
 }
 
 export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = any> {
@@ -92,7 +76,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
     try {
       const data = await promiseTry(this.getter, this.thisArg, this.cache === empty ? undefined : this.cache);
       this.inited = true;
-      this.last = BigInt(Math.floor(performance.now()));
+      this.last = now();
       this.cache = data;
       return data;
     } finally {
@@ -125,7 +109,12 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
    * Returns the cached value, reloading and awaiting it first if the cache is empty or expired.
    */
   async get(): Promise<T> {
-    if (!this.inited || BigInt(Math.floor(performance.now())) - this.last >= this.ttl) {
+    // Never expires
+    if (this.ttl === infinityBigInt) {
+      return this.cache as T;
+    }
+
+    if (!this.inited || now() - this.last >= this.ttl) {
       return this.reload();
     }
     return this.cache as T;
@@ -200,7 +189,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
    * Returns if the cacher has been destroyed.
    */
   get destroyed(): boolean {
-    return this.inited === null;
+    return this.getter === null;
   }
 
   /**
@@ -215,6 +204,5 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
     this.pending = null as any;
     this.thisArg = null as any;
     this.last = -1n;
-    this.inited = null as any;
   }
 }

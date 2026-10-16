@@ -1,65 +1,4 @@
 cacher-ts 问题清单
-==================
-范围：src/cacher.ts、src/decorator.ts、README.md、tests/、examples/、package.json
-说明：已排除"文档/注释中已约定、代码选择信任"的事项（例如：getter 自行处理错误、后台刷新失败由用户处理、
-      mapper 必须是纯同步函数、@Cache 方法不得带参数、
-      cachers 集合不注销（Nestjs 风格，实例常驻） 等）。
-      "运行时验证"：装饰器相关的用例写在 examples/index.ts（`pnpm exp`，tsx 转译）；
-      其余为 esbuild/tsc 转译 + node 24.5 实测。"类型验证"为 tsc 6.0.3（strict）实测。
-等级：[严重] 功能不可用/数据错误；[高] 明显行为缺陷；[中] 不稳定/不完善；[低] 细节/文档。
-已解决并删除：cachers 泄漏（设计如此）、initializeDecoratedCaches 语义、装饰后方法返回类型、
-      脱离接收者调用、reload/pending 时序（runGetter）、Cache 选项里 symbol 的校验、
-      重复 id 检测（new 时报错）、getSub 未加载就 derive 时返回 Symbol、
-      "Zero dependencies"（构建产物已内联 @shared/std/map.js 与 @duo-map，无外部 import）、
-      原严重-1（装饰器依赖 context.metadata：曾改为模块级 WeakMap，现改用 DuoMap，均不使用 metadata。
-        tsc 输出（无 Symbol.metadata）已验证正常，用例在 examples/index.ts）、
-      原高-1（getSub 先 `await this.get()`，过期会 reload，已验证）、
-      原高-2（装饰器类型签名已收紧：@Cache 的 MethodCacheDecorator 只接受
-        `<This, R>(target: (this: This) => Promise<R>, …)`，同步方法不再通过；
-        tsc 6.0.3（strict）实测 sync @Cache 报 TS1241/TS1270，`async m(): Promise<R>` 通过且
-        `obj.m()` 类型为 `Promise<R>`）、
-      原中-4（getSync 后台刷新的 Unhandled Rejection：getSync 已删除）、
-      原中-1（getter 同步抛错时 pending 永久卡死：改用 @shared 的 promiseTry，保证 finally 在
-        reload 的 `this.pending = this.runGetter()` 赋值之后执行；实测同步抛错后可重试，用例在 examples/index.ts）、
-      原中-3（@SubCache 的前置错误改为 reject：@SubCache 本身已在"万事从简"中移除）、
-      原中-5（首次加载中调用 get() 不再直接抛错：get() 改为
-        `if (!this.inited || expired) return this.reload()`，首次加载尚未完成时
-        调用 get() 会等待该次加载，而不是抛 "Cache is empty"）、
-      中-2（装饰器/构造函数参数校验：Cacher 构造函数现校验 ttl 与 getter；
-        ttl 拒绝 NaN / 负数 / 非安全整数 / > 2147483647，放行 Infinity；
-        Cacher getter 类型已放宽为 `(lastValue?: T) => T | Promise<T>`，同步 getter 受支持。
-        @Cache 的 options 现为可选，故原先"options 必填 + id 必填"的校验已随之下线，
-        改为 `Object(options)` 解构 + `id = context.name` 兜底）、
-      文档-1（README 已按现行 async API 完整重写）、
-      导出-1（initializeDecoratedCaches 已在 src/index.ts 正确导出）、
-      低-7（Cache 初始化器里重复 id 检查顺序：重复 id 检测本身已随实例化期注册一并移除）、
-      中-6（子类覆写 @Cache 方法的行为：装饰器改为惰性注册后，"父类 initializer 多余 warm"
-        的现象不复存在——只有被真正调用过的 [id, 实例] 才会注册。
-        实测：子类同 id 覆写 → 父子共用 `[id, 实例]` 这一个 Cacher，`m()` 与 `super.m()`
-        都命中同一份缓存（因此 `super.m()` 不会执行父类方法体，只返回子类结果）；
-        子类不同 id 覆写 → 父子的 getter 各自独立，`super.m()`（不同实例维度同 id）
-        首次调用时惰性建 cacher；子类无装饰器覆写 → 父 wrapper 被原型链遮蔽，
-        不再被 initializeDecoratedCaches 预先 warm，`super.m()` 走惰性注册正常返回父值。
-        同 id 覆写导致"父方法体不执行"这一点已作为设计取舍接受，不再单列）、
-      文档-2（cacher.ts 的注释与行为不符已全部修正：initialized / setThis / get / derive /
-        getOrDerive 的 JSDoc 已重写；getSub 的恒真判断与无意义别名一并清理；
-        mapper 的"纯同步"说法改为"建议纯同步，结果会被 await"；
-        @SubCache 相关的 2e、2g 两条随 @SubCache 移除而消失；
-        runGetter 已补 `/* @internal */`，构建出的 .d.mts 中不再出现裸的 `private runGetter;`）、
-      导出-2（src/index.ts 曾残留 `export { SubCache … }`，在 @SubCache 被删除后导致
-        `tsc` 报 TS2305、`node` 报 SyntaxError；已删除该导出，`pnpm build` 恢复通过）、
-      测试-1 / 测试-2（tests/index.test.ts 已按现行 async API 完全重写，拆为
-        tests/cacher.test.ts（58 例）与 tests/decorator.test.ts（21 例），共 79 例全绿；
-        装饰器用例从 examples/ 迁进 vitest，`pnpm test cacher-ts` 现在真的会跑到。
-        顺带发现并修掉一个测试基建问题：Vite 8 用 oxc 转译 TS，而 oxc 不处理类装饰器，
-        Node 24 又无法直接解析 `@` 语法 —— 装饰器测试全都报
-        `SyntaxError: Invalid or unexpected token`。已在根 vitest.config.ts 加一个
-        `decorator-downlevel` 插件：仅对含装饰器语法的文件先用 esbuild 降级到 es2022
-        （已实测 esbuild 产出的是 TC39 语义的 `__decorateElement`，
-        `ctx.kind` / `ctx.name` / `ctx.addInitializer` 均正常），其余文件不受影响。
-        examples/index.ts 与 examples/inherit.ts 覆盖的场景已被新测试覆盖或依赖已移除的
-        @SubCache，作为历史文件保留、不再运行）。
-编号：本轮不再重新编号，剩下的条目保持原编号。
 
 ==================================================================
 本轮审查：22387b5「现在 ttl 可以是 bigint 了」
@@ -76,20 +15,17 @@ cacher-ts 问题清单
 
 [严重-1] ttl 默认值失效 —— `new Cacher(getter)` 与 `new Cacher(getter, Infinity)` 必然抛错，
          "不传 ttl" 这条主路径整个不可用，并连带击穿全部 `@Cache`。
-
   机理（src/cacher.ts:66-71、25-39）：
       constructor(…, ttl: number | bigint = Infinity, …) { this.ttl = validTTL(ttl); }
   默认值是 number 的 `Infinity`，而 validTTL 的 number 分支要求
   `Number.isSafeInteger(ttl)` —— Infinity 不是安全整数，直接落到 throw。
   旧实现里那句 `if (ttl !== Infinity)` 的特判在本次提交中被删除。
-
   实测：
       new Cacher(async () => 1)             → TypeError: ttl must be a non-negative number or bigint.
       new Cacher(async () => 1, Infinity)   → 同上
       new Cacher(async () => 1, 0)          → ok
       new Cacher(async () => 1, 60000n)     → ok
   validTTL 自己的 JSDoc 写着「Cannot be `NaN`, can be `Infinity`」，与代码完全相反。
-
   @Cache 全量陪葬（src/decorator.ts:94-96）：
       let { id = context.name, ttl } = Object(options);
       … new DecCacher(target, ttl, this, id) …
@@ -97,25 +33,24 @@ cacher-ts 问题清单
   于是仍取默认的 `Infinity` → 仍抛错。因此 `@Cache()`、`@Cache({ id: 'x' })`
   都会在**首次调用被装饰方法**时抛，而非构造实例时。
   实测：装饰器用例 19/19 全红，栈顶都是 `decorator.ts:7 → cacher.ts:71`。
-
   修法：validTTL 放行 `Infinity`（number 分支加 `ttl === Infinity` 特判，映射为哨兵 bigint
   或另留一个 neverExpires 标志），或在解构处给 `ttl` 补显式默认值，两者最好都做。
+-- 已修改
 
 [严重-2] destroy() 后 `initialized` 变成 `null`，公开 API 违反自己的类型契约。
-
   本次提交把 `inited = false` 改成 `inited = null as any`，好让新的
   `get destroyed() { return this.inited === null }` 能工作。代价是：
       cacher.initialized   // 类型声明 boolean，实际返回 null
   实测（destroy 前后）：`true` (boolean) → `null` (object)。
   测试 `destroy() > clears the cached value and the initialization flag` 因此转红。
-
   注：destroy 后调用 `get()` 会 resolve 出 `null` 这一点**不是本次引入的**
   （老代码 destroy 把 `pending` 置 null，`pending !== empty` 为真，get() 同样 resolve null，
   已用旧逻辑单独跑过复现）。本次只是把破坏面从 get() 扩大到了 initialized 的契约。
-
   destroyed 的实现方式也偏脆：用「inited 是否为 null」同时编码「是否初始化」和「是否销毁」
   两种语义，而这个字段是 `/* @internal */` + stripInternal 的私有成员。
   建议独立一个 `private destroyedFlag = false`，`inited` 恢复 boolean。
+
+-- 已保持inited的值，改为对getter判定。这是我专门设计的效率方案，无需在意，只要对外正确即可
 
 ------------------------------------------------------------------
 高
@@ -129,6 +64,8 @@ cacher-ts 问题清单
   对秒级 TTL 无实际影响，但 floor + BigInt 的写法重复两处：
   抽成一个私有 `private now(): bigint` 更好，也避免两处将来不一致。
   实测 `performance.now()` 在 node 24.5 为亚毫秒浮点，无小数部分时 floor 无副作用。
+--已修复
+
 
 [高-2] number 分支的校验上限被悄悄放开，但错误信息、JSDoc、README、测试四方没跟上。
 
@@ -140,12 +77,14 @@ cacher-ts 问题清单
       - tests 仍断言 2^31-1 被拒。
   代码 / JSDoc / README / tests 四方不一致，应以「非负且由 Number.isSafeInteger 界定」
   为准统一改写（或恢复旧上限，二选一，别停在中间态）。
+--请你帮我改
 
 [高-3] bigint 分支不校验负值 —— `new Cacher(fn, -1n)` 直接通过（实测 ttl = -1n）。
 
   number 分支明确拒绝负数，bigint 分支却原样返回；JSDoc 声称
   「Must be a non-negative number or bigint」。负 bigint 会让每次 get() 都判定过期（恒真），
   等于把 ttl 静默降级成 0，属于「配错不报错」。补 `if (ttl < 0n) throw new TypeError(…)`。
+--已修复
 
 ------------------------------------------------------------------
 中
@@ -156,11 +95,18 @@ cacher-ts 问题清单
   `private ttl: bigint` 收窄了，但没有任何只读访问器；一旦将来暴露 ttl
   （或 DecCacher 之类子类要读），number/bigint 又会在公开签名里摇摆。
   建议：内部一律 bigint（入口收窄后不再外泄），或统一对外 bigint，别两轨并行。
+--已经收窄
+
 
 [中-2] ttl 校验只在构造期做，而 @Cache 把 ttl 透传到首次调用才构造 DecCacher，
       于是「ttl 配错」的错误被推迟到第一次方法调用才抛，构造实例时毫无感知。
       这不全是 bigint 引入的，但严重-1 让触发面从「极端 ttl」扩大到「所有未显式传 ttl 的 @Cache」，
       值得顺手把校验时机与错误信息一起理顺。
+--已增加，并且严谨传输-1n
+
+
+
+----下面的暂时不看
 
 ------------------------------------------------------------------
 低（文档与测试）
