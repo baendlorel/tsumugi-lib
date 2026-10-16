@@ -67,12 +67,13 @@ interface CacheOptions {
    * Identifier for the cache. Defaults to the method name if not provided.
    */
   id?: string;
+
   /**
    * Time-to-live for the cached value in milliseconds.
+   * - Can be `bigint` or `number`.
    * - Can be `Infinity` for a cache that never expires.
-   * - Otherwise, must be a non-negative number between `0` and `2**31 - 1`.
    */
-  ttl?: number;
+  ttl?: number | bigint;
 }
 
 /**

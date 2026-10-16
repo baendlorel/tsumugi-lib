@@ -18,16 +18,36 @@ interface SubCacheEntry<T, TSub = any> {
   fn: (value: T) => TSub;
 }
 
+/**
+ * - Must be a non-negative number or bigint.
+ * - Cannot be `NaN`, can be `Infinity`.
+ */
+function validTTL(ttl: unknown): bigint {
+  if (typeof ttl === 'number') {
+    if (!Number.isSafeInteger(ttl) || ttl < 0) {
+      throw new TypeError(`ttl must be a non-negative number or bigint.`);
+    }
+
+    return BigInt(ttl);
+  }
+
+  if (typeof ttl === 'bigint') {
+    return ttl;
+  }
+
+  throw new TypeError(`ttl must be a non-negative number or bigint.`);
+}
+
 export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = any> {
   /* @internal */
   private getter: (lastValue?: T) => T | Promise<T>;
   /* @internal */
-  private ttl: number;
+  private ttl: bigint;
   /* @internal */
   protected thisArg: any;
 
   /* @internal */
-  private last: number = -Infinity;
+  private last: bigint = -1n;
   /* @internal */
   private cache: T | empty = empty;
   /* @internal */
@@ -43,17 +63,12 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
    *   A sync getter is awaited like any other, so both kinds are interchangeable at the call site.
    * @param ttl Time-to-live for the cached value in milliseconds.
    */
-  constructor(getter: (lastValue?: T) => T | Promise<T>, ttl: number = Infinity, thisArg: any = null) {
-    if (ttl !== Infinity) {
-      if (typeof ttl !== 'number' || !Number.isSafeInteger(ttl) || ttl < 0 || ttl > 2147483647) {
-        throw new TypeError(`ttl must be a positive integer less than 2147483647.`);
-      }
-    }
+  constructor(getter: (lastValue?: T) => T | Promise<T>, ttl: number | bigint = Infinity, thisArg: any = null) {
     if (typeof getter !== 'function') {
       throw new TypeError(`getter must be a function.`);
     }
     this.getter = getter;
-    this.ttl = ttl;
+    this.ttl = validTTL(ttl);
     this.thisArg = thisArg;
   }
 
@@ -77,7 +92,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
     try {
       const data = await promiseTry(this.getter, this.thisArg, this.cache === empty ? undefined : this.cache);
       this.inited = true;
-      this.last = performance.now();
+      this.last = BigInt(Math.floor(performance.now()));
       this.cache = data;
       return data;
     } finally {
@@ -110,7 +125,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
    * Returns the cached value, reloading and awaiting it first if the cache is empty or expired.
    */
   async get(): Promise<T> {
-    if (!this.inited || performance.now() - this.last >= this.ttl) {
+    if (!this.inited || BigInt(Math.floor(performance.now())) - this.last >= this.ttl) {
       return this.reload();
     }
     return this.cache as T;
@@ -181,6 +196,17 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
     return cache;
   }
 
+  /**
+   * Returns if the cacher has been destroyed.
+   */
+  get destroyed(): boolean {
+    return this.inited === null;
+  }
+
+  /**
+   * When destroyed, clears all cached values and sub-caches, and resets the internal state.
+   * - Methods will be unusable after destruction.
+   */
   destroy(): void {
     this.getter = null as any;
     this.cache = null as any;
@@ -188,7 +214,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
     this.sub = null as any;
     this.pending = null as any;
     this.thisArg = null as any;
-    this.inited = false;
-    this.last = 0;
+    this.last = -1n;
+    this.inited = null as any;
   }
 }
