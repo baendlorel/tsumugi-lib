@@ -8,7 +8,7 @@ export const infinityBigInt = -1n;
  * - Cannot be `NaN`, can be `Infinity`.
  */
 export function validTTL(ttl: unknown): bigint {
-  if (ttl === Infinity) {
+  if (ttl === Infinity || ttl === undefined) {
     return infinityBigInt;
   }
 

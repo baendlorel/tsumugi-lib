@@ -109,12 +109,14 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
    * Returns the cached value, reloading and awaiting it first if the cache is empty or expired.
    */
   async get(): Promise<T> {
+    if (!this.inited) {
+      return this.reload();
+    }
     // Never expires
     if (this.ttl === infinityBigInt) {
       return this.cache as T;
     }
-
-    if (!this.inited || now() - this.last >= this.ttl) {
+    if (now() - this.last >= this.ttl) {
       return this.reload();
     }
     return this.cache as T;

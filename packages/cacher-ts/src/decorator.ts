@@ -88,14 +88,12 @@ interface CacheOptions {
  * @param options.ttl Time-to-live for the cached value in milliseconds. `number` or `bigint`, both non-negative. Can be `Infinity` for a cache that never expires.
  */
 export function Cache(options?: CacheOptions): MethodCacheDecorator {
-  let { id, ttl } = Object(options);
-  ttl = validTTL(ttl);
-
   return function <This, R>(target: (this: This) => Promise<R>, context: Ctx<This, R>) {
     if (context.kind !== 'method') {
       throw new Error('@Cache can only be applied to class methods.');
     }
-    id = id ?? context.name;
+    let { id = context.name, ttl } = Object(options);
+    ttl = validTTL(ttl);
     return function (this: This) {
       return cacherMap.getOrInsertComputed(id, this, () => new DecCacher(target, ttl, this, id)).get();
     };

@@ -415,19 +415,26 @@ describe('Cacher', () => {
   // Constructor validation
   // ---------------------------------------------------------------------------
   describe('constructor', () => {
-    it('accepts 0 and Infinity as ttl', () => {
+    it('accepts 0, Infinity, large numbers and bigints as ttl', () => {
       expect(new Cacher(async () => 1, 0)).toBeInstanceOf(Cacher);
       expect(new Cacher(async () => 1, Infinity)).toBeInstanceOf(Cacher);
+      expect(new Cacher(async () => 1, 2147483648)).toBeInstanceOf(Cacher);
+      expect(new Cacher(async () => 1, 0n)).toBeInstanceOf(Cacher);
+      expect(new Cacher(async () => 1, 2n ** 60n)).toBeInstanceOf(Cacher);
     });
 
     it.each([
       ['NaN', NaN],
       ['negative', -1],
       ['non-integer', 1.5],
-      ['above 2^31-1', 2147483648],
+      ['unsafe integer', 2 ** 60],
       ['non-number', '1000'],
     ])('rejects a %s ttl', (_label, ttl) => {
       expect(() => new Cacher(async () => 1, ttl as number)).toThrow(/ttl must be/);
+    });
+
+    it('rejects a negative bigint ttl', () => {
+      expect(() => new Cacher(async () => 1, -1n)).toThrow(/ttl must be/);
     });
 
     it('rejects a non-function getter', () => {
