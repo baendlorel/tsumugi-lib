@@ -234,7 +234,7 @@ describe('@Cache', () => {
       expect(calls).toBe(1);
 
       // Already initialised: returns the cached value without re-running the getter.
-      await expect(DecoratedCache.initialize('initSingle', svc)).resolves.toBe(1);
+      await expect(DecoratedCache.initialize(svc, 'initSingle')).resolves.toBe(1);
       expect(calls).toBe(1);
     });
 
@@ -250,7 +250,7 @@ describe('@Cache', () => {
       await svc.load();
 
       // Reachable through `svc`, but not through this other instance.
-      await expect(DecoratedCache.initialize('initMissing', new Svc())).rejects.toThrow(
+      await expect(DecoratedCache.initialize(new Svc(), 'initMissing')).rejects.toThrow(
         'Cache with id "initMissing" not found for the given instance.',
       );
     });
@@ -266,11 +266,11 @@ describe('@Cache', () => {
       }
 
       const svc = new Svc();
-      expect(DecoratedCache.get('getUnderlying', svc)).toBeUndefined();
+      expect(DecoratedCache.get(svc, 'getUnderlying')).toBeUndefined();
 
       await svc.load();
 
-      const cacher = DecoratedCache.get('getUnderlying', svc);
+      const cacher = DecoratedCache.get(svc, 'getUnderlying');
       expect(cacher).toBeInstanceOf(Cacher);
       await expect(cacher!.get()).resolves.toBe(1);
     });
@@ -289,15 +289,15 @@ describe('@Cache', () => {
       const svc = new Svc();
       await expect(svc.load()).resolves.toBe(1);
 
-      DecoratedCache.destroy('destroyEntry', svc);
-      expect(DecoratedCache.get('destroyEntry', svc)).toBeUndefined();
+      DecoratedCache.destroy(svc, 'destroyEntry');
+      expect(DecoratedCache.get(svc, 'destroyEntry')).toBeUndefined();
 
       await expect(svc.load()).resolves.toBe(2);
       expect(calls).toBe(2);
     });
 
     it('is a no-op when nothing is registered', () => {
-      expect(() => DecoratedCache.destroy('neverRegistered', {})).not.toThrow();
+      expect(() => DecoratedCache.destroy({}, 'neverRegistered')).not.toThrow();
     });
   });
 

@@ -434,7 +434,11 @@ describe('Cacher', () => {
     });
 
     it('rejects a negative bigint ttl', () => {
-      expect(() => new Cacher(async () => 1, -1n)).toThrow(/ttl must be/);
+      expect(() => new Cacher(async () => 1, -2n)).toThrow(/ttl must be/);
+    });
+
+    it('treats -1n as an alias for Infinity, like the internal never-expire sentinel', () => {
+      expect(new Cacher(async () => 1, -1n)).toBeInstanceOf(Cacher);
     });
 
     it('rejects a non-function getter', () => {
@@ -692,13 +696,15 @@ describe('Cacher', () => {
   // destroy()
   // ---------------------------------------------------------------------------
   describe('destroy()', () => {
-    it('clears the cached value and the initialization flag', async () => {
+    it('clears the cached value and marks the cacher destroyed', async () => {
       const cacher = new Cacher(async () => 'v', TTL);
       await cacher.reload();
 
       cacher.destroy();
 
-      expect(cacher.initialized).toBe(false);
+      // `initialized` is not reset (a destroyed cacher is simply unusable), so the
+      // documented post-destroy check is `destroyed`.
+      expect(cacher.destroyed).toBe(true);
     });
 
     it('drops sub-caches so getSub() fails afterwards', async () => {

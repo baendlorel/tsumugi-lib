@@ -1,43 +1,23 @@
 cacher-ts 问题清单
 ==================
 仅列未解决项。等级：[严重] 功能不可用/数据错误；[高] 明显行为缺陷；[中] 不完善；[低] 细节。
-实测：`npx vitest run packages/cacher-ts` → 22 failed / 61 passed；`tsc --noEmit` → exit 0。
+实测：`npx vitest run packages/cacher-ts` → 84 passed；`tsc --noEmit` → exit 0。
 
 ------------------------------------------------------------------
 严重
 ------------------------------------------------------------------
 
-[严重-1] @Cache 不传 ttl 时抛错。`Object(options)` 解构出 undefined 直接进 validTTL，
-        兜底分支 throw。只有显式传 ttl 才能用，与 README/JSDoc 的「可选，默认 Infinity」不符。
-        即 19 例装饰器测试全红的根因。（src/decorator.ts:91-92）
-
-[严重-2] Infinity 的短路判断绕过了 `!inited`，未加载就返回内部哨兵 `empty`，getter 不执行。
-        所有走默认 ttl（=Infinity）的 get() 都受影响；先调 reload() 则正常，故旧用例未捕获。
-        （src/cacher.ts:113）
-
-[严重-3] destroy 后 `initialized` 仍为 true，且 get() 仍 resolve 出 null 而非抛错。
-        测试断言 `initialized === false` 因此变红。需在「销毁后对象失效」与「保持现状」间定调；
-        若取后者，测试断言应改为验证 destroyed。（src/cacher.ts:117/191）
+（暂无）
 
 ------------------------------------------------------------------
 高
 ------------------------------------------------------------------
 
-[高-1] 默认 id 只解析一次：`id = id ?? context.name` 写回闭包外层变量，
-        同一个装饰器对象复用到第二个方法时，其 id 已被首个方法占住，导致两个方法共用一个缓存。
-
-[高-2] 哨兵 `-1n` 跨模块往返：common 定义 → decorator 反解成 Infinity → cacher 再解回 -1n。
-        哨兵值或反解逻辑改动即静默错位。建议内部改用 neverExpires 布尔。
+（暂无）
 
 ------------------------------------------------------------------
 低
 ------------------------------------------------------------------
 
-[低-1] implements/old1.ts 是旧版实现，仍被 tsconfig include 编译。
-[低-2] package.json：`scripts.test` 用 `clear && vitest`（CI 下 clear 可能报错，且默认 watch 模式）；
+[低-1] package.json：`scripts.test` 用 `clear && vitest`（CI 下 clear 可能报错，且默认 watch 模式）；
         缺 `sideEffects: false` 与 `engines`；末行无换行符。
-[低-3] private 成员用 `/* @internal */` + stripInternal 从 .d.ts 剥除，Cacher 类型丧失名义性。
-[低-4] getSub 以 Object.is 判断父值变化，getter 每次返回新对象时派生值必重算；
-        无可选的深比较 / 自定义 equals。
-[低-5] 泛型顺序 `Cacher<Subs, T>`：显式写 Subs 后 T 退化为 any（TS 不支持部分推断）。
-[低-6] `@Cache` 的 id 声明为 string，实现按 string | symbol 使用，声明与实现不一致。

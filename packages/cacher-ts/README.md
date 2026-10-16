@@ -24,7 +24,7 @@ pnpm add cacher-ts
 - **The getter sees the previous value** — `getter(lastValue?: T)`, `undefined` on the first call.
 - **One in-flight request per cacher.** Concurrent `reload()` / `get()` calls share one in-flight promise.
 - **Monotonic TTL** on `performance.now()` — immune to wall-clock changes.
-- **`ttl` accepts `number` or `bigint`** — a `number` must be a non-negative *safe* integer (so `Infinity` and `2147483648` are fine, `2 ** 60` is not); a `bigint` must be non-negative. For TTLs past `2**53` ms, use a `bigint` (`2n ** 60n`).
+- **`ttl` accepts `number` or `bigint`** — a `number` must be a non-negative *safe* integer (so `Infinity` and `2147483648` are fine, `2 ** 60` is not); a `bigint` must be non-negative. For TTLs past `2**53` ms, use a `bigint` (`2n ** 60n`). Omitting `ttl` (or passing `Infinity`) means "never expires"; `-1n` is an accepted alias for the same thing.
 - **Failures are never cached.** A throwing or rejected getter leaves the previous value intact; the next call retries.
 - **Typed derived sub-caches**, re-mapped only when the parent value changes by identity.
 - **`@Cache({ id?, ttl? })`** memoizes a no-argument async method, per instance, with `this` bound automatically. Both options are optional: `id` defaults to the method name.
@@ -55,7 +55,7 @@ new Cacher(getter, ttl?, thisArg?)
 | Parameter | Type                                 | Default    | Description                                                                                                                                                                                                                    |
 | --------- | ------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `getter`  | `(lastValue?: T) => T \| Promise<T>` | —          | Called on first load and on every TTL expiry. Receives the previous cached value (`undefined` first time). **Handle your own errors** — a thrown or rejected getter leaves the previous value intact and is retried next call. |
-| `ttl`     | `number \| bigint`                   | `Infinity` | Milliseconds until the cached value expires. `0` = reload on every `get()`. `Infinity` = never expires. A `number` must be a non-negative safe integer (`2 ** 60` is rejected — it is not a safe integer); a `bigint` must be non-negative. Use `bigint` for TTLs beyond `2**53` ms (~285 000 years). |
+| `ttl`     | `number \| bigint`                   | `Infinity` | Milliseconds until the cached value expires. `0` = reload on every `get()`. `Infinity` = never expires. A `number` must be a non-negative safe integer (`2 ** 60` is rejected — it is not a safe integer); a `bigint` must be non-negative (`-1n` is accepted as an alias for `Infinity`). Use `bigint` for TTLs beyond `2**53` ms (~285 000 years). |
 | `thisArg` | `any`                                | `null`     | Bound as `this` when calling the getter and sub-cache mappers. Can be changed later with `setThis()`.                                                                                                                          |
 
 #### Reading the value
@@ -214,10 +214,10 @@ DecoratedCache.destroy(svc, 'cfg');           // tear down and drop the registry
 
 | Member          | Signature                               | Behaviour                                                                                                                                     |
 | --------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `initialize`    | `(id, instance) => Promise<unknown>`    | Resolves with the cached value, reloading only when the cacher is not initialised yet. **Throws** if `id` is not registered on that instance. |
+| `initialize`    | `(instance, id) => Promise<unknown>`    | Resolves with the cached value, reloading only when the cacher is not initialised yet. **Throws** if `id` is not registered on that instance. |
 | `initializeAll` | `(force?) => Promise<unknown[]>`        | Reloads every registered cacher, and resolves with all of their values. Pass `true` to re-run even initialised getters.                       |
-| `get`           | `(id, instance) => Cacher \| undefined` | The underlying [`Cacher`](#cacher--core-class), or `undefined` when nothing is registered.                                                    |
-| `destroy`       | `(id, instance) => void`                | Destroys the cacher and removes it from the registry. A no-op if nothing is registered; the next call of the method builds a fresh cacher.    |
+| `get`           | `(instance, id) => Cacher \| undefined` | The underlying [`Cacher`](#cacher--core-class), or `undefined` when nothing is registered.                                                    |
+| `destroy`       | `(instance, id) => void`                | Destroys the cacher and removes it from the registry. A no-op if nothing is registered; the next call of the method builds a fresh cacher.    |
 
 > `initializeAll` walks the whole registry, so it warms caches of *any* class and *any* instance —
 > there is no per-class or per-instance scoping. Combined with lazy registration, it only ever
