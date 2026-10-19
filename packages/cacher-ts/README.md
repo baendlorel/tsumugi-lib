@@ -26,6 +26,7 @@ pnpm add cacher-ts
 - **Monotonic TTL** on `performance.now()` — immune to wall-clock changes.
 - **`ttl` accepts `number` or `bigint`** — a `number` must be a non-negative *safe* integer (so `Infinity` and `2147483648` are fine, `2 ** 60` is not); a `bigint` must be non-negative. For TTLs past `2**53` ms, use a `bigint` (`2n ** 60n`). Omitting `ttl` (or passing `Infinity`) means "never expires"; `-1n` is an accepted alias for the same thing.
 - **Failures are never cached.** A throwing or rejected getter leaves the previous value intact; the next call retries.
+- **Sync `patch()`** to replace the cached value without calling the getter.
 - **Typed derived sub-caches**, re-mapped only when the parent value changes by identity.
 - **`@Cache({ id?, ttl? })`** memoizes a no-argument async method, per instance, with `this` bound automatically. Both options are optional: `id` defaults to the method name.
 - **`DecoratedCache` registry helpers** to warm (`initialize`, `initializeAll`), inspect (`get`) and tear down (`destroy`) decorated caches by `id` + instance.
@@ -119,6 +120,34 @@ const names = await config.getOrDerive('names', (cfg) => cfg.users.map(u => u.na
 ```
 
 > **Note:** `getOrDerive` only registers the mapper on the **first** call. Subsequent calls with a different mapper silently reuse the original. Use `deleteSub` + `derive` to replace a mapper.
+
+### Updating the value without a reload: `patch`
+
+`patch(mapper)` applies a synchronous function to the cached value and stores the result — no getter call, no await.
+
+```ts
+const user = new Cacher(async () => (await fetch('/api/me')).json(), 60_000);
+await user.get(); // → { name: 'Ada', visits: 0 }
+
+user.patch(u => ({ ...u, visits: u.visits + 1 })); // → true
+const updated = await user.get();                  // → { name: 'Ada', visits: 1 } — no refetch
+```
+
+```ts
+patch(mapper: (value: T) => T, ignorePending?: boolean): boolean
+```
+
+- The mapper receives the **current cached value as-is** (`undefined` before the first load) and its return value becomes the new cached value. It receives no `thisArg` and is not awaited.
+- Returns `true` when the patch was applied, `false` when it was skipped.
+- `patch` does **not** reset the TTL clock: `get()` may still reload the patched value once the original TTL expires.
+- **Race warning:** if a `reload()` is in flight, the patch is skipped and returns `false`, because its result would be overwritten by the load. Pass `ignorePending = true` to force the patch anyway — the in-flight load will still overwrite it when it settles.
+
+```ts
+if (!user.patch(u => ({ ...u, visits: u.visits + 1 }))) {
+  // a reload is in progress — retry afterwards, or force it:
+  user.patch(u => ({ ...u, visits: u.visits + 1 }), true);
+}
+```
 
 ### Cleanup
 

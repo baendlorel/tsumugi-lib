@@ -57,6 +57,21 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
   }
 
   /**
+   * Modify the cache data by a sync function.
+   *
+   * Watch out for **race conditions** when used simultaneously with `reload`.
+   * @param mapper a synchronous function that modifies the cached value.
+   * @param ignorePending **Racing condition warning:** If `true`, forces the patch even if there is a pending reload.
+   */
+  patch(mapper: (value: T) => T, ignorePending = false): boolean {
+    if (ignorePending || this.pending === empty) {
+      this.cache = mapper(this.cache as T);
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * `true` once the getter has completed at least one successful load.
    */
   get initialized(): boolean {
