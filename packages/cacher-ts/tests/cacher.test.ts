@@ -498,7 +498,7 @@ describe('Cacher', () => {
       await expect(cacher.getSub('doubled')).resolves.toBe(42);
     });
 
-    it('memoizes the mapping while the parent reference is unchanged', async () => {
+    it('memoizes the mapping while the parent version is unchanged', async () => {
       let mapCalls = 0;
       const cacher = new Cacher(async () => ({ n: 7 }), Infinity);
       cacher.derive('n', (value) => {
@@ -513,7 +513,7 @@ describe('Cacher', () => {
       expect(mapCalls).toBe(1);
     });
 
-    it('re-maps when the parent value changes by identity', async () => {
+    it('re-maps when the parent value changes', async () => {
       let n = 0;
       const cacher = new Cacher(async () => ({ n: ++n }), Infinity);
       cacher.derive('n', (value) => value.n);
@@ -525,7 +525,7 @@ describe('Cacher', () => {
       await expect(cacher.getSub('n')).resolves.toBe(2);
     });
 
-    it('does not re-map when the parent is the same primitive', async () => {
+    it('re-maps after a reload even when the value is identical', async () => {
       let mapCalls = 0;
       const cacher = new Cacher(async () => 'prod', Infinity);
       cacher.derive('tag', (value) => {
@@ -536,12 +536,28 @@ describe('Cacher', () => {
       await cacher.reload();
       await expect(cacher.getSub('tag')).resolves.toBe('prod-mapped');
 
-      await cacher.reload(); // 'prod' again
+      await cacher.reload(); // 'prod' again — a new load is still a new version
       await expect(cacher.getSub('tag')).resolves.toBe('prod-mapped');
-      expect(mapCalls).toBe(1);
+      expect(mapCalls).toBe(2);
     });
 
-    it('treats NaN as an unchanged parent (Object.is semantics)', async () => {
+    it('re-maps after a patch', async () => {
+      let mapCalls = 0;
+      const cacher = new Cacher(async () => ({ n: 1 }), Infinity);
+      cacher.derive('n', (value) => {
+        mapCalls++;
+        return value.n;
+      });
+
+      await cacher.reload();
+      await expect(cacher.getSub('n')).resolves.toBe(1);
+
+      cacher.patch((value) => ({ n: value.n + 1 }));
+      await expect(cacher.getSub('n')).resolves.toBe(2);
+      expect(mapCalls).toBe(2);
+    });
+
+    it('memoizes the same value for NaN just like any other', async () => {
       let mapCalls = 0;
       const cacher = new Cacher(async () => NaN, Infinity);
       cacher.derive('n', () => {
@@ -551,8 +567,6 @@ describe('Cacher', () => {
 
       await cacher.reload();
       await expect(cacher.getSub('n')).resolves.toBe(1);
-
-      await cacher.reload();
       await expect(cacher.getSub('n')).resolves.toBe(1);
       expect(mapCalls).toBe(1);
     });

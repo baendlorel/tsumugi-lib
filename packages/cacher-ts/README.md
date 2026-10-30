@@ -27,7 +27,7 @@ pnpm add cacher-ts
 - **`ttl` accepts `number` or `bigint`** — a `number` must be a non-negative *safe* integer (so `Infinity` and `2147483648` are fine, `2 ** 60` is not); a `bigint` must be non-negative. For TTLs past `2**53` ms, use a `bigint` (`2n ** 60n`). Omitting `ttl` (or passing `Infinity`) means "never expires"; `-1n` is an accepted alias for the same thing.
 - **Failures are never cached.** A throwing or rejected getter leaves the previous value intact; the next call retries.
 - **Sync `patch()`** to replace the cached value without calling the getter.
-- **Typed derived sub-caches**, re-mapped only when the parent value changes by identity.
+- **Typed derived sub-caches**, re-mapped only when the parent value is reloaded or patched.
 - **`@Cache({ id?, ttl? })`** memoizes a no-argument async method, per instance, with `this` bound automatically. Both options are optional: `id` defaults to the method name.
 - **`DecoratedCache` registry helpers** to warm (`initialize`, `initializeAll`), inspect (`get`) and tear down (`destroy`) decorated caches by `id` + instance.
 - Zero runtime dependencies. ESM + CJS dual output.
@@ -93,7 +93,7 @@ class Api {
 
 ### Derived sub-caches
 
-A sub-cache maps the parent value to a derived shape. Write the mapper as a **pure synchronous function** — it is called with `thisArg`, and its result is awaited (so an `async` mapper works at runtime, even though the declared type is synchronous) and cached until the parent value changes by identity (`Object.is`).
+A sub-cache maps the parent value to a derived shape. Write the mapper as a **pure synchronous function** — it is called with `thisArg`, and its result is awaited (so an `async` mapper works at runtime, even though the declared type is synchronous) and cached until the parent value is replaced, i.e. after a `reload()` or a `patch()`. An unchanged mapping is reused as long as the parent version does not change.
 
 ```ts
 interface ConfigSubs { names: string[]; adminCount: number }
@@ -105,7 +105,7 @@ config.derive('adminCount', (cfg) => cfg.users.filter(u => u.admin).length);
 
 await config.reload();
 const names = await config.getSub('names');       // string[] — mapper runs, result remembered
-const names2 = await config.getSub('names');      // string[] — memoized: parent unchanged
+const names2 = await config.getSub('names');      // string[] — memoized: parent version unchanged
 
 config.hasSub('names');       // boolean
 config.deleteSub('names');    // boolean — true if existed and was removed

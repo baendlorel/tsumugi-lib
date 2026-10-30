@@ -8,9 +8,10 @@ interface SubCacheEntry<T, TSub = any> {
   cache: TSub | empty;
 
   /**
-   * Parent Cache
+   * Version of the parent cache the current `cache` was mapped from.
+   * `-1` means "never mapped".
    */
-  parent: T | empty;
+  version: number;
 
   /**
    * Mapping function. Must be pure.
@@ -32,6 +33,12 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
 
   /* @internal */
   private last: bigint = -1n;
+  /**
+   * Bumped every time `cache` is replaced. Starts at `0`; sub-caches compare
+   * against it to decide whether their mapping is still valid.
+   */
+  /* @internal */
+  private version: number = 0;
   /* @internal */
   private cache: T | empty = empty;
   /* @internal */
@@ -66,6 +73,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
   patch(mapper: (value: T) => T, ignorePending = false): boolean {
     if (ignorePending || this.pending === empty) {
       this.cache = mapper(this.cache as T);
+      this.version++;
       return true;
     }
     return false;
@@ -93,6 +101,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
       this.inited = true;
       this.last = now();
       this.cache = data;
+      this.version++;
       return data;
     } finally {
       this.pending = empty;
@@ -146,7 +155,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
    *   (its result is awaited) but does not fit the declared type.
    */
   derive<SubKey extends keyof Subs>(name: SubKey, pureMapper: (value: T) => Subs[SubKey]): void {
-    this.sub.set(name, { cache: empty, parent: empty, fn: pureMapper });
+    this.sub.set(name, { cache: empty, version: -1, fn: pureMapper });
   }
 
   /**
@@ -180,7 +189,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
   /**
    * Get the cached value derived by the mapper.
    * Awaits the parent cache first (reloading it when expired), then runs the mapper
-   * only if the parent value changed by identity since the last mapping.
+   * only if the parent value was replaced since the last mapping.
    */
   async getSub<SubKey extends keyof Subs>(key: SubKey): Promise<Subs[SubKey]> {
     const sub = this.sub.get(key);
@@ -189,14 +198,17 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
     }
 
     const current = await this.get();
-    if (Object.is(sub.parent, current)) {
+    // Captured before the mapper runs, so a parent update mid-mapping leaves the sub-cache stale-and-remappable
+    // rather than wrongly marked fresh.
+    const version = this.version;
+    if (sub.version === version) {
       return sub.cache as Subs[SubKey];
     }
 
-    // ! Assign only after the mapper settles, so parent and cache stay consistent even if it throws.
+    // ! Assign only after the mapper settles, so version and cache stay consistent even if it throws.
     const cache = await sub.fn.call(this.thisArg, current);
 
-    sub.parent = current;
+    sub.version = version;
     sub.cache = cache;
 
     return cache;
@@ -221,5 +233,6 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
     this.pending = null as any;
     this.thisArg = null as any;
     this.last = -1n;
+    this.version = 0;
   }
 }
