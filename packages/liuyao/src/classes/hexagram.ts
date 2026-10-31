@@ -1,6 +1,8 @@
-import { 六十四卦表, 八宫卦位顺序表, type 八卦信息, type 六十四卦信息, 八卦表, 五行, 八卦名 } from '../core/common.js';
+import type { 八卦信息, 六十四卦信息 } from '../core/common.js';
+
+import { 六十四卦表, 八宫卦位顺序表, 八卦表, 五行, 八卦名 } from '../core/common.js';
 import { 装天干 } from '../core/heaven-stem.js';
-import { setupHostGuest } from '../core/host-guest.js';
+import { 装世应 } from '../core/host-guest.js';
 import { 装六亲五行 } from '../core/six-kins.js';
 import { 动静状态, 爻 } from './yao.js';
 
@@ -56,7 +58,7 @@ export class 六爻卦 implements 六十四卦信息 {
     const exist = 六十四卦表.find(
       (h) => h.全名 === name || h.全名.slice(2) === name || (h.全名.startsWith(name) && name.length > 1),
     );
-    return exist ? 六爻卦.从阳数创建(exist.阳数) : null;
+    return exist ? 六爻卦.从阳数字符串创建(exist.二进制表示) : null;
   }
 
   // #endregion
@@ -119,9 +121,15 @@ export class 六爻卦 implements 六十四卦信息 {
    * Create a Hexagram from an array of Yao with length 6.
    * @param 六爻 从初爻到上爻6个爻组成的数组
    */
-  constructor(六爻: 爻[], 状态: 动静状态) {
+  constructor(六爻: 爻[], 状态?: 动静状态) {
     if (六爻.length !== 6 || 六爻.some((a) => !(a instanceof 爻))) {
       throw new TypeError('第一个参数必须是6个爻对象');
+    }
+
+    // 动静必须符合要求
+
+    if (状态 === undefined) {
+      状态 = 六爻.some((v) => v.动静状态 !== 动静状态.静) ? 动静状态.动未变 : 动静状态.静;
     }
 
     this.#六爻 = 六爻.map((a) => a.克隆()) as [爻, 爻, 爻, 爻, 爻, 爻];
@@ -142,9 +150,9 @@ export class 六爻卦 implements 六十四卦信息 {
       ...this.#外卦.作为外卦.map((地支五行, i) => 六亲数组[i + 3] + 天干数组[i + 3] + 地支五行),
     ];
 
-    const hg = setupHostGuest(this);
-    this.#世爻 = hg.host;
-    this.#应爻 = hg.guest;
+    const hg = 装世应(this);
+    this.#世爻 = hg.世;
+    this.#应爻 = hg.应;
 
     // special types
 
@@ -163,7 +171,7 @@ export class 六爻卦 implements 六十四卦信息 {
   }
 
   get 宫位信息(): string {
-    return `${this.#信息.宫}宫（${this.#信息.五行}）${八宫卦位顺序表[this.#信息.卦位]}`;
+    return `${this.#信息.宫}宫（${this.#信息.五行}）${八宫卦位顺序表[this.#信息.八宫卦位]}`;
   }
 
   get 动静状态(): 动静状态 {
@@ -223,8 +231,8 @@ export class 六爻卦 implements 六十四卦信息 {
     return this.#信息.宫;
   }
 
-  get 卦位() {
-    return this.#信息.卦位;
+  get 八宫卦位() {
+    return this.#信息.八宫卦位;
   }
   // #endregion
 

@@ -6,14 +6,19 @@ import type { 六爻卦 } from '../classes/hexagram.js';
 隔世爻两位，即是应爻。余卦仿此。
 `;
 
-const _h = [5, 0, 1, 2, 3, 4, 3, 2];
-const _g = [2, 3, 4, 5, 0, 1, 0, 5]; // _h.map((v) => (v + 3) % 6);
+const 世位 = [5, 0, 1, 2, 3, 4, 3, 2] as const;
+
+/**
+ * 应位满足公式`(世位 + 3) % 6`
+ */
+const 应位 = [2, 3, 4, 5, 0, 1, 0, 5] as const;
+
 /**
  * @see 《增删卜易·世应章》
  */
-export function setupHostGuest(hexagram: 六爻卦): { host: 0 | 1 | 2 | 3 | 4 | 5; guest: 0 | 1 | 2 | 3 | 4 | 5 } {
+export function 装世应(hexagram: 六爻卦): { 世: 0 | 1 | 2 | 3 | 4 | 5; 应: 0 | 1 | 2 | 3 | 4 | 5 } {
   return {
-    host: _h[hexagram.卦位],
-    guest: _g[hexagram.卦位],
+    世: 世位[hexagram.八宫卦位],
+    应: 应位[hexagram.八宫卦位],
   };
 }
