@@ -1,11 +1,11 @@
 import { 爻位, type 六爻卦 } from '../classes/hexagram.js';
-import type { SixGod } from './six-gods.js';
+import type { 六神 } from './six-gods.js';
 
 interface YaoInfo {
   爻: string;
   装卦: string;
   关系?: '世' | '应';
-  六神?: SixGod;
+  六神?: 六神;
 }
 
 export interface AIReadableInfo {
@@ -26,15 +26,15 @@ export interface HexagramAIReadable {
   六冲六合: '六合' | '六冲' | '不是';
 }
 
-function createYaoInfo(hexagram: 六爻卦, index: number, gods?: SixGod[]): YaoInfo {
+function createYaoInfo(hexagram: 六爻卦, index: number, gods?: 六神[]): YaoInfo {
   const a: YaoInfo = {
-    爻: hexagram.#六爻[index].名称,
+    爻: hexagram.六爻[index].名称,
     装卦: hexagram.六亲干支五行[index],
   };
 
-  if (hexagram.世爻 === index) {
+  if (hexagram.#世爻 === index) {
     a.关系 = '世';
-  } else if (hexagram.应爻 === index) {
+  } else if (hexagram.#应爻 === index) {
     a.关系 = '应';
   }
 
@@ -48,7 +48,7 @@ function createYaoInfo(hexagram: 六爻卦, index: number, gods?: SixGod[]): Yao
 /**
  * This output is meant for AI skills.
  */
-export function toAIReadableJSON(hexagram: 六爻卦, gods?: SixGod[]): AIReadableInfo {
+export function toAIReadableJSON(hexagram: 六爻卦, gods?: 六神[]): AIReadableInfo {
   const changed = hexagram.toChanged();
 
   return {
@@ -60,7 +60,7 @@ export function toAIReadableJSON(hexagram: 六爻卦, gods?: SixGod[]): AIReadab
       二爻: createYaoInfo(hexagram, 1, gods),
       初爻: createYaoInfo(hexagram, 0, gods),
       卦名: hexagram.卦名,
-      宫: hexagram.palaceInfo,
+      宫: hexagram.宫位信息,
       变爻: hexagram.是否为动卦
         ? hexagram.#六爻
             .map((y, i) => (y.是否动爻 ? 爻位[i] : null))

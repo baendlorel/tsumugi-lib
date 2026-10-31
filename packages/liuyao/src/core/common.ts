@@ -20,7 +20,7 @@ export type 天干 = '甲' | '乙' | '丙' | '丁' | '戊' | '己' | '庚' | '�
 
 export type 八卦名 = '乾' | '兑' | '离' | '震' | '巽' | '坎' | '艮' | '坤';
 
-export interface 六爻卦象信息 {
+export interface 六十四卦信息 {
   /**
    * Binary representation of the hexagram, where 0 image a yin line and 1 image a yang line. The lines are ordered from the bottom (first line) to the top (sixth line).
    */
@@ -73,7 +73,17 @@ export interface 六爻卦象信息 {
   卦位: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 }
 
-export const 六爻卦象信息表: readonly 六爻卦象信息[] = [
+/**
+ * 包含丰富信息的表，已冻结无法修改，字段如下：
+ *  - 二进制表示: '000000'
+ *  - 全名: '坤为地'
+ *  - 符号: '䷁'
+ *  - 五行: '土'
+ *  - 宫: '坤'
+ *  - 卦位: 0
+ *  - 卦名: '坤'
+ */
+export const 六十四卦表: readonly 六十四卦信息[] = [
   {
     二进制表示: '000000',
     全名: '坤为地',
@@ -696,7 +706,7 @@ export interface 八卦信息 {
 /**
  * List of all trigrams in the I Ching, with their binary representation, number of yang lines, name, what they represent, and their corresponding sign.
  */
-export const 八卦信息表: readonly 八卦信息[] = [
+export const 八卦表: readonly 八卦信息[] = [
   {
     卦名: '坤',
     二进制表示: '000',
@@ -772,5 +782,5 @@ export const 八卦信息表: readonly 八卦信息[] = [
 ];
 
 Object.freeze(八宫卦位顺序表);
-Object.freeze(六爻卦象信息表);
-Object.freeze(八卦信息表);
+Object.freeze(六十四卦表);
+Object.freeze(八卦表);

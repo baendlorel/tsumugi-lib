@@ -1,10 +1,4 @@
-import {
-  六爻卦象信息表,
-  八宫卦位顺序表,
-  type 八卦信息,
-  type 六爻卦象信息 as 六爻卦象信息,
-  八卦信息表 as 八卦表,
-} from '../core/common.js';
+import { 六十四卦表, 八宫卦位顺序表, type 八卦信息, type 六十四卦信息, 八卦表, 五行, 八卦名 } from '../core/common.js';
 import { setupHeavenStem } from '../core/heaven-stem.js';
 import { setupHostGuest } from '../core/host-guest.js';
 import { setupSixKins } from '../core/six-kins.js';
@@ -22,7 +16,7 @@ const _pure = ['乾', '坤', '震', '巽', '坎', '离', '艮', '兑'];
  * - The hexagram can be constructed from an array of Yao or an array of counts of yang.
  * - Creates “乾为天” by default.
  */
-export class 六爻卦 implements 六爻卦象信息 {
+export class 六爻卦 implements 六十四卦信息 {
   // #region Static
   /**
    * Use tokens like `'012132'` to create a Hexagram, where each digit represents the count of Yang in the corresponding Yao (0 for 老阴, 1 for 少阳, 2 for 少阴, 3 for 老阳). The first digit represents the first Yao (初爻) and the last digit represents the sixth Yao (上爻).
@@ -59,7 +53,7 @@ export class 六爻卦 implements 六爻卦象信息 {
    * @param name "坤为地", "地雷复", "地水师"
    */
   static 从卦名创建(name: string): 六爻卦 | null {
-    const exist = 六爻卦象信息表.find(
+    const exist = 六十四卦表.find(
       (h) => h.全名 === name || h.全名.slice(2) === name || (h.全名.startsWith(name) && name.length > 1),
     );
     return exist ? 六爻卦.从阳数创建(exist.阳数) : null;
@@ -71,60 +65,55 @@ export class 六爻卦 implements 六爻卦象信息 {
    * 6 Yao positions, indexed from bottom to top.
    * Index from 0 to 5, where 0 is the first Yao (初爻) and 5 is the sixth Yao (上爻).
    */
-  readonly 六爻: [爻, 爻, 爻, 爻, 爻, 爻];
+  #六爻: [爻, 爻, 爻, 爻, 爻, 爻];
 
-  // #region inherited from HexagramInfo
+  /**
+   * 指向六爻卦象信息的对象，外部不可更改
+   */
+  #信息: 六十四卦信息;
+
   /**
    * 只含有阴阳的二进制表示
    * - `100100`代表震为雷
    */
-  readonly 二进制表示: string;
-  readonly 全名: string;
-  readonly 卦名: string;
-  readonly 符号: string;
-  readonly 宫: '乾' | '坤' | '震' | '巽' | '坎' | '离' | '艮' | '兑';
-  readonly 五行: '金' | '木' | '水' | '火' | '土';
-  readonly 卦位: 0 | 6 | 1 | 2 | 3 | 4 | 5 | 7;
-  // #endregion
-
-  readonly palaceInfo;
+  #二进制表示: string;
 
   /**
    * Whether this hexagram has already changed to another hexagram. Once a hexagram is changed, it cannot change again.
    */
-  readonly 动静状态: 动静状态;
+  #动静状态: 动静状态;
 
   /**
    * 下三爻组成的卦
    */
-  readonly 内卦: 八卦信息;
+  #内卦: 八卦信息;
 
   /**
    * 上三爻组成的卦
    */
-  readonly 外卦: 八卦信息;
+  #外卦: 八卦信息;
 
   /**
    * Whether this gram is 六冲、六合
    */
-  readonly 属性?: '六冲' | '六合';
+  #属性?: '六冲' | '六合';
 
-  readonly 是否为八纯卦: boolean;
+  #是否为八纯卦: boolean;
 
   /**
    * Includes 六亲、天干、地支、五行. Looks like "兄弟癸丑土" "官鬼辛卯木"
    */
-  readonly 六亲干支五行: string[];
+  #六亲干支五行: string[];
 
   /**
    * Index of the 世爻
    */
-  readonly 世爻: number;
+  #世爻: 0 | 1 | 2 | 3 | 4 | 5;
 
   /**
    * Index of the 应爻
    */
-  readonly 应爻: number;
+  #应爻: 0 | 1 | 2 | 3 | 4 | 5;
 
   /**
    * Create a Hexagram from an array of Yao with length 6.
@@ -135,55 +124,109 @@ export class 六爻卦 implements 六爻卦象信息 {
       throw new TypeError('第一个参数必须是6个爻对象');
     }
 
-    this.六爻 = 六爻.map((a) => a.克隆()) as [爻, 爻, 爻, 爻, 爻, 爻];
-    this.二进制表示 = this.六爻.map((y) => y.阴阳).join('');
-    const info = 六爻卦象信息表.find((h) => h.二进制表示 === this.二进制表示)!; // This is guaranteed
-    this.宫 = info.宫;
+    this.#六爻 = 六爻.map((a) => a.克隆()) as [爻, 爻, 爻, 爻, 爻, 爻];
+    this.#二进制表示 = this.#六爻.map((y) => y.阴阳).join('');
+    // 一定能搜索到，因为爻数已经校验过
+    this.#信息 = 六十四卦表.find((h) => h.二进制表示 === this.二进制表示)!;
+    this.#动静状态 = 状态;
 
-    // properties from HexagramInfo
-    this.全名 = info.全名;
-    this.卦位 = info.卦位;
-    this.五行 = info.五行;
-    this.卦名 = info.卦名;
-    this.符号 = info.符号;
-
-    // details
-
-    this.palaceInfo = `${info.宫}宫（${info.五行}）${八宫卦位顺序表[info.卦位]}`;
-
-    this.动静状态 = 状态;
-
-    const ub = this.二进制表示.slice(0, 3);
-    const lb = this.二进制表示.slice(3);
-    this.内卦 = 八卦表.find((t) => t.二进制表示 === ub)!;
-    this.外卦 = 八卦表.find((t) => t.二进制表示 === lb)!;
+    const ub = this.#二进制表示.slice(0, 3);
+    const lb = this.#二进制表示.slice(3);
+    this.#内卦 = 八卦表.find((t) => t.二进制表示 === ub)!;
+    this.#外卦 = 八卦表.find((t) => t.二进制表示 === lb)!;
 
     const sixKins = setupSixKins(this);
     const hs = setupHeavenStem(this);
-    this.六亲干支五行 = [
-      ...this.内卦.作为内卦.map((v, i) => sixKins[i] + hs[i] + v),
-      ...this.外卦.作为外卦.map((v, i) => sixKins[i + 3] + hs[i + 3] + v),
+    this.#六亲干支五行 = [
+      ...this.#内卦.作为内卦.map((v, i) => sixKins[i] + hs[i] + v),
+      ...this.#外卦.作为外卦.map((v, i) => sixKins[i + 3] + hs[i + 3] + v),
     ];
 
     const hg = setupHostGuest(this);
-    this.世爻 = hg.host;
-    this.应爻 = hg.guest;
+    this.#世爻 = hg.host;
+    this.#应爻 = hg.guest;
 
     // special types
 
-    if (_scattering.includes(info.卦名)) {
-      this.属性 = '六冲';
+    if (_scattering.includes(this.#信息.卦名)) {
+      this.#属性 = '六冲';
     }
-    if (_gathering.includes(info.卦名)) {
-      this.属性 = '六合';
+    if (_gathering.includes(this.#信息.卦名)) {
+      this.#属性 = '六合';
     }
 
-    this.是否为八纯卦 = _pure.includes(info.卦名);
+    this.#是否为八纯卦 = _pure.includes(this.#信息.卦名);
   }
 
   get 阳数(): number[] {
-    return this.六爻.map((v) => v.阳数);
+    return this.#六爻.map((v) => v.阳数);
   }
+
+  get 宫位信息(): string {
+    return `${this.#信息.宫}宫（${this.#信息.五行}）${八宫卦位顺序表[this.#信息.卦位]}`;
+  }
+
+  get 动静状态(): 动静状态 {
+    return this.#动静状态;
+  }
+
+  get 六亲干支五行(): string[] {
+    return [...this.#六亲干支五行];
+  }
+
+  get 世爻(): 0 | 1 | 2 | 3 | 4 | 5 {
+    return this.#世爻;
+  }
+
+  get 应爻(): 0 | 1 | 2 | 3 | 4 | 5 {
+    return this.#应爻;
+  }
+
+  get 属性(): '六冲' | '六合' | undefined {
+    return this.#属性;
+  }
+
+  get 是否为八纯卦(): boolean {
+    return this.#是否为八纯卦;
+  }
+
+  get 内卦(): 八卦信息 {
+    return this.#内卦;
+  }
+
+  get 外卦(): 八卦信息 {
+    return this.#外卦;
+  }
+
+  // #region 实现六十四卦信息接口，快捷访问
+  get 二进制表示(): string {
+    return this.#二进制表示;
+  }
+
+  get 卦名(): string {
+    return this.#信息.卦名;
+  }
+
+  get 全名(): string {
+    return this.#信息.全名;
+  }
+
+  get 符号(): string {
+    return this.#信息.符号;
+  }
+
+  get 五行(): 五行 {
+    return this.#信息.五行;
+  }
+
+  get 宫(): 八卦名 {
+    return this.#信息.宫;
+  }
+
+  get 卦位() {
+    return this.#信息.卦位;
+  }
+  // #endregion
 
   /**
    * 获得变爻卦象
@@ -191,22 +234,22 @@ export class 六爻卦 implements 六爻卦象信息 {
    * @throws {TypeError} 如果卦象已经动过则抛出错误
    */
   获得变卦(): 六爻卦 | null {
-    if (this.动静状态 === 动静状态.静) {
+    if (this.#动静状态 === 动静状态.静) {
       return null;
     }
 
-    if (this.动静状态 === 动静状态.动已变) {
+    if (this.#动静状态 === 动静状态.动已变) {
       throw new TypeError('卦象已经动过，不可再动');
     }
 
     return new 六爻卦(
-      this.六爻.map((y) => y.变()),
+      this.#六爻.map((y) => y.变()),
       动静状态.动已变,
     );
   }
 
   克隆(): 六爻卦 {
-    return new 六爻卦(this.六爻, this.动静状态);
+    return new 六爻卦(this.#六爻, this.#动静状态);
   }
 
   toString(): string {

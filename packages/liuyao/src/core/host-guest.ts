@@ -11,7 +11,7 @@ const _g = [2, 3, 4, 5, 0, 1, 0, 5]; // _h.map((v) => (v + 3) % 6);
 /**
  * @see 《增删卜易·世应章》
  */
-export function setupHostGuest(hexagram: 六爻卦): { host: number; guest: number } {
+export function setupHostGuest(hexagram: 六爻卦): { host: 0 | 1 | 2 | 3 | 4 | 5; guest: 0 | 1 | 2 | 3 | 4 | 5 } {
   return {
     host: _h[hexagram.卦位],
     guest: _g[hexagram.卦位],

@@ -1,4 +1,4 @@
-import { 八卦信息表 } from '../core/common.js';
+import { 八卦表 } from '../core/common.js';
 
 const _names = ['老阴', '少阳', '少阴', '老阳'] as const;
 const _symbolNames = '交单拆重' as const;
@@ -48,7 +48,7 @@ export class 爻 {
    * @returns 如果入参符合就返回，如果不符合就返回`null`
    */
   static 从八卦字段创建(value: string | number): 爻 | null {
-    const trigram = 八卦信息表.find(
+    const trigram = 八卦表.find(
       (v) => v.卦名 === value || v.阳数 === value || v.二进制表示 === value || v.符号 === value,
     );
     return trigram ? new 爻(trigram.阳数) : null;

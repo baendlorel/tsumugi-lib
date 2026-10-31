@@ -1,12 +1,12 @@
-export type SixGod = '玄武' | '白虎' | '螣蛇' | '勾陈' | '朱雀' | '青龙';
+export type 六神 = '玄武' | '白虎' | '螣蛇' | '勾陈' | '朱雀' | '青龙';
 
-export interface SixGodInfo {
+export interface 六神信息 {
   /**
    * The Heavenly Stem associated with the Six Gods in this order.
    * They are '甲乙丙丁戊己庚辛壬癸' in sequence.
    * Different Heavenly Stems correspond to different orders of Six Gods.
    */
-  heavenlyStem: string;
+  天干: string;
 
   /**
    * Six Gods contains '青龙', '朱雀', '勾陈', '螣蛇', '白虎', '玄武'.
@@ -20,53 +20,53 @@ export interface SixGodInfo {
    * - 螣蛇: Flying Serpent, a limbless divine serpent that can summon clouds and mist and roam within them.
    * - 勾陈: Gouchen, Also considered as 麒麟 Kylin. It has a body like a musk deer, a tail like that of a dragon, dragon scales, and a single horn.
    */
-  gods: SixGod[];
+  六神: 六神[];
 }
 
 /**
  * @see 《增删卜易·六神章》
  */
-export const SixGodTable: readonly SixGodInfo[] = [
+export const 六神表: readonly 六神信息[] = [
   {
-    heavenlyStem: '甲',
-    gods: ['青龙', '朱雀', '勾陈', '螣蛇', '白虎', '玄武'] as SixGod[],
+    天干: '甲',
+    六神: ['青龙', '朱雀', '勾陈', '螣蛇', '白虎', '玄武'] as 六神[],
   },
   {
-    heavenlyStem: '乙',
-    gods: ['青龙', '朱雀', '勾陈', '螣蛇', '白虎', '玄武'] as SixGod[],
+    天干: '乙',
+    六神: ['青龙', '朱雀', '勾陈', '螣蛇', '白虎', '玄武'] as 六神[],
   },
   {
-    heavenlyStem: '丙',
-    gods: ['朱雀', '勾陈', '螣蛇', '白虎', '玄武', '青龙'] as SixGod[],
+    天干: '丙',
+    六神: ['朱雀', '勾陈', '螣蛇', '白虎', '玄武', '青龙'] as 六神[],
   },
   {
-    heavenlyStem: '丁',
-    gods: ['朱雀', '勾陈', '螣蛇', '白虎', '玄武', '青龙'] as SixGod[],
+    天干: '丁',
+    六神: ['朱雀', '勾陈', '螣蛇', '白虎', '玄武', '青龙'] as 六神[],
   },
   {
-    heavenlyStem: '戊',
-    gods: ['勾陈', '螣蛇', '白虎', '玄武', '青龙', '朱雀'] as SixGod[],
+    天干: '戊',
+    六神: ['勾陈', '螣蛇', '白虎', '玄武', '青龙', '朱雀'] as 六神[],
   },
   {
-    heavenlyStem: '己',
-    gods: ['螣蛇', '白虎', '玄武', '青龙', '朱雀', '勾陈'] as SixGod[],
+    天干: '己',
+    六神: ['螣蛇', '白虎', '玄武', '青龙', '朱雀', '勾陈'] as 六神[],
   },
   {
-    heavenlyStem: '庚',
-    gods: ['白虎', '玄武', '青龙', '朱雀', '勾陈', '螣蛇'] as SixGod[],
+    天干: '庚',
+    六神: ['白虎', '玄武', '青龙', '朱雀', '勾陈', '螣蛇'] as 六神[],
   },
   {
-    heavenlyStem: '辛',
-    gods: ['白虎', '玄武', '青龙', '朱雀', '勾陈', '螣蛇'] as SixGod[],
+    天干: '辛',
+    六神: ['白虎', '玄武', '青龙', '朱雀', '勾陈', '螣蛇'] as 六神[],
   },
   {
-    heavenlyStem: '壬',
-    gods: ['玄武', '青龙', '朱雀', '勾陈', '螣蛇', '白虎'] as SixGod[],
+    天干: '壬',
+    六神: ['玄武', '青龙', '朱雀', '勾陈', '螣蛇', '白虎'] as 六神[],
   },
   {
-    heavenlyStem: '癸',
-    gods: ['玄武', '青龙', '朱雀', '勾陈', '螣蛇', '白虎'] as SixGod[],
+    天干: '癸',
+    六神: ['玄武', '青龙', '朱雀', '勾陈', '螣蛇', '白虎'] as 六神[],
   },
 ];
 
-Object.freeze(SixGodTable);
+Object.freeze(六神表);

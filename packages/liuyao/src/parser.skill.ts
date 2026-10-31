@@ -1,7 +1,7 @@
 import solar2lunar from 'solarlunar';
 import { 六爻卦 } from './classes/hexagram.js';
 import { 爻 } from './classes/yao.js';
-import { SixGodTable } from './core/six-gods.js';
+import { 六神表 } from './core/six-gods.js';
 import { toAIReadableJSON } from './core/ai.js';
 
 function getInfo() {
@@ -37,7 +37,7 @@ function getLunarInfo() {
     return null;
   }
 
-  const gods = SixGodTable.find((g) => g.heavenlyStem === l.gzDay[0])!.gods;
+  const gods = 六神表.find((g) => g.天干 === l.gzDay[0])!.六神;
   return {
     时辰: {
       年: l.gzYear,

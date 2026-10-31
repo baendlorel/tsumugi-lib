@@ -1,7 +1,11 @@
 import { 六爻卦 } from '../classes/hexagram.js';
+import { 动静状态 } from '../classes/yao.js';
 import { 五行, 地支五行 } from './common.js';
 
-export type Kin = '父母' | '子孙' | '妻财' | '官鬼' | '兄弟';
+/**
+ * 六亲只有五个？
+ */
+export type 六亲 = '父母' | '子孙' | '妻财' | '官鬼' | '兄弟';
 
 `
 六亲歌章
@@ -12,8 +16,9 @@ export type Kin = '父母' | '子孙' | '妻财' | '官鬼' | '兄弟';
 离宫木父土子孙，水鬼金财火弟兄。（离宫属火)
 震巽木兄水父母，金鬼火子财是土。（震巽两宫，八卦俱属木）
 `;
+
 /**
- * Returns kins.
+ * 返回六亲和五行
  * @param v inner outer extracted from trigram
  * @param phase 金木水火土
  * @param kin 六亲
@@ -21,16 +26,16 @@ export type Kin = '父母' | '子孙' | '妻财' | '官鬼' | '兄弟';
 function map(
   v: 地支五行,
   phase0: 五行,
-  kin0: Kin,
+  kin0: 六亲,
   phase1: 五行,
-  kin1: Kin,
+  kin1: 六亲,
   phase2: 五行,
-  kin2: Kin,
+  kin2: 六亲,
   phase3: 五行,
-  kin3: Kin,
+  kin3: 六亲,
   phase4: 五行,
-  kin4: Kin,
-): Kin {
+  kin4: 六亲,
+): 六亲 {
   if (v.includes(phase0)) {
     return kin0;
   }
@@ -49,7 +54,7 @@ function map(
   throw new Error(`No BranchPhase[${v}] matches phase[${phase0},${phase1},${phase2},${phase3},${phase4}]`);
 }
 
-const _mappers: Record<string, (sp: 地支五行) => Kin> = {
+const _mappers: Record<string, (sp: 地支五行) => 六亲> = {
   乾: (v: 地支五行) => map(v, '金', '兄弟', '土', '父母', '木', '妻财', '火', '官鬼', '水', '子孙'),
   兑: (v: 地支五行) => map(v, '金', '兄弟', '土', '父母', '木', '妻财', '火', '官鬼', '水', '子孙'),
   坎: (v: 地支五行) => map(v, '木', '子孙', '水', '兄弟', '金', '父母', '火', '妻财', '土', '官鬼'),
@@ -61,11 +66,10 @@ const _mappers: Record<string, (sp: 地支五行) => Kin> = {
 };
 
 /**
- * Changed gram's kins is borrowed from the primary gram.
+ * 变卦的六亲会继承本卦的六亲，而不是它自己的
  * @see 《增删卜易·六亲歌章》
- * @param hexagram the gram wait to be setup.
  */
-export function setupSixKins(hexagram: 六爻卦): Kin[] {
-  const mapper = _mappers[hexagram.primary ? hexagram.primary.宫 : hexagram.宫];
-  return [...hexagram.内卦.作为内卦.map(mapper), ...hexagram.外卦.作为外卦.map(mapper)];
+export function setupSixKins(hexagram: 六爻卦): 六亲[] {
+  const mapper = _mappers[hexagram.动静状态 === 动静状态.动未变 ? hexagram.宫 : hexagram.宫];
+  return [...hexagram.#内卦.作为内卦.map(mapper), ...hexagram.#外卦.作为外卦.map(mapper)];
 }
