@@ -5,6 +5,9 @@ const _symbolNames = '交单拆重' as const;
 const _digits = '0123' as const;
 const _change = [1, 1, 2, 2] as const;
 
+/**
+ * 描述卦和爻的动静变化，分为'静'、'动卦/爻但还没变'、'动卦/爻已经变了'3个状态
+ */
 export const enum 动静状态 {
   静,
   动未变,

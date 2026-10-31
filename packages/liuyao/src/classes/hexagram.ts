@@ -96,7 +96,7 @@ export class 六爻卦 implements 六十四卦信息 {
   /**
    * Whether this gram is 六冲、六合
    */
-  #属性?: '六冲' | '六合';
+  #属性: '六冲' | '六合' | undefined;
 
   #是否为八纯卦: boolean;
 
