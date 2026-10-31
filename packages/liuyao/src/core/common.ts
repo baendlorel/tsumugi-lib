@@ -20,7 +20,7 @@ export type 天干 = '甲' | '乙' | '丙' | '丁' | '戊' | '己' | '庚' | '�
 
 export type 八卦名 = '乾' | '兑' | '离' | '震' | '巽' | '坎' | '艮' | '坤';
 
-export interface 六十四卦信息 {
+export interface 六十四卦 {
   /**
    * Binary representation of the hexagram, where 0 image a yin line and 1 image a yang line. The lines are ordered from the bottom (first line) to the top (sixth line).
    */
@@ -83,7 +83,7 @@ export interface 六十四卦信息 {
  *  - 卦位: 0
  *  - 卦名: '坤'
  */
-export const 六十四卦表: readonly 六十四卦信息[] = [
+export const 六十四卦表: readonly 六十四卦[] = [
   {
     二进制表示: '000000',
     全名: '坤为地',
@@ -662,7 +662,7 @@ export const 六十四卦表: readonly 六十四卦信息[] = [
   },
 ];
 
-export interface 八卦信息 {
+export interface 八卦 {
   /**
    * Presents the trigram as a 3-digit binary string. 1 image a Yang line and 0 image a Yin line.
    *
@@ -694,27 +694,27 @@ export interface 八卦信息 {
    * Earth Stem and Five Phases when this gram performs a inner gram of a hexagram.
    * @see 《增删卜易·浑天甲子章》
    */
-  作为内卦: 地支五行[];
+  内卦地支五行: 地支五行[];
 
   /**
    * Earth Stem and Five Phases when this gram performs a outer gram of a hexagram.
    * @see 《增删卜易·浑天甲子章》
    */
-  作为外卦: 地支五行[];
+  外卦地支五行: 地支五行[];
 }
 
 /**
  * List of all trigrams in the I Ching, with their binary representation, number of yang lines, name, what they represent, and their corresponding sign.
  */
-export const 八卦表: readonly 八卦信息[] = [
+export const 八卦表: readonly 八卦[] = [
   {
     卦名: '坤',
     二进制表示: '000',
     阳数: 0,
     象: '地',
     符号: '☷',
-    作为内卦: ['未土', '巳火', '卯木'],
-    作为外卦: ['丑土', '亥水', '酉金'],
+    内卦地支五行: ['未土', '巳火', '卯木'],
+    外卦地支五行: ['丑土', '亥水', '酉金'],
   },
   {
     卦名: '震',
@@ -722,8 +722,8 @@ export const 八卦表: readonly 八卦信息[] = [
     阳数: 1,
     象: '雷',
     符号: '☳',
-    作为内卦: ['子水', '寅木', '辰土'],
-    作为外卦: ['午火', '申金', '戌土'],
+    内卦地支五行: ['子水', '寅木', '辰土'],
+    外卦地支五行: ['午火', '申金', '戌土'],
   },
   {
     卦名: '坎',
@@ -731,8 +731,8 @@ export const 八卦表: readonly 八卦信息[] = [
     阳数: 1,
     象: '水',
     符号: '☵',
-    作为内卦: ['寅木', '辰土', '午火'],
-    作为外卦: ['申金', '戌土', '子水'],
+    内卦地支五行: ['寅木', '辰土', '午火'],
+    外卦地支五行: ['申金', '戌土', '子水'],
   },
   {
     卦名: '兑',
@@ -740,8 +740,8 @@ export const 八卦表: readonly 八卦信息[] = [
     阳数: 2,
     象: '泽',
     符号: '☱',
-    作为内卦: ['巳火', '卯木', '丑土'],
-    作为外卦: ['亥水', '酉金', '未土'],
+    内卦地支五行: ['巳火', '卯木', '丑土'],
+    外卦地支五行: ['亥水', '酉金', '未土'],
   },
   {
     卦名: '艮',
@@ -749,8 +749,8 @@ export const 八卦表: readonly 八卦信息[] = [
     阳数: 1,
     象: '山',
     符号: '☶',
-    作为内卦: ['辰土', '午火', '申金'],
-    作为外卦: ['戌土', '子水', '寅木'],
+    内卦地支五行: ['辰土', '午火', '申金'],
+    外卦地支五行: ['戌土', '子水', '寅木'],
   },
   {
     卦名: '离',
@@ -758,8 +758,8 @@ export const 八卦表: readonly 八卦信息[] = [
     阳数: 2,
     象: '火',
     符号: '☲',
-    作为内卦: ['卯木', '丑土', '亥水'],
-    作为外卦: ['酉金', '未土', '巳火'],
+    内卦地支五行: ['卯木', '丑土', '亥水'],
+    外卦地支五行: ['酉金', '未土', '巳火'],
   },
   {
     卦名: '巽',
@@ -767,8 +767,8 @@ export const 八卦表: readonly 八卦信息[] = [
     阳数: 2,
     象: '风',
     符号: '☴',
-    作为内卦: ['丑土', '亥水', '酉金'],
-    作为外卦: ['未土', '巳火', '卯木'],
+    内卦地支五行: ['丑土', '亥水', '酉金'],
+    外卦地支五行: ['未土', '巳火', '卯木'],
   },
   {
     卦名: '乾',
@@ -776,8 +776,8 @@ export const 八卦表: readonly 八卦信息[] = [
     阳数: 3,
     象: '天',
     符号: '☰',
-    作为内卦: ['子水', '寅木', '辰土'],
-    作为外卦: ['午火', '申金', '戌土'],
+    内卦地支五行: ['子水', '寅木', '辰土'],
+    外卦地支五行: ['午火', '申金', '戌土'],
   },
 ];
 

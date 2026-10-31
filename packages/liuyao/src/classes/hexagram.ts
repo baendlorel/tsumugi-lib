@@ -1,4 +1,4 @@
-import type { 八卦信息, 六十四卦信息 } from '../core/common.js';
+import type { 八卦, 六十四卦 } from '../core/common.js';
 
 import { 六十四卦表, 八宫卦位顺序表, 八卦表, 五行, 八卦名 } from '../core/common.js';
 import { 装天干 } from '../core/heaven-stem.js';
@@ -18,7 +18,7 @@ const _pure = ['乾', '坤', '震', '巽', '坎', '离', '艮', '兑'];
  * - The hexagram can be constructed from an array of Yao or an array of counts of yang.
  * - Creates “乾为天” by default.
  */
-export class 六爻卦 implements 六十四卦信息 {
+export class 六爻卦 implements 六十四卦 {
   // #region Static
   /**
    * Use tokens like `'012132'` to create a Hexagram, where each digit represents the count of Yang in the corresponding Yao (0 for 老阴, 1 for 少阳, 2 for 少阴, 3 for 老阳). The first digit represents the first Yao (初爻) and the last digit represents the sixth Yao (上爻).
@@ -72,7 +72,7 @@ export class 六爻卦 implements 六十四卦信息 {
   /**
    * 指向六爻卦象信息的对象，外部不可更改
    */
-  #信息: 六十四卦信息;
+  #信息: 六十四卦;
 
   /**
    * 只含有阴阳的二进制表示
@@ -88,12 +88,12 @@ export class 六爻卦 implements 六十四卦信息 {
   /**
    * 下三爻组成的卦
    */
-  #内卦: 八卦信息;
+  #内卦: 八卦;
 
   /**
    * 上三爻组成的卦
    */
-  #外卦: 八卦信息;
+  #外卦: 八卦;
 
   /**
    * Whether this gram is 六冲、六合
@@ -145,10 +145,9 @@ export class 六爻卦 implements 六十四卦信息 {
 
     const 六亲数组 = 装六亲五行(this);
     const 天干数组 = 装天干(this);
-    this.#六亲干支五行 = [
-      ...this.#内卦.作为内卦.map((地支五行, i) => 六亲数组[i + 0] + 天干数组[i + 0] + 地支五行),
-      ...this.#外卦.作为外卦.map((地支五行, i) => 六亲数组[i + 3] + 天干数组[i + 3] + 地支五行),
-    ];
+    const 内卦装 = this.#内卦.内卦地支五行.map((地支五行, i) => 六亲数组[i + 0] + 天干数组[i + 0] + 地支五行);
+    const 外卦装 = this.#外卦.外卦地支五行.map((地支五行, i) => 六亲数组[i + 3] + 天干数组[i + 3] + 地支五行);
+    this.#六亲干支五行 = [...内卦装, ...外卦装];
 
     const hg = 装世应(this);
     this.#世爻 = hg.世;
@@ -198,11 +197,11 @@ export class 六爻卦 implements 六十四卦信息 {
     return this.#是否为八纯卦;
   }
 
-  get 内卦(): 八卦信息 {
+  get 内卦(): 八卦 {
     return this.#内卦;
   }
 
-  get 外卦(): 八卦信息 {
+  get 外卦(): 八卦 {
     return this.#外卦;
   }
 
