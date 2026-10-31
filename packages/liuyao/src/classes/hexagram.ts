@@ -56,7 +56,8 @@ export class 六爻卦 implements 六十四卦 {
    */
   static 从卦名创建(name: string): 六爻卦 | null {
     const exist = 六十四卦表.find(
-      (h) => h.全名 === name || h.全名.slice(2) === name || (h.全名.startsWith(name) && name.length > 1),
+      (h) =>
+        h.卦名 === name || h.全名 === name || h.全名.slice(2) === name || (h.全名.startsWith(name) && name.length > 1),
     );
     return exist ? 六爻卦.从阳数字符串创建(exist.二进制表示) : null;
   }

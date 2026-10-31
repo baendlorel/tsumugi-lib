@@ -3,7 +3,8 @@ import { 爻 } from '../classes/yao.js';
 import { toJSON } from './json.js';
 
 /**
- * Convert 本卦 and 变卦 to AI readable json
+ * 这是读取本卦变卦，转换为本包能解析的卦象对象用的，并非无效代码
+ *
  * @param ben 本卦 like 天风姤
  * @param bian 变卦 like 天雷无妄
  * @returns AI readable json
