@@ -1,5 +1,5 @@
 import solar2lunar from 'solarlunar';
-import { 六爻卦象 } from './classes/hexagram.js';
+import { 六爻卦 } from './classes/hexagram.js';
 import { 爻 } from './classes/yao.js';
 import { SixGodTable } from './core/six-gods.js';
 import { toAIReadableJSON } from './core/ai.js';
@@ -14,10 +14,10 @@ function getInfo() {
 
   const yaos = rawYaos.split('').map(爻.从八卦字段创建);
   if (yaos.every((y): y is 爻 => y !== null) && yaos.length >= 6) {
-    return new 六爻卦象(yaos);
+    return new 六爻卦(yaos);
   }
 
-  return 六爻卦象.从阳数字符串创建(rawYaos) || 六爻卦象.从卦名创建(rawYaos) || 六爻卦象.从单拆重交创建(rawYaos);
+  return 六爻卦.从阳数字符串创建(rawYaos) || 六爻卦.从卦名创建(rawYaos) || 六爻卦.从单拆重交创建(rawYaos);
 }
 
 function getShichen(date: Date): string {

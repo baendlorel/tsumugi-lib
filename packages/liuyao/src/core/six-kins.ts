@@ -1,4 +1,4 @@
-import { 六爻卦象 } from '../classes/hexagram.js';
+import { 六爻卦 } from '../classes/hexagram.js';
 import { 五行, 地支五行 } from './common.js';
 
 export type Kin = '父母' | '子孙' | '妻财' | '官鬼' | '兄弟';
@@ -65,7 +65,7 @@ const _mappers: Record<string, (sp: 地支五行) => Kin> = {
  * @see 《增删卜易·六亲歌章》
  * @param hexagram the gram wait to be setup.
  */
-export function setupSixKins(hexagram: 六爻卦象): Kin[] {
+export function setupSixKins(hexagram: 六爻卦): Kin[] {
   const mapper = _mappers[hexagram.primary ? hexagram.primary.宫 : hexagram.宫];
-  return [...hexagram.inner.作为内卦.map(mapper), ...hexagram.outer.作为外卦.map(mapper)];
+  return [...hexagram.内卦.作为内卦.map(mapper), ...hexagram.外卦.作为外卦.map(mapper)];
 }

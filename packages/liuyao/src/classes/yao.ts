@@ -145,4 +145,16 @@ export class 爻 {
     const state = this.#动静状态 === 动静状态.动未变 ? 动静状态.动已变 : this.#动静状态;
     return new 爻(_change[this.#阳数], state);
   }
+
+  /**
+   * 获得变化后的爻，和`获得变爻`的区别是：
+   * 1. 不会报错
+   * 2. 如果原爻为静爻或者已经变过，那么返回原爻的克隆对象
+   */
+  变(): 爻 {
+    if (this.#动静状态 === 动静状态.静 || this.#动静状态 === 动静状态.动已变) {
+      return this.克隆();
+    }
+    return new 爻(_change[this.#阳数], 动静状态.动已变);
+  }
 }

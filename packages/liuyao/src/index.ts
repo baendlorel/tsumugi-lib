@@ -10,5 +10,5 @@ export { type SetupGramInfo } from './core/setup-gram.js';
 export { SixGodTable, type SixGod, type SixGodInfo } from './core/six-gods.js';
 
 // # classes
-export { 爻位, 六爻卦象 as Hexagram } from './classes/hexagram.js';
+export { 爻位, 六爻卦 as Hexagram } from './classes/hexagram.js';
 export { 爻 as Yao } from './classes/yao.js';

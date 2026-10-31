@@ -1,4 +1,4 @@
-import { 六爻卦象 } from '../classes/hexagram.js';
+import { 六爻卦 } from '../classes/hexagram.js';
 import { 爻 } from '../classes/yao.js';
 import { toAIReadableJSON } from '../core/ai.js';
 
@@ -9,8 +9,8 @@ import { toAIReadableJSON } from '../core/ai.js';
  * @returns AI readable json
  */
 export function resolveHexagram(ben: string, bian: string) {
-  const h1 = 六爻卦象.从卦名创建(ben);
-  const h2 = 六爻卦象.从卦名创建(bian);
+  const h1 = 六爻卦.从卦名创建(ben);
+  const h2 = 六爻卦.从卦名创建(bian);
 
   if (!h1) {
     throw new Error(`Invalid 本卦: ${ben}`);
@@ -20,8 +20,8 @@ export function resolveHexagram(ben: string, bian: string) {
   }
 
   // Yaos here can only be 0 and 1
-  const yaos = h1.六爻.map((y, i) => {
-    if (y.#阳数 === h2.六爻[i].#阳数) {
+  const yaos = h1.#六爻.map((y, i) => {
+    if (y.#阳数 === h2.#六爻[i].#阳数) {
       return new 爻(y.#阳数);
     }
 
@@ -36,7 +36,7 @@ export function resolveHexagram(ben: string, bian: string) {
     throw new Error(`Invalid 变卦: ${bian}, it is not a valid change from 本卦: ${ben}`);
   });
 
-  return new 六爻卦象(yaos);
+  return new 六爻卦(yaos);
 }
 
 const [, , ben, bian] = process.argv;
