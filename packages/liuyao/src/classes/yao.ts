@@ -110,15 +110,15 @@ export class 爻 {
   /**
    * 判断是否同为阴爻或同为阳爻
    */
-  比较阳数(other: 爻): boolean {
+  是否阳数相等(other: 爻): boolean {
     return this.#阳数 === other.#阳数;
   }
 
   /**
    * 判断是否同为阴爻或同为阳爻，且是否变过的状态也相同
-   * - 阳数和状态相同视为相等
+   * - 阳数和状态相同视为全同
    */
-  是否相等(other: 爻): boolean {
+  是否全同(other: 爻): boolean {
     return this.#阳数 === other.#阳数 && this.#动静状态 === other.#动静状态;
   }
 

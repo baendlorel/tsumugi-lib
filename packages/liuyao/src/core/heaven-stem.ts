@@ -25,7 +25,7 @@ const _mappers: Record<string, { inner: 天干; outer: 天干 }> = {
   震: { inner: '庚', outer: '庚' },
   巽: { inner: '辛', outer: '辛' },
 };
-export function setupHeavenStem(hexagram: 六爻卦): 天干[] {
+export function 装天干(hexagram: 六爻卦): 天干[] {
   const inner = _mappers[hexagram.内卦.卦名].inner;
   const outer = _mappers[hexagram.外卦.卦名].outer;
   return [inner, inner, inner, outer, outer, outer];

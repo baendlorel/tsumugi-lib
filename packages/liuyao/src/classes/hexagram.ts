@@ -1,7 +1,7 @@
 import { 六十四卦表, 八宫卦位顺序表, type 八卦信息, type 六十四卦信息, 八卦表, 五行, 八卦名 } from '../core/common.js';
-import { setupHeavenStem } from '../core/heaven-stem.js';
+import { 装天干 } from '../core/heaven-stem.js';
 import { setupHostGuest } from '../core/host-guest.js';
-import { setupSixKins } from '../core/six-kins.js';
+import { 装六亲五行 } from '../core/six-kins.js';
 import { 动静状态, 爻 } from './yao.js';
 
 export const 爻位 = ['初爻', '二爻', '三爻', '四爻', '五爻', '上爻'] as const;
@@ -135,11 +135,11 @@ export class 六爻卦 implements 六十四卦信息 {
     this.#内卦 = 八卦表.find((t) => t.二进制表示 === ub)!;
     this.#外卦 = 八卦表.find((t) => t.二进制表示 === lb)!;
 
-    const sixKins = setupSixKins(this);
-    const hs = setupHeavenStem(this);
+    const 六亲数组 = 装六亲五行(this);
+    const 天干数组 = 装天干(this);
     this.#六亲干支五行 = [
-      ...this.#内卦.作为内卦.map((v, i) => sixKins[i] + hs[i] + v),
-      ...this.#外卦.作为外卦.map((v, i) => sixKins[i + 3] + hs[i + 3] + v),
+      ...this.#内卦.作为内卦.map((地支五行, i) => 六亲数组[i + 0] + 天干数组[i + 0] + 地支五行),
+      ...this.#外卦.作为外卦.map((地支五行, i) => 六亲数组[i + 3] + 天干数组[i + 3] + 地支五行),
     ];
 
     const hg = setupHostGuest(this);
