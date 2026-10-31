@@ -1,6 +1,6 @@
 import { 六爻卦 } from '../classes/hexagram.js';
 import { 爻 } from '../classes/yao.js';
-import { toJSON } from '../core/ai.js';
+import { toJSON } from './json.js';
 
 /**
  * Convert 本卦 and 变卦 to AI readable json
