@@ -1,6 +1,6 @@
 import { 六爻卦 } from '../classes/hexagram.js';
 import { 爻 } from '../classes/yao.js';
-import { toAIReadableJSON } from '../core/ai.js';
+import { toJSON } from '../core/ai.js';
 
 /**
  * Convert 本卦 and 变卦 to AI readable json
@@ -20,16 +20,16 @@ export function resolveHexagram(ben: string, bian: string) {
   }
 
   // Yaos here can only be 0 and 1
-  const yaos = h1.#六爻.map((y, i) => {
-    if (y.#阳数 === h2.#六爻[i].#阳数) {
-      return new 爻(y.#阳数);
+  const yaos = h1.六爻.map((y, i) => {
+    if (y.阳数 === h2.六爻[i].阳数) {
+      return new 爻(y.阳数);
     }
 
-    if (y.#阳数 === 2) {
+    if (y.阳数 === 2) {
       return new 爻(0);
     }
 
-    if (y.#阳数 === 1) {
+    if (y.阳数 === 1) {
       return new 爻(3);
     }
 
@@ -42,6 +42,6 @@ export function resolveHexagram(ben: string, bian: string) {
 const [, , ben, bian] = process.argv;
 if (ben && bian) {
   const gram = resolveHexagram(ben, bian);
-  const json = toAIReadableJSON(gram);
+  const json = toJSON(gram);
   console.log(JSON.stringify({ yaos: gram.阳数.join(''), ...json }, null, 2));
 }

@@ -2,7 +2,7 @@ import solar2lunar from 'solarlunar';
 import { 六爻卦 } from './classes/hexagram.js';
 import { 爻 } from './classes/yao.js';
 import { 六神表 } from './core/six-gods.js';
-import { toAIReadableJSON } from './core/ai.js';
+import { toJSON } from './core/ai.js';
 
 function getInfo() {
   const rawYaos = process.argv[2];
@@ -56,7 +56,7 @@ function main() {
   }
   const t = getLunarInfo();
 
-  return JSON.stringify({ version: '__VERSION__', 卦象: toAIReadableJSON(h, t?.gods), 时辰: t?.时辰 }, null, 2);
+  return JSON.stringify({ version: '__VERSION__', 卦象: toJSON(h, t?.gods), 时辰: t?.时辰 }, null, 2);
 }
 
 console.log(main());
