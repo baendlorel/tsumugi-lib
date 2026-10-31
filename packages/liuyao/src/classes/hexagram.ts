@@ -86,6 +86,11 @@ export class 六爻卦 implements 六十四卦 {
   #动静状态: 动静状态;
 
   /**
+   * The original hexagram before any changes.
+   */
+  #本卦: 六爻卦;
+
+  /**
    * 下三爻组成的卦
    */
   #内卦: 八卦;
@@ -126,10 +131,19 @@ export class 六爻卦 implements 六十四卦 {
       throw new TypeError('第一个参数必须是6个爻对象');
     }
 
-    // 动静必须符合要求
-
-    if (状态 === undefined) {
+    // 保证基础逻辑。比如静卦和动已变没有老阳老阴，动未变必须有老阳老阴
+    if (状态 === 动静状态.静 || 状态 === 动静状态.动已变) {
+      if (六爻.some((v) => v.阳数 === 3 || v.阳数 === 0)) {
+        throw new TypeError('静卦和动已变卦不能有老阳老阴');
+      }
+    } else if (状态 === 动静状态.动未变) {
+      if (六爻.every((v) => v.阳数 !== 3 && v.阳数 !== 0)) {
+        throw new TypeError('动未变卦必须有老阳老阴');
+      }
+    } else if (状态 === undefined) {
       状态 = 六爻.some((v) => v.动静状态 !== 动静状态.静) ? 动静状态.动未变 : 动静状态.静;
+    } else {
+      throw new TypeError('无效的动静状态');
     }
 
     this.#六爻 = 六爻.map((a) => a.克隆()) as [爻, 爻, 爻, 爻, 爻, 爻];
@@ -137,6 +151,7 @@ export class 六爻卦 implements 六十四卦 {
     // 一定能搜索到，因为爻数已经校验过
     this.#信息 = 六十四卦表.find((h) => h.二进制表示 === this.二进制表示)!;
     this.#动静状态 = 状态;
+    this.#本卦 = this; // 初始化本卦为自身
 
     const ub = this.#二进制表示.slice(0, 3);
     const lb = this.#二进制表示.slice(3);
@@ -179,6 +194,15 @@ export class 六爻卦 implements 六十四卦 {
 
   get 动静状态(): 动静状态 {
     return this.#动静状态;
+  }
+
+  /**
+   * 若是变卦，则返回本卦。
+   *
+   * 若是静卦或者本来就是本卦，则返回自身。
+   */
+  get 本卦(): 六爻卦 {
+    return this.#本卦;
   }
 
   get 六亲干支五行(): string[] {
@@ -250,14 +274,16 @@ export class 六爻卦 implements 六十四卦 {
    * @returns 变爻卦象，如果卦象静则返回它自己
    */
   变(): 六爻卦 {
-    if (this.#动静状态 === 动静状态.动未变) {
-      return new 六爻卦(
-        this.#六爻.map((y) => y.变()),
-        动静状态.动已变,
-      );
+    if (this.#动静状态 !== 动静状态.动未变) {
+      return this;
     }
 
-    return this;
+    const v = new 六爻卦(
+      this.#六爻.map((y) => y.变()),
+      动静状态.动已变,
+    );
+    v.#本卦 = this;
+    return v;
   }
 
   克隆(): 六爻卦 {

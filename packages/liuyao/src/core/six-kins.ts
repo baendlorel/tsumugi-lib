@@ -69,7 +69,7 @@ const _mappers: Record<string, (sp: 地支五行) => 六亲> = {
  * 变卦的六亲会继承本卦的六亲，而不是它自己的
  * @see 《增删卜易·六亲歌章》
  */
-export function 装六亲五行(hexagram: 六爻卦): 六亲[] {
-  const mapper = _mappers[hexagram.动静状态 === 动静状态.动未变 ? hexagram.宫 : hexagram.宫];
-  return [...hexagram.内卦.内卦地支五行.map(mapper), ...hexagram.外卦.外卦地支五行.map(mapper)];
+export function 装六亲五行(卦: 六爻卦): 六亲[] {
+  const mapper = _mappers[卦.本卦.宫];
+  return [...卦.内卦.内卦地支五行.map(mapper), ...卦.外卦.外卦地支五行.map(mapper)];
 }
