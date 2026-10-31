@@ -1,4 +1,4 @@
-import { HexagramYaoOrder, type Hexagram } from '../classes/hexagram.js';
+import { 爻位, type 六爻卦象 } from '../classes/hexagram.js';
 import type { SixGod } from './six-gods.js';
 
 interface YaoInfo {
@@ -26,9 +26,9 @@ export interface HexagramAIReadable {
   六冲六合: '六合' | '六冲' | '不是';
 }
 
-function createYaoInfo(hexagram: Hexagram, index: number, gods?: SixGod[]): YaoInfo {
+function createYaoInfo(hexagram: 六爻卦象, index: number, gods?: SixGod[]): YaoInfo {
   const a: YaoInfo = {
-    爻: hexagram.yaos[index].name,
+    爻: hexagram.六爻[index].名称,
     装卦: hexagram.kins[index],
   };
 
@@ -48,7 +48,7 @@ function createYaoInfo(hexagram: Hexagram, index: number, gods?: SixGod[]): YaoI
 /**
  * This output is meant for AI skills.
  */
-export function toAIReadableJSON(hexagram: Hexagram, gods?: SixGod[]): AIReadableInfo {
+export function toAIReadableJSON(hexagram: 六爻卦象, gods?: SixGod[]): AIReadableInfo {
   const changed = hexagram.toChanged();
 
   return {
@@ -59,11 +59,11 @@ export function toAIReadableJSON(hexagram: Hexagram, gods?: SixGod[]): AIReadabl
       三爻: createYaoInfo(hexagram, 2, gods),
       二爻: createYaoInfo(hexagram, 1, gods),
       初爻: createYaoInfo(hexagram, 0, gods),
-      卦名: hexagram.name,
+      卦名: hexagram.卦名,
       宫: hexagram.palaceInfo,
-      变爻: hexagram.dynamic
-        ? hexagram.yaos
-            .map((y, i) => (y.dynamic ? HexagramYaoOrder[i] : null))
+      变爻: hexagram.是否为动卦
+        ? hexagram.六爻
+            .map((y, i) => (y.是否动爻 ? 爻位[i] : null))
             .filter((s): s is '初爻' | '二爻' | '三爻' | '四爻' | '五爻' | '上爻' => s !== null)
         : undefined,
       六冲六合: hexagram.specialType ?? '不是',
@@ -76,7 +76,7 @@ export function toAIReadableJSON(hexagram: Hexagram, gods?: SixGod[]): AIReadabl
           三爻: createYaoInfo(changed, 2, gods),
           二爻: createYaoInfo(changed, 1, gods),
           初爻: createYaoInfo(changed, 0, gods),
-          卦名: changed.name,
+          卦名: changed.卦名,
           宫: changed.palaceInfo,
           六冲六合: changed.specialType ?? '不是',
         }

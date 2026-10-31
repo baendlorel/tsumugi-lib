@@ -1,6 +1,6 @@
 import solar2lunar from 'solarlunar';
-import { Hexagram } from './classes/hexagram.js';
-import { Yao } from './classes/yao.js';
+import { 六爻卦象 } from './classes/hexagram.js';
+import { 爻 } from './classes/yao.js';
 import { SixGodTable } from './core/six-gods.js';
 import { toAIReadableJSON } from './core/ai.js';
 
@@ -12,12 +12,12 @@ function getInfo() {
 
   // Maybe 001122 or 坤坤震坎坎离
 
-  const yaos = rawYaos.split('').map(Yao.fromTrigramField);
-  if (yaos.every((y): y is Yao => y !== null) && yaos.length >= 6) {
-    return new Hexagram(yaos);
+  const yaos = rawYaos.split('').map(爻.从八卦字段创建);
+  if (yaos.every((y): y is 爻 => y !== null) && yaos.length >= 6) {
+    return new 六爻卦象(yaos);
   }
 
-  return Hexagram.fromQuaternary(rawYaos) || Hexagram.fromId(rawYaos) || Hexagram.fromSymbolName(rawYaos);
+  return 六爻卦象.从阳数字符串创建(rawYaos) || 六爻卦象.从卦名创建(rawYaos) || 六爻卦象.从单拆重交创建(rawYaos);
 }
 
 function getShichen(date: Date): string {

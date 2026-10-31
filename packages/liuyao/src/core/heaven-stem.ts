@@ -1,5 +1,5 @@
-import type { Hexagram } from '../classes/hexagram.js';
-import { HeavenStem } from './common.js';
+import type { 六爻卦象 } from '../classes/hexagram.js';
+import { 天干 } from './common.js';
 
 `
 野鹤曰：此为多事之论也。鬼谷三才论舍爻辞，以五行而定祸福者，乃用地支。既用地支，不
@@ -15,7 +15,7 @@ import { HeavenStem } from './common.js';
 多事之论也。
 `;
 
-const _mappers: Record<string, { inner: HeavenStem; outer: HeavenStem }> = {
+const _mappers: Record<string, { inner: 天干; outer: 天干 }> = {
   乾: { inner: '甲', outer: '壬' },
   坤: { inner: '乙', outer: '癸' },
   兑: { inner: '丁', outer: '丁' },
@@ -25,8 +25,8 @@ const _mappers: Record<string, { inner: HeavenStem; outer: HeavenStem }> = {
   震: { inner: '庚', outer: '庚' },
   巽: { inner: '辛', outer: '辛' },
 };
-export function setupHeavenStem(hexagram: Hexagram): HeavenStem[] {
-  const inner = _mappers[hexagram.inner.id].inner;
-  const outer = _mappers[hexagram.outer.id].outer;
+export function setupHeavenStem(hexagram: 六爻卦象): 天干[] {
+  const inner = _mappers[hexagram.inner.卦名].inner;
+  const outer = _mappers[hexagram.outer.卦名].outer;
   return [inner, inner, inner, outer, outer, outer];
 }

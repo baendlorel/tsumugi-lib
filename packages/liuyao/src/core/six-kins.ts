@@ -1,5 +1,5 @@
-import { Hexagram } from '../classes/hexagram.js';
-import { Phase, BranchPhase } from './common.js';
+import { 六爻卦象 } from '../classes/hexagram.js';
+import { 五行, 地支五行 } from './common.js';
 
 export type Kin = '父母' | '子孙' | '妻财' | '官鬼' | '兄弟';
 
@@ -19,16 +19,16 @@ export type Kin = '父母' | '子孙' | '妻财' | '官鬼' | '兄弟';
  * @param kin 六亲
  */
 function map(
-  v: BranchPhase,
-  phase0: Phase,
+  v: 地支五行,
+  phase0: 五行,
   kin0: Kin,
-  phase1: Phase,
+  phase1: 五行,
   kin1: Kin,
-  phase2: Phase,
+  phase2: 五行,
   kin2: Kin,
-  phase3: Phase,
+  phase3: 五行,
   kin3: Kin,
-  phase4: Phase,
+  phase4: 五行,
   kin4: Kin,
 ): Kin {
   if (v.includes(phase0)) {
@@ -49,15 +49,15 @@ function map(
   throw new Error(`No BranchPhase[${v}] matches phase[${phase0},${phase1},${phase2},${phase3},${phase4}]`);
 }
 
-const _mappers: Record<string, (sp: BranchPhase) => Kin> = {
-  乾: (v: BranchPhase) => map(v, '金', '兄弟', '土', '父母', '木', '妻财', '火', '官鬼', '水', '子孙'),
-  兑: (v: BranchPhase) => map(v, '金', '兄弟', '土', '父母', '木', '妻财', '火', '官鬼', '水', '子孙'),
-  坎: (v: BranchPhase) => map(v, '木', '子孙', '水', '兄弟', '金', '父母', '火', '妻财', '土', '官鬼'),
-  坤: (v: BranchPhase) => map(v, '土', '兄弟', '火', '父母', '木', '官鬼', '水', '妻财', '金', '子孙'),
-  艮: (v: BranchPhase) => map(v, '土', '兄弟', '火', '父母', '木', '官鬼', '水', '妻财', '金', '子孙'),
-  离: (v: BranchPhase) => map(v, '木', '父母', '土', '子孙', '水', '官鬼', '金', '妻财', '火', '兄弟'),
-  震: (v: BranchPhase) => map(v, '木', '兄弟', '水', '父母', '金', '官鬼', '火', '子孙', '土', '妻财'),
-  巽: (v: BranchPhase) => map(v, '木', '兄弟', '水', '父母', '金', '官鬼', '火', '子孙', '土', '妻财'),
+const _mappers: Record<string, (sp: 地支五行) => Kin> = {
+  乾: (v: 地支五行) => map(v, '金', '兄弟', '土', '父母', '木', '妻财', '火', '官鬼', '水', '子孙'),
+  兑: (v: 地支五行) => map(v, '金', '兄弟', '土', '父母', '木', '妻财', '火', '官鬼', '水', '子孙'),
+  坎: (v: 地支五行) => map(v, '木', '子孙', '水', '兄弟', '金', '父母', '火', '妻财', '土', '官鬼'),
+  坤: (v: 地支五行) => map(v, '土', '兄弟', '火', '父母', '木', '官鬼', '水', '妻财', '金', '子孙'),
+  艮: (v: 地支五行) => map(v, '土', '兄弟', '火', '父母', '木', '官鬼', '水', '妻财', '金', '子孙'),
+  离: (v: 地支五行) => map(v, '木', '父母', '土', '子孙', '水', '官鬼', '金', '妻财', '火', '兄弟'),
+  震: (v: 地支五行) => map(v, '木', '兄弟', '水', '父母', '金', '官鬼', '火', '子孙', '土', '妻财'),
+  巽: (v: 地支五行) => map(v, '木', '兄弟', '水', '父母', '金', '官鬼', '火', '子孙', '土', '妻财'),
 };
 
 /**
@@ -65,7 +65,7 @@ const _mappers: Record<string, (sp: BranchPhase) => Kin> = {
  * @see 《增删卜易·六亲歌章》
  * @param hexagram the gram wait to be setup.
  */
-export function setupSixKins(hexagram: Hexagram): Kin[] {
-  const mapper = _mappers[hexagram.primary ? hexagram.primary.palace : hexagram.palace];
-  return [...hexagram.inner.inner.map(mapper), ...hexagram.outer.outer.map(mapper)];
+export function setupSixKins(hexagram: 六爻卦象): Kin[] {
+  const mapper = _mappers[hexagram.primary ? hexagram.primary.宫 : hexagram.宫];
+  return [...hexagram.inner.作为内卦.map(mapper), ...hexagram.outer.作为外卦.map(mapper)];
 }

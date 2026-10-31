@@ -1,4 +1,4 @@
-import type { Hexagram } from '../classes/hexagram.js';
+import type { 六爻卦象 } from '../classes/hexagram.js';
 `
 世应章
 乾为天：世在六爻；天风姤：世在初爻；天山遁：世在二爻；火地晋：世退在四爻；
@@ -11,9 +11,9 @@ const _g = [2, 3, 4, 5, 0, 1, 0, 5]; // _h.map((v) => (v + 3) % 6);
 /**
  * @see 《增删卜易·世应章》
  */
-export function setupHostGuest(hexagram: Hexagram): { host: number; guest: number } {
+export function setupHostGuest(hexagram: 六爻卦象): { host: number; guest: number } {
   return {
-    host: _h[hexagram.generation],
-    guest: _g[hexagram.generation],
+    host: _h[hexagram.卦位],
+    guest: _g[hexagram.卦位],
   };
 }
