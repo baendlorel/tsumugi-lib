@@ -10,7 +10,7 @@ interface 单爻数据 {
   是否动爻: boolean;
 }
 
-function 单爻(卦: 六爻卦, index: number, gods?: 六神[]): 单爻数据 {
+export function 单爻(卦: 六爻卦, index: number, gods?: 六神[]): 单爻数据 {
   const a = {} as 单爻数据;
   a.爻 = 卦.六爻[index].名称;
   a.装卦 = 卦.六亲干支五行[index];
