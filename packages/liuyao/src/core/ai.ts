@@ -1,86 +1,78 @@
-import { 爻位, type 六爻卦 } from '../classes/hexagram.js';
 import type { 六神 } from './six-gods.js';
+import type { 六爻卦 } from '../classes/hexagram.js';
+import { 动静状态 } from '../classes/yao.js';
 
-interface YaoInfo {
+class 单爻 {
   爻: string;
   装卦: string;
   关系?: '世' | '应';
   六神?: 六神;
+  是否动爻: boolean;
+  constructor(卦: 六爻卦, index: number, gods?: 六神[]) {
+    this.爻 = 卦.六爻[index].名称;
+    this.装卦 = 卦.六亲干支五行[index];
+    this.是否动爻 = 卦.六爻[index].动静状态 !== 动静状态.静;
+
+    if (卦.世爻 === index) {
+      this.关系 = '世';
+    } else if (卦.应爻 === index) {
+      this.关系 = '应';
+    }
+
+    if (gods) {
+      this.六神 = gods[index];
+    }
+  }
 }
 
-export interface AIReadableInfo {
-  本卦: HexagramAIReadable;
-  变卦: HexagramAIReadable | '无';
+export interface JSON输出 {
+  本卦: JSON卦象;
+  变卦: JSON卦象 | '无';
 }
 
-export interface HexagramAIReadable {
-  初爻: YaoInfo;
-  二爻: YaoInfo;
-  三爻: YaoInfo;
-  四爻: YaoInfo;
-  五爻: YaoInfo;
-  上爻: YaoInfo;
+export interface JSON卦象 {
+  初爻: 单爻;
+  二爻: 单爻;
+  三爻: 单爻;
+  四爻: 单爻;
+  五爻: 单爻;
+  上爻: 单爻;
   卦名: string;
   宫: string;
-  变爻?: string[];
   六冲六合: '六合' | '六冲' | '不是';
-}
-
-function createYaoInfo(hexagram: 六爻卦, index: number, gods?: 六神[]): YaoInfo {
-  const a: YaoInfo = {
-    爻: hexagram.六爻[index].名称,
-    装卦: hexagram.六亲干支五行[index],
-  };
-
-  if (hexagram.#世爻 === index) {
-    a.关系 = '世';
-  } else if (hexagram.#应爻 === index) {
-    a.关系 = '应';
-  }
-
-  if (gods) {
-    a.六神 = gods[index];
-  }
-
-  return a;
 }
 
 /**
  * This output is meant for AI skills.
  */
-export function toAIReadableJSON(hexagram: 六爻卦, gods?: 六神[]): AIReadableInfo {
-  const changed = hexagram.toChanged();
+export function toAIReadableJSON(本卦: 六爻卦, gods?: 六神[]): JSON输出 {
+  const 变卦 = 本卦.变();
 
   return {
     本卦: {
-      上爻: createYaoInfo(hexagram, 5, gods),
-      五爻: createYaoInfo(hexagram, 4, gods),
-      四爻: createYaoInfo(hexagram, 3, gods),
-      三爻: createYaoInfo(hexagram, 2, gods),
-      二爻: createYaoInfo(hexagram, 1, gods),
-      初爻: createYaoInfo(hexagram, 0, gods),
-      卦名: hexagram.卦名,
-      宫: hexagram.宫位信息,
-      变爻: hexagram.是否为动卦
-        ? hexagram.#六爻
-            .map((y, i) => (y.是否动爻 ? 爻位[i] : null))
-            .filter((s): s is '初爻' | '二爻' | '三爻' | '四爻' | '五爻' | '上爻' => s !== null)
-        : undefined,
-      六冲六合: hexagram.specialType ?? '不是',
+      上爻: new 单爻(本卦, 5, gods),
+      五爻: new 单爻(本卦, 4, gods),
+      四爻: new 单爻(本卦, 3, gods),
+      三爻: new 单爻(本卦, 2, gods),
+      二爻: new 单爻(本卦, 1, gods),
+      初爻: new 单爻(本卦, 0, gods),
+      卦名: 本卦.卦名,
+      宫: 本卦.宫位信息,
+      六冲六合: 本卦.六冲六合 ?? '不是',
     },
-    变卦: changed
-      ? {
-          上爻: createYaoInfo(changed, 5, gods),
-          五爻: createYaoInfo(changed, 4, gods),
-          四爻: createYaoInfo(changed, 3, gods),
-          三爻: createYaoInfo(changed, 2, gods),
-          二爻: createYaoInfo(changed, 1, gods),
-          初爻: createYaoInfo(changed, 0, gods),
-          卦名: changed.卦名,
-          宫: changed.palaceInfo,
-          六冲六合: changed.specialType ?? '不是',
-        }
-      : '无',
-    // 世应变化: hostGuestChange.join('，'),
+    变卦:
+      本卦 !== 变卦
+        ? {
+            上爻: new 单爻(变卦, 5, gods),
+            五爻: new 单爻(变卦, 4, gods),
+            四爻: new 单爻(变卦, 3, gods),
+            三爻: new 单爻(变卦, 2, gods),
+            二爻: new 单爻(变卦, 1, gods),
+            初爻: new 单爻(变卦, 0, gods),
+            卦名: 变卦.卦名,
+            宫: 变卦.宫位信息,
+            六冲六合: 变卦.六冲六合 ?? '不是',
+          }
+        : '无',
   };
 }

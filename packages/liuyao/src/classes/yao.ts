@@ -1,8 +1,6 @@
 import { 八卦表 } from '../core/common.js';
 
 const _names = ['老阴', '少阳', '少阴', '老阳'] as const;
-const _symbolNames = '交单拆重' as const;
-const _digits = '0123' as const;
 const _change = [1, 1, 2, 2] as const;
 
 /**
@@ -22,7 +20,7 @@ export class 爻 {
    * @returns 如果入参符合就返回，如果不符合就返回`null`
    */
   static 从单拆重交创建(symbolName: string): 爻 | null {
-    const index = _symbolNames.indexOf(symbolName);
+    const index = '交单拆重'.indexOf(symbolName);
     return index !== -1 ? new 爻(index) : null;
   }
 
@@ -37,11 +35,11 @@ export class 爻 {
   }
 
   /**
-   * Create a Yao from a digit string representing the count of yang.
+   * @param digit e.g. '0', '1', '2', '3'.
    * @returns 如果入参符合就返回，如果不符合就返回`null`
    */
   static 从阳数字符串创建(digit: string): 爻 | null {
-    const index = _digits.indexOf(digit);
+    const index = '0123'.indexOf(digit);
     return index !== -1 ? new 爻(index) : null;
   }
 
@@ -90,7 +88,7 @@ export class 爻 {
   }
 
   get 符号(): '单' | '拆' | '重' | '交' {
-    return _symbolNames[this.#阳数] as '单' | '拆' | '重' | '交';
+    return '交单拆重'[this.#阳数] as '单' | '拆' | '重' | '交';
   }
 
   constructor(阳数: number, 状态?: 动静状态) {
@@ -133,31 +131,13 @@ export class 爻 {
   }
 
   /**
-   * 获取一个新的爻对象，这个爻是变过的。
-   * - 如果已变过，则报错
-   * - 如果是静爻，则没有变爻，故返回 null
-   */
-  获得变爻(): 爻 | null {
-    if (this.#动静状态 === 动静状态.静) {
-      return null;
-    }
-
-    if (this.#动静状态 === 动静状态.动已变) {
-      throw new TypeError('动爻已变不能再次变动');
-    }
-    const state = this.#动静状态 === 动静状态.动未变 ? 动静状态.动已变 : this.#动静状态;
-    return new 爻(_change[this.#阳数], state);
-  }
-
-  /**
-   * 获得变化后的爻，和`获得变爻`的区别是：
-   * 1. 不会报错
-   * 2. 如果原爻为静爻或者已经变过，那么返回原爻的克隆对象
+   * 得到新的爻对象，这个爻是变过的。
+   * @returns 如果是静爻或者已变过，则返回它自己
    */
   变(): 爻 {
-    if (this.#动静状态 === 动静状态.静 || this.#动静状态 === 动静状态.动已变) {
-      return this.克隆();
+    if (this.#动静状态 === 动静状态.动未变) {
+      return new 爻(_change[this.#阳数], 动静状态.动已变);
     }
-    return new 爻(_change[this.#阳数], 动静状态.动已变);
+    return this;
   }
 }

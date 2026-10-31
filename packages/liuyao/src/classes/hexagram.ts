@@ -98,7 +98,7 @@ export class 六爻卦 implements 六十四卦 {
   /**
    * Whether this gram is 六冲、六合
    */
-  #属性: '六冲' | '六合' | undefined;
+  #六冲六合: '六冲' | '六合' | undefined;
 
   #是否为八纯卦: boolean;
 
@@ -156,13 +156,17 @@ export class 六爻卦 implements 六十四卦 {
     // special types
 
     if (_scattering.includes(this.#信息.卦名)) {
-      this.#属性 = '六冲';
+      this.#六冲六合 = '六冲';
     }
     if (_gathering.includes(this.#信息.卦名)) {
-      this.#属性 = '六合';
+      this.#六冲六合 = '六合';
     }
 
     this.#是否为八纯卦 = _pure.includes(this.#信息.卦名);
+  }
+
+  get 六爻(): [爻, 爻, 爻, 爻, 爻, 爻] {
+    return [...this.#六爻];
   }
 
   get 阳数(): number[] {
@@ -181,16 +185,22 @@ export class 六爻卦 implements 六十四卦 {
     return [...this.#六亲干支五行];
   }
 
+  /**
+   * 返回世爻所在的index（0表示初爻，5表示上爻）
+   */
   get 世爻(): 0 | 1 | 2 | 3 | 4 | 5 {
     return this.#世爻;
   }
 
+  /**
+   * 返回应爻所在的index（0表示初爻，5表示上爻）
+   */
   get 应爻(): 0 | 1 | 2 | 3 | 4 | 5 {
     return this.#应爻;
   }
 
-  get 属性(): '六冲' | '六合' | undefined {
-    return this.#属性;
+  get 六冲六合(): '六冲' | '六合' | undefined {
+    return this.#六冲六合;
   }
 
   get 是否为八纯卦(): boolean {
@@ -237,22 +247,17 @@ export class 六爻卦 implements 六十四卦 {
 
   /**
    * 获得变爻卦象
-   * @returns 变爻卦象，如果卦象静则返回 null
-   * @throws {TypeError} 如果卦象已经动过则抛出错误
+   * @returns 变爻卦象，如果卦象静则返回它自己
    */
-  获得变卦(): 六爻卦 | null {
-    if (this.#动静状态 === 动静状态.静) {
-      return null;
+  变(): 六爻卦 {
+    if (this.#动静状态 === 动静状态.动未变) {
+      return new 六爻卦(
+        this.#六爻.map((y) => y.变()),
+        动静状态.动已变,
+      );
     }
 
-    if (this.#动静状态 === 动静状态.动已变) {
-      throw new TypeError('卦象已经动过，不可再动');
-    }
-
-    return new 六爻卦(
-      this.#六爻.map((y) => y.变()),
-      动静状态.动已变,
-    );
+    return this;
   }
 
   克隆(): 六爻卦 {
