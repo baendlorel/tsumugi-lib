@@ -1,123 +1,93 @@
 # liuyao
 
-Metadata and utility classes for Chinese Liu Yao divination. This package provides typed models for yao lines and hexagrams, along with traditional metadata derived from sources such as Zeng Shan Bu Yi.
+六爻卦象元数据与装卦工具。数据取自《增删卜易》等著作，只做数据建模，不包含解卦逻辑。
 
-For more packages, see [my homepage](https://baendlorel.github.io/?repoType=npm).
+更多包见[我的主页💛](https://baendlorel.github.io/?repoType=npm)
 
-## Features
-
-- Create a yao from its Yang-count representation, quaternary or various arguments.
-- Build a hexagram from six Yao lines or from a known hexagram name.
-- Inspect hexagram metadata such as its name, palace, phase, and setup information.
-- Derive the changed hexagram for dynamic lines.
-- Access Six God ordering data for different heavenly stems.
-
-## Skill Pack
-This packages includes a 'liuyao-skill' directory that can parse a hexagram string and date into a structured JSON output. It is used for agents to divination and interpretation.  See the [SKILL.md](./src/SKILL.md) for details.
-> I tried it, very handy.
-
-## Installation
+## 安装
 
 ```bash
 pnpm add liuyao
 ```
 
-## Quick Start
+## 快速开始
 
 ```ts
-import { Hexagram, Yao, SixGodList } from 'liuyao';
+import { 六爻卦, 爻 } from 'liuyao';
 
-const hexagram = Hexagram.fromQuaternary('111222'); // gets a Hexagram instance of '地天泰'
+const 卦 = 六爻卦.从卦名创建('天风姤');
 
-if (hexagram === null) {
-	throw new Error('Invalid hexagram');
-}
-
-console.log(hexagram.info.id);
-console.log(hexagram.toDescriptionEn());
-console.log(hexagram.toChanged()?.info.id);
-console.log(SixGodList[0]);
-```
-
-## Core Concepts
-
-### Yao
-
-A yao is one line in a hexagram. The constructor accepts a yang count from `0` to `3`:
-
-- `0`: old yin, dynamic
-- `1`: young yang, static
-- `2`: young yin, static
-- `3`: old yang, dynamic
-
-Example:
-
-```ts
-import { Yao } from 'liuyao';
-
-const yao = new Yao(3);
-
-console.log(yao.name);
-console.log(yao.symbol);
-console.log(yao.isDynamic);
-```
-
-### Hexagram
-
-A hexagram contains six yao lines ordered from bottom to top.
-
-```ts
-import { Hexagram } from 'liuyao';
-
-const qian = Hexagram.fromId('乾为天');
-
-if (qian) {
-	console.log(qian.info.sign);
-	console.log(qian.info.phase);
-	console.log(qian.dynamicInner);
+if (卦) {
+  console.log(卦.全名); // 天风姤
+  console.log(卦.宫位信息); // 乾宫（金）一世卦
+  console.log(卦.六亲干支五行); // ['父母辛丑土', '子孙辛亥水', ...]
+  console.log(卦.六冲六合); // undefined（不是六冲也不是六合）
+  console.log(卦.变().全名); // 动爻变化后的卦，静卦返回自身
+  console.log(卦.世爻, 卦.应爻); // 世应所在的爻index，0 为初爻
 }
 ```
 
-Useful instance members:
+## 核心概念
 
-- `info`: metadata for the current hexagram
-- `isDynamic`: whether any line is dynamic
-- `isChanged`: whether the current hexagram is already a changed hexagram
-- `toChanged()`: returns the changed hexagram when dynamic lines exist
-- `toDescription()`: Chinese description
-- `toDescriptionEn()`: English description
+### 爻
 
-Useful factory methods:
+一个爻由「阳数」0–3 表示，对应老阴、少阳、少阴、老阳；0 和 3 是动爻。
 
-- `Hexagram.fromYaos(yaos)`
-- `Hexagram.fromyangs(counts)`
-- `Hexagram.fromId(id)`
-- `Hexagram.fromPalace(palace)`
+```ts
+const 爻1 = new 爻(3);
+爻1.名称; // 老阳
+爻1.阴阳; // 阳
+爻1.符号; // 重
+爻1.动静状态; // 动未变
+爻1.变().名称; // 少阴
+```
 
-## Exported API
+### 六爻卦
 
-The package currently exports:
+六个爻从初爻到上爻排列。构造时自动完成装六亲、装天干、装世应、判六冲六合。
 
-**Classes:**
-- `Hexagram`
-- `Yao`
+```ts
+const 卦 = 六爻卦.从阳数字符串创建('112233'); // '单单拆拆重重' 等价
+卦?.全名; // 风泽中孚
+卦?.二进制表示; // '110011'，1 为阳爻，0 为阴爻
+```
 
-**Data Lists:**
-- `HexagramList`(六十四卦): Includes 64 static hexagram info objects with traditional metadata.
-- `HexagramYaoIndex`(六十四卦爻位名)
-- `TrigramList`(八卦): Includes 8 static trigram info objects with traditional metadata.
-- `SixGodList`(六神表)
+## API
 
-**Types:**
-- type `SixGod`
-- type `SixGodInfo`
-- type `SetupGramInfo`
+### 爻
 
-## Notes
+| 静态方法                 | 说明                                         |
+| ------------------------ | -------------------------------------------- |
+| `从阳数字符串创建(s)`    | `'0'`–`'3'`                                  |
+| `从单拆重交创建(s)`      | `'交'` `'单'` `'拆'` `'重'`                  |
+| `从名称创建(s)`          | `'老阴'` `'少阳'` `'少阴'` `'老阳'`          |
+| `从八卦字段创建(v)`      | 八卦的卦名、二进制、阳数、符号均可，如 `'乾'` |
 
-- Traditional names and metadata values are kept in Chinese.
-- The package focuses on data modeling and lookup. It does not implement a full divination workflow by itself.
+实例：`阳数`、`阴阳`、`名称`、`符号`、`动静状态`、`变()`、`克隆()`。
 
-## License
+### 六爻卦
 
-MIT
+| 静态方法                     | 说明                                   |
+| ---------------------------- | -------------------------------------- |
+| `从阳数字符串创建(s)`        | 如 `'112233'`                          |
+| `从单拆重交创建(s)`          | 如 `'单单拆拆重重'`                    |
+| `从阳数创建(counts)`         | 阳数数组，非法时返回 `null`            |
+| `从卦名创建(name)`           | 全名、卦名或唯一前缀，如 `'天火同人'`、`'姤'` |
+
+实例：`六爻`、`阳数`、`二进制表示`、`卦名`、`全名`、`符号`、`五行`、`宫`、`八宫卦位`、`宫位信息`、`动静状态`、`六亲干支五行`、`世爻`、`应爻`、`六冲六合`、`是否为八纯卦`、`内卦`、`外卦`、`变()`、`克隆()`。
+
+### 数据表
+
+`六十四卦表`、`八卦表`、`八宫卦位顺序表`、`六神表`、`爻位`。
+
+## 技能包
+
+包内附带 `liuyao-skill`，供 AI 用脚本把卦象字符串装成结构化数据，详见 [SKILL.md](./src/SKILL.md)。
+
+```bash
+node parser.skill.mjs <卦象字符串> <日期> [--format=<格式>]
+```
+
+`--format` 可选 `json`（默认，紧凑）、`pretty-json`（缩进 2 格）、`yaml`、`md`（排盘表格）。卦象字符串支持二进制 `000111`、八卦名 `坤坤震乾坎坎`、卦名 `天风姤`。
+
+`src/lib` 下的 `toJSON`、`toYAML`、`toMarkdown` 即上述三种结构化输出的实现。
