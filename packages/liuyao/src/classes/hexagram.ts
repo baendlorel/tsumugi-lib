@@ -133,7 +133,7 @@ export class 六爻卦 implements 六十四卦 {
     }
 
     this.#六爻 = 六爻.map((a) => a.克隆()) as [爻, 爻, 爻, 爻, 爻, 爻];
-    this.#二进制表示 = this.#六爻.map((y) => y.阴阳).join('');
+    this.#二进制表示 = this.#六爻.map((y) => (y.阴阳 === '阳' ? '1' : '0')).join('');
     // 一定能搜索到，因为爻数已经校验过
     this.#信息 = 六十四卦表.find((h) => h.二进制表示 === this.二进制表示)!;
     this.#动静状态 = 状态;

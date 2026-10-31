@@ -32,8 +32,14 @@
 **使用parser.skill.mjs解析卦象**
 
 ```bash
-node parser.skill.mjs <卦象字符串> <日期>
+node parser.skill.mjs <卦象字符串> <日期> [--format=<格式>]
 ```
+
+- **输出格式**：`--format` 可选，不写时默认 `json`
+  - `json`（默认）：紧凑 JSON，`JSON.stringify(obj)`
+  - `pretty-json`：缩进两格的 JSON，`JSON.stringify(obj, null, 2)`
+  - `yaml`：YAML 文本
+  - `md`：Markdown 排盘表格，本卦逐爻列出，变卦只标动爻装卦
 
 - **卦象字符串格式**：可以是多种形式
 
