@@ -95,3 +95,11 @@ node parser.skill.mjs <卦象字符串> [--date=<日期>] [--format=<格式>]
 `--format` 可选 `json`（默认，紧凑）、`pretty-json`（缩进 2 格）、`yaml`、`md`（排盘表格）。卦象字符串支持六位阳数 `112233`、六位单拆重交 `单单拆拆重重`、卦名或全名 `天风姤`。日期用 `--date` 传入，如 `--date=2026-10-31T13:00`（`new Date` 对纯日期按 UTC 零点解析，会固定成辰时、UTC 以西还会退一天，请写全时间）。参数不合法时会打印具体原因和用法并以非 0 退出。
 
 `src/lib` 下的 `toJSON`、`toYAML`、`toMarkdown` 即上述三种结构化输出的实现。
+
+与 [obsidian-liuyao](https://github.com/baendlorel/obsidian-liuyao) 等工具配合时，用 `--code-blocks` 一次读出文件里所有 ` ```liuyao ` 代码块（不限于 Obsidian）：
+
+```bash
+node parser.skill.mjs --code-blocks=<文件路径>
+```
+
+输出 `{ 文件路径, 卦象: [{ 行号, 卦象, 时辰? }] }`，代码块支持只写卦象、或「日期 + 卦象」两行两种写法。该参数与 `<卦象字符串>`、`--date`、`--format` 互斥。

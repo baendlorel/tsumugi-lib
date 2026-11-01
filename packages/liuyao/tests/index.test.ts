@@ -5,6 +5,7 @@ import type { 六神 } from '../src/index.js';
 import { toJSON } from '../src/lib/json.js';
 import { toYAML } from '../src/lib/yaml.js';
 import { toMarkdown } from '../src/lib/md-table.js';
+import { 扫描代码块 } from '../src/lib/code-blocks.js';
 
 const 六神: 六神[] = ['青龙', '朱雀', '勾陈', '螣蛇', '白虎', '玄武'];
 
@@ -279,5 +280,42 @@ describe('toMarkdown', () => {
     expect(md).not.toContain('六神');
     expect(md).not.toContain('变卦装卦');
     expect(md).toContain('**变卦**：无');
+  });
+});
+
+describe('扫描代码块', () => {
+  it('finds every ```liuyao block with its 1-based line number', () => {
+    const md = [
+      '# 笔记',
+      '```liuyao',
+      '112233',
+      '```',
+      '',
+      '正文',
+      '```liuyao',
+      '2026-10-31T13:00',
+      '天风姤',
+      '```',
+    ].join('\n');
+
+    expect(扫描代码块(md)).toEqual([
+      { 行号: 2, 行: ['112233'] },
+      { 行号: 7, 行: ['2026-10-31T13:00', '天风姤'] },
+    ]);
+  });
+
+  it('ignores other code blocks and nested ``` inside 正文', () => {
+    const md = ['```js', 'console.log(1)', '```', '```liuyao', '单单拆拆重重', '```'].join('\n');
+
+    expect(扫描代码块(md)).toEqual([{ 行号: 4, 行: ['单单拆拆重重'] }]);
+  });
+
+  it('returns an empty array when there is no block', () => {
+    expect(扫描代码块('# 笔记\n没有任何代码块')).toEqual([]);
+    expect(扫描代码块('')).toEqual([]);
+  });
+
+  it('throws with the file path and line number when a block is not closed', () => {
+    expect(() => 扫描代码块('```liuyao\n112233\n', 'note.md')).toThrow(/note\.md.*第 1 行/);
   });
 });
