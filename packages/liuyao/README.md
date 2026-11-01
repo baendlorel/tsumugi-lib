@@ -89,9 +89,9 @@ const 卦 = 六爻卦.从阳数字符串创建('112233'); // '单单拆拆重重
 包内附带 `liuyao-skill`，供 AI 用脚本把卦象字符串装成结构化数据，详见 [SKILL.md](./src/SKILL.md)。
 
 ```bash
-node parser.skill.mjs <卦象字符串> <日期> [--format=<格式>]
+node parser.skill.mjs <卦象字符串> [--date=<日期>] [--format=<格式>]
 ```
 
-`--format` 可选 `json`（默认，紧凑）、`pretty-json`（缩进 2 格）、`yaml`、`md`（排盘表格）。卦象字符串支持二进制 `000111`、八卦名 `坤坤震乾坎坎`、卦名 `天风姤`。
+`--format` 可选 `json`（默认，紧凑）、`pretty-json`（缩进 2 格）、`yaml`、`md`（排盘表格）。卦象字符串支持六位阳数 `112233`、六位单拆重交 `单单拆拆重重`、卦名或全名 `天风姤`。日期用 `--date` 传入，如 `--date=2026-10-31T13:00`（只写日期时 `new Date` 按 UTC 零点解析，日辰可能落到前一天）。参数不合法时会打印具体原因和用法并以非 0 退出。
 
 `src/lib` 下的 `toJSON`、`toYAML`、`toMarkdown` 即上述三种结构化输出的实现。

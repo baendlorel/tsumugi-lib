@@ -1,5 +1,4 @@
 import { 六爻卦 } from '../classes/hexagram.js';
-import { 动静状态 } from '../classes/yao.js';
 import { 五行, 地支五行 } from './common.js';
 
 /**

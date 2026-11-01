@@ -98,6 +98,20 @@ describe('六爻卦 static methods', () => {
     expect(六爻卦.从卦名创建('天火')?.全名).toBe('天火同人');
     expect(六爻卦.从卦名创建('不存在')).toBeNull();
   });
+
+  it('从卦名创建 yields a static hexagram, since a name carries no moving yao', () => {
+    const hexagram = 六爻卦.从卦名创建('天风姤')!;
+
+    expect(hexagram.阳数).toEqual([2, 1, 1, 1, 1, 1]);
+    expect(hexagram.变()).toBe(hexagram);
+  });
+
+  it('string factories return null instead of throwing when the length is not 6', () => {
+    expect(六爻卦.从阳数字符串创建('')).toBeNull();
+    expect(六爻卦.从阳数字符串创建('11223')).toBeNull();
+    expect(六爻卦.从阳数字符串创建('1122334')).toBeNull();
+    expect(六爻卦.从单拆重交创建('单单拆拆重')).toBeNull();
+  });
 });
 
 describe('六爻卦 instance', () => {
@@ -138,6 +152,45 @@ describe('六爻卦 instance', () => {
   it('toPrimitive and toString yield the full name', () => {
     expect(`${hexagram}`).toBe('风泽中孚');
     expect(hexagram.toString()).toBe('风泽中孚');
+  });
+
+  it('本卦 points to itself for a 本卦 and to the original for a 变卦', () => {
+    expect(hexagram.本卦).toBe(hexagram);
+
+    const 变卦 = hexagram.变();
+    expect(变卦.本卦).toBe(hexagram);
+  });
+
+  it('克隆 keeps the 本卦 pointer, so a cloned 变卦 keeps the 本卦 six kins', () => {
+    const 变卦 = hexagram.变();
+    const clone = 变卦.克隆();
+
+    expect(clone).not.toBe(变卦);
+    expect(clone.全名).toBe(变卦.全名);
+    expect(clone.本卦.全名).toBe('风泽中孚');
+    expect(clone.六亲干支五行).toEqual(变卦.六亲干支五行);
+
+    const 本卦克隆 = hexagram.克隆();
+    expect(本卦克隆.本卦).toBe(本卦克隆);
+  });
+
+  it('变卦 installs six kins by the 本卦 palace even when the palaces differ', () => {
+    // 天火同人（离宫）变乾为天（乾宫），六亲要按离宫装
+    const 本卦 = 六爻卦.从阳数字符串创建('101111')!;
+    const 变卦 = 本卦.变();
+
+    expect(本卦.全名).toBe('天火同人');
+    expect(变卦.全名).toBe('乾为天');
+    expect(变卦.本卦).toBe(本卦);
+    expect(变卦.六亲干支五行).toEqual([
+      '官鬼甲子水',
+      '父母甲寅木',
+      '子孙甲辰土',
+      '兄弟壬午火',
+      '妻财壬申金',
+      '子孙壬戌土',
+    ]);
+    expect(变卦.克隆().六亲干支五行).toEqual(变卦.六亲干支五行);
   });
 });
 

@@ -24,6 +24,9 @@ export class 六爻卦 implements 六十四卦 {
    * Use tokens like `'012132'` to create a Hexagram, where each digit represents the count of Yang in the corresponding Yao (0 for 老阴, 1 for 少阳, 2 for 少阴, 3 for 老阳). The first digit represents the first Yao (初爻) and the last digit represents the sixth Yao (上爻).
    */
   static 从阳数字符串创建(quaternary: string): 六爻卦 | null {
+    if (quaternary.length !== 6) {
+      return null;
+    }
     const yaos = quaternary.split('').map(爻.从阳数字符串创建);
     return yaos.every((y): y is 爻 => y !== null) ? new 六爻卦(yaos) : null;
   }
@@ -35,6 +38,9 @@ export class 六爻卦 implements 六十四卦 {
    * Which returns '风泽中孚' with its 5th and 6th Yao being dynamic.
    */
   static 从单拆重交创建(symbolNames: string): 六爻卦 | null {
+    if (symbolNames.length !== 6) {
+      return null;
+    }
     const yaos = symbolNames.split('').map(爻.从单拆重交创建);
     return yaos.every((y): y is 爻 => y !== null) ? new 六爻卦(yaos) : null;
   }
@@ -59,7 +65,8 @@ export class 六爻卦 implements 六十四卦 {
       (h) =>
         h.卦名 === name || h.全名 === name || h.全名.slice(2) === name || (h.全名.startsWith(name) && name.length > 1),
     );
-    return exist ? 六爻卦.从阳数字符串创建(exist.二进制表示) : null;
+    // 卦名不含动爻信息，所以按二进制创建成静卦（0 为少阴，1 为少阳）
+    return exist ? new 六爻卦(exist.二进制表示.split('').map((c) => new 爻(c === '1' ? 1 : 2))) : null;
   }
 
   // #endregion
@@ -126,8 +133,10 @@ export class 六爻卦 implements 六十四卦 {
   /**
    * Create a Hexagram from an array of Yao with length 6.
    * @param 六爻 从初爻到上爻6个爻组成的数组
+   * @param 状态 动静状态，不传则由爻推断
+   * @param 本卦 仅变卦需要传入。六亲在构造时就要按本卦的宫装好，所以不能等构造完再赋值
    */
-  constructor(六爻: 爻[], 状态?: 动静状态) {
+  constructor(六爻: 爻[], 状态?: 动静状态, 本卦?: 六爻卦) {
     if (六爻.length !== 6 || 六爻.some((a) => !(a instanceof 爻))) {
       throw new TypeError('第一个参数必须是6个爻对象');
     }
@@ -152,7 +161,7 @@ export class 六爻卦 implements 六十四卦 {
     // 一定能搜索到，因为爻数已经校验过
     this.#信息 = 六十四卦表.find((h) => h.二进制表示 === this.二进制表示)!;
     this.#动静状态 = 状态;
-    this.#本卦 = this; // 初始化本卦为自身
+    this.#本卦 = 本卦 ?? this; // 没有传入则本卦为自身
 
     const ub = this.#二进制表示.slice(0, 3);
     const lb = this.#二进制表示.slice(3);
@@ -279,16 +288,16 @@ export class 六爻卦 implements 六十四卦 {
       return this;
     }
 
-    const v = new 六爻卦(
+    return new 六爻卦(
       this.#六爻.map((y) => y.变()),
       动静状态.动已变,
+      this,
     );
-    v.#本卦 = this;
-    return v;
   }
 
   克隆(): 六爻卦 {
-    return new 六爻卦(this.#六爻, this.#动静状态);
+    // 变卦的六亲继承自本卦，克隆时必须带上本卦，否则会按自身重新装六亲
+    return new 六爻卦(this.#六爻, this.#动静状态, this.#本卦 === this ? undefined : this.#本卦);
   }
 
   toString(): string {
