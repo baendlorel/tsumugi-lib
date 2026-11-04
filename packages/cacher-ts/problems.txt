@@ -1,7 +1,7 @@
 cacher-ts 问题清单
 ==================
 仅列未解决项。等级：[严重] 功能不可用/数据错误；[高] 明显行为缺陷；[中] 不完善；[低] 细节。
-实测：`npx vitest run packages/cacher-ts` → 84 passed；`tsc --noEmit` → exit 0。
+实测：`npx vitest run packages/cacher-ts` → 61 passed；`tsc --noEmit` → exit 0。
 
 ------------------------------------------------------------------
 严重

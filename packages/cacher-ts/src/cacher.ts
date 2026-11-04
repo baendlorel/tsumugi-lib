@@ -71,7 +71,7 @@ export class Cacher<Subs extends Record<string, any> = Record<string, any>, T = 
    * @param ignorePending **Racing condition warning:** If `true`, forces the patch even if there is a pending reload.
    */
   patch(mapper: (value: T) => T, ignorePending = false): boolean {
-    if (ignorePending || this.pending === empty) {
+    if (this.pending === empty || ignorePending) {
       this.cache = mapper(this.cache as T);
       this.version++;
       return true;
