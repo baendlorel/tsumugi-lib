@@ -2,8 +2,8 @@
 
 import type { CommandType } from './cli.js';
 import { createPrompt, parseArgs, promptUser } from './cli.js';
-import { URLS, DIVIDER, errorExit, getElapsed } from './common.js';
-import { TESTERS, fetchModels, logResults, testAnthropic, testChatCompletion, testResponses } from './protocols.js';
+import { DIVIDER, URLS, errorExit } from './common.js';
+import { fetchModels, logResults, logSummary, runAllTests, runTest } from './protocols.js';
 import { help } from './help.js';
 
 const handlers = {
@@ -12,34 +12,13 @@ const handlers = {
   },
   models: async function ({ key }: CommandType<'models'>) {
     const { models, error } = await fetchModels(key);
-    if (error) {
-      console.error(error);
-      process.exit(1);
-    }
+    if (error) errorExit(error);
     return { url: URLS.models, models: models.map((m) => m.id) };
   },
   test: async function ({ key, api, model }: CommandType<'test'>) {
-    const url = URLS[api];
-    const start = performance.now();
-    try {
-      const result = await TESTERS[api](key, model);
-      const elapsed = getElapsed(start);
-
-      delete result.usage;
-      return { valid: !result.error && result.content.length > 0, key, model, ...result, url, elapsed };
-    } catch (e) {
-      const elapsed = getElapsed(start);
-      return {
-        valid: false,
-        key,
-        model,
-        content: '',
-        url,
-        type: api,
-        error: e instanceof Error ? e.message : String(e),
-        elapsed,
-      };
-    }
+    const result = await runTest(api, key, model);
+    delete result.usage;
+    return { key, model, ...result, url: URLS[api] };
   },
   interactive: async function (): Promise<void> {
     console.log('\n🔑 电信大模型网关 API 密钥测试工具\n');
@@ -74,22 +53,14 @@ const handlers = {
     }
     rl.close();
 
-    console.log(`✅ 开始测试 chat-completion、responses 和 anthropic 接口，使用模型: ${selected}`);
+    console.log(`\n✅ 开始测试 chat、responses 和 anthropic 接口，使用模型: ${selected}\n`);
 
-    try {
-      const start = Date.now();
-      const results = await Promise.all([
-        testChatCompletion(apiKey, selected),
-        testResponses(apiKey, selected),
-        testAnthropic(apiKey, selected),
-      ]);
-      console.log(`✅ 请求完成，耗时: ${Date.now() - start}ms:`);
-      logResults(results);
-      console.log('\n注：接口都是透传，如果源供应商没有对应接口（如 /anthropic、/responses），返回失败是正常的。\n');
-    } catch (e) {
-      console.error(`❌ ${e instanceof Error ? e.message : String(e)}`);
-      process.exit(1);
-    }
+    const start = Date.now();
+    const results = await runAllTests(apiKey, selected);
+    logResults(results);
+    console.log(`✅ 请求完成，耗时: ${Date.now() - start}ms`);
+    logSummary(results);
+    console.log('\n注：接口都是透传，如果源供应商没有对应接口（如 /anthropic、/responses），返回失败是正常的。\n');
   },
   help,
   error: async ({ message }: CommandType<'error'>) => {
