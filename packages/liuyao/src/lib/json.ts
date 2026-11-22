@@ -1,6 +1,6 @@
-import type { 六神 } from '../core/six-gods.js';
-import type { 六爻卦 } from '../classes/hexagram.js';
-import { 动静状态 } from '../classes/yao.js';
+import type { 六神 } from '../core/六神.js';
+import type { 六爻卦 } from '../classes/六爻卦.js';
+import { 动静状态 } from '../classes/爻.js';
 
 interface 单爻数据 {
   爻: string;

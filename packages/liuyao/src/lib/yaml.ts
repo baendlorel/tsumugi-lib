@@ -1,7 +1,7 @@
-import type { 六神 } from '../core/six-gods.js';
-import type { 六爻卦 } from '../classes/hexagram.js';
+import type { 六神 } from '../core/六神.js';
+import type { 六爻卦 } from '../classes/六爻卦.js';
 import { 单爻 } from './json.js';
-import { 动静状态 } from '../classes/yao.js';
+import { 动静状态 } from '../classes/爻.js';
 
 function 单卦(卦: 六爻卦, gods?: 六神[]): string {
   const 上爻 = 单爻(卦, 5, gods);

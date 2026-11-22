@@ -1,4 +1,4 @@
-import { 八卦表 } from '../core/common.js';
+import { 八卦表 } from '../core/卦象表.js';
 
 const _names = ['老阴', '少阳', '少阴', '老阳'] as const;
 const _change = [1, 1, 2, 2] as const;

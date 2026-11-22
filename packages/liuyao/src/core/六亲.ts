@@ -1,5 +1,5 @@
-import { 六爻卦 } from '../classes/hexagram.js';
-import { 五行, 地支五行 } from './common.js';
+import { 六爻卦 } from '../classes/六爻卦.js';
+import { 五行, 地支五行 } from './卦象表.js';
 
 /**
  * 六亲只有五个？

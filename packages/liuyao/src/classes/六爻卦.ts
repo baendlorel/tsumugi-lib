@@ -1,10 +1,10 @@
-import type { 八卦, 六十四卦 } from '../core/common.js';
+import type { 八卦, 六十四卦 } from '../core/卦象表.js';
 
-import { 六十四卦表, 八宫卦位顺序表, 八卦表, 五行, 八卦名 } from '../core/common.js';
-import { 装天干 } from '../core/heaven-stem.js';
-import { 装世应 } from '../core/host-guest.js';
-import { 装六亲五行 } from '../core/six-kins.js';
-import { 动静状态, 爻 } from './yao.js';
+import { 六十四卦表, 八宫卦位顺序表, 八卦表, 五行, 八卦名 } from '../core/卦象表.js';
+import { 装天干 } from '../core/天干.js';
+import { 装世应 } from '../core/世应.js';
+import { 装六亲五行 } from '../core/六亲.js';
+import { 动静状态, 爻 } from './爻.js';
 
 export const 爻位 = ['初爻', '二爻', '三爻', '四爻', '五爻', '上爻'] as const;
 

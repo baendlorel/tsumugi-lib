@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 
 import solar2lunar from 'solarlunar';
-import { 六爻卦 } from './classes/hexagram.js';
-import { 六神表 } from './core/six-gods.js';
+import { 六爻卦 } from './classes/六爻卦.js';
+import { 六神表 } from './core/六神.js';
 import { toJSON, type JSON输出 } from './lib/json.js';
 import { toYAML } from './lib/yaml.js';
 import { toMarkdown } from './lib/md-table.js';

@@ -1,4 +1,4 @@
-import type { 六爻卦 } from '../classes/hexagram.js';
+import type { 六爻卦 } from '../classes/六爻卦.js';
 `
 世应章
 乾为天：世在六爻；天风姤：世在初爻；天山遁：世在二爻；火地晋：世退在四爻；

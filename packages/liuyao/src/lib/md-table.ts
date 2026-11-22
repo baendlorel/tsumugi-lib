@@ -1,6 +1,6 @@
-import type { 六神 } from '../core/six-gods.js';
-import type { 六爻卦 } from '../classes/hexagram.js';
-import { 爻位 } from '../classes/hexagram.js';
+import type { 六神 } from '../core/六神.js';
+import type { 六爻卦 } from '../classes/六爻卦.js';
+import { 爻位 } from '../classes/六爻卦.js';
 import type { JSON卦象 } from './json.js';
 import { toJSON } from './json.js';
 

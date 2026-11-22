@@ -1,5 +1,6 @@
-import type { 六爻卦 } from '../classes/hexagram.js';
-import { 天干 } from './common.js';
+import type { 六爻卦 } from '../classes/六爻卦.js';
+
+export type 天干 = '甲' | '乙' | '丙' | '丁' | '戊' | '己' | '庚' | '辛' | '壬' | '癸';
 
 `
 野鹤曰：此为多事之论也。鬼谷三才论舍爻辞，以五行而定祸福者，乃用地支。既用地支，不

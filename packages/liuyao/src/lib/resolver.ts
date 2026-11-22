@@ -1,5 +1,5 @@
-import { 六爻卦 } from '../classes/hexagram.js';
-import { 爻 } from '../classes/yao.js';
+import { 六爻卦 } from '../classes/六爻卦.js';
+import { 爻 } from '../classes/爻.js';
 import { toJSON } from './json.js';
 
 /**
